@@ -12,6 +12,11 @@ public enum ErrorCode {
     CREATE_VALIDATE_EXCEPTION(HttpStatus.BAD_REQUEST,"E005", "객체 생성에 실패했습니다."),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "E006", "입력값 검증에 실패했습니다."),
     INVALID_JSON(HttpStatus.BAD_REQUEST, "E007",  "잘못된 JSON 형식입니다."),
+    REQUIRED_VALUE_MISSING(HttpStatus.BAD_REQUEST, "E008", "필수 값이 누락되었습니다."),
+    INVALID_FORMAT(HttpStatus.BAD_REQUEST, "E009", "잘못된 입력 형식입니다."),
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "E010", "해당 상태로 전환할 수 없습니다."),
+    HUB_ORIGIN_EQUALS_DESTINATION(HttpStatus.BAD_REQUEST, "E011", "도착 허브와 출발 허브가 같을 수 없습니다."),
+    INVALID_STATE_FOR_MODIFICATION(HttpStatus.BAD_REQUEST, "E012", "현재 상태에서는 정보를 수정할 수 없습니다."),
 
     // 401 UNAUTHORIZED
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E003", "인증이 필요합니다."),
