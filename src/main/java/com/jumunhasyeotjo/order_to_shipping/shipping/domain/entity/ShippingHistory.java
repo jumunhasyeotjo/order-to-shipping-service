@@ -131,6 +131,17 @@ public class ShippingHistory extends BaseEntity {
 		this.actualRouteInfo = RouteInfo.ofActualRoute(actualDistance, this.departedAt, arrivedAt);
 	}
 
+	/**
+	 * 배송취소
+	 */
+	public void cancel(){
+		if(!this.status.equals(ShippingHistoryStatus.WAITING)){
+			throw new BusinessException(INVALID_STATE_FOR_MODIFICATION);
+		}
+
+		this.status = ShippingHistoryStatus.CANCELED;
+	}
+
 	private boolean canTransitionTo(ShippingHistoryStatus newStatus) {
 		return this.status.getSequence() + 1 == newStatus.getSequence();
 	}
