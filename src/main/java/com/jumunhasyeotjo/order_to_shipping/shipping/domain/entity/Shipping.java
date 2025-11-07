@@ -153,7 +153,7 @@ public class Shipping extends BaseEntity {
 	 * 수령인 전화번호 변경
 	 */
 	public void changeReceiverPhoneNumber(PhoneNumber phoneNumber){
-		if(this.shippingStatus.equals(ShippingStatus.DELIVERED)){
+		if(this.shippingStatus.equals(ShippingStatus.DELIVERED) || this.shippingStatus.equals(ShippingStatus.CANCELED)){
 			throw new BusinessException(INVALID_STATE_FOR_MODIFICATION);
 		}
 
@@ -164,11 +164,22 @@ public class Shipping extends BaseEntity {
 	 * 수령인 이름 변경
 	 */
 	public void changeReceiverName(String name){
-		if(this.shippingStatus.equals(ShippingStatus.DELIVERED)){
+		if(this.shippingStatus.equals(ShippingStatus.DELIVERED) || this.shippingStatus.equals(ShippingStatus.CANCELED)){
 			throw new BusinessException(INVALID_STATE_FOR_MODIFICATION);
 		}
 
 		this.receiverName = name;
+	}
+
+	/**
+	 * 배송 취소
+	 */
+	public void cancel(){
+		if(!this.shippingStatus.equals(ShippingStatus.WAITING_AT_HUB)){
+			throw new BusinessException(INVALID_STATE_CANCEL);
+		}
+
+		this.shippingStatus = ShippingStatus.CANCELED;
 	}
 
 

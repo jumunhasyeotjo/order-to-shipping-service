@@ -37,6 +37,32 @@ class ShippingTest {
 	}
 
 	@Test
+	@DisplayName("배송 취소 시 배송 상태는 CANCELED이다.")
+	void cancelShipping_ShouldSetStatusToCanceled() {
+		// given
+		Shipping shipping = ShippingFixture.createDefault();
+
+		// when
+		shipping.cancel();
+
+		// then
+		assertThat(shipping.getShippingStatus()).isEqualTo(ShippingStatus.CANCELED);
+	}
+
+	@Test
+	@DisplayName("배송 취소는 WAITING_AT_HUB 상태 일떄만 가능하다.")
+	void cancelShipping_OnlyWhenWaitingAtHub() {
+		// given
+		Shipping shipping = ShippingFixture.createDefault();
+		shipping.dispatchFromOriginHub();
+
+		// when & then
+		assertThatThrownBy(shipping::cancel)
+			.isInstanceOf(BusinessException.class)
+			.hasMessageContaining("배송이 이미 시작되어 취소할 수 없습니다.");
+	}
+
+	@Test
 	@DisplayName("배송 상태 변경은 순차적으로만 가능하다")
 	void changeShippingStatus_ShouldAllowOnlySequentialTransition(){
 		// given
@@ -96,4 +122,6 @@ class ShippingTest {
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("현재 상태에서는 정보를 수정할 수 없습니다.");
 	}
+
+
 }

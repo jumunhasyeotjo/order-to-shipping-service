@@ -17,6 +17,7 @@ public enum ErrorCode {
     INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "E007", "해당 상태로 전환할 수 없습니다."),
     HUB_ORIGIN_EQUALS_DESTINATION(HttpStatus.BAD_REQUEST, "E008", "도착 허브와 출발 허브가 같을 수 없습니다."),
     INVALID_STATE_FOR_MODIFICATION(HttpStatus.BAD_REQUEST, "E009", "현재 상태에서는 정보를 수정할 수 없습니다."),
+    INVALID_STATE_CANCEL(HttpStatus.BAD_REQUEST, "E009", "배송이 이미 시작되어 취소할 수 없습니다."),
 
     // 401 UNAUTHORIZED
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E010", "인증이 필요합니다."),
