@@ -107,7 +107,7 @@ public class ShippingHistory extends BaseEntity {
 	/**
 	 * 배송 출발
 	 */
-	public void departDelivery(){
+	public void markAsDeparted(){
 		ShippingHistoryStatus newStatus = ShippingHistoryStatus.MOVING_TO_HUB;
 		if(!canTransitionTo(newStatus)){
 			throw new BusinessException(INVALID_STATUS_TRANSITION);
@@ -120,7 +120,7 @@ public class ShippingHistory extends BaseEntity {
 	/**
 	 * 배송 도착
 	 */
-	public void arriveDelivery(Integer actualDistance){
+	public void markAsArrived(Integer actualDistance){
 		ShippingHistoryStatus newStatus = ShippingHistoryStatus.ARRIVED;
 		if(!canTransitionTo(newStatus)){
 			throw new BusinessException(INVALID_STATUS_TRANSITION);

@@ -15,6 +15,15 @@ public class ShippingHistoryFixture {
 		UUID driverId = UUID.randomUUID();
 		Integer sequence = 1;
 		String origin = "출발지";
+		String destination = "도착";
+		RouteInfo expectRouteInfo = RouteInfo.of(100, 100);
+
+		return ShippingHistory.create(shipping, driverId, sequence, origin, destination, expectRouteInfo);
+	}
+
+	public static ShippingHistory createWithShippingAndSequence(Shipping shipping, Integer sequence){
+		UUID driverId = UUID.randomUUID();
+		String origin = "출발지";
 		String destination = "도착지";
 		RouteInfo expectRouteInfo = RouteInfo.of(100, 100);
 
