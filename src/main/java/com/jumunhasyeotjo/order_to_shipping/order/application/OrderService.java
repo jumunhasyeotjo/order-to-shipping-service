@@ -109,8 +109,7 @@ public class OrderService {
 
         validateHubManager(command.role(), command.userId(), order.getCompanyId());
 
-        order.cancel(command.role(), null);
-
+        order.cancel(command.role(), command.userId());
         return order;
     }
 
