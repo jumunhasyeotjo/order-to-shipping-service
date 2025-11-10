@@ -17,7 +17,7 @@ public enum ErrorCode {
     INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "E007", "해당 상태로 전환할 수 없습니다."),
     HUB_ORIGIN_EQUALS_DESTINATION(HttpStatus.BAD_REQUEST, "E008", "도착 허브와 출발 허브가 같을 수 없습니다."),
     INVALID_STATE_FOR_MODIFICATION(HttpStatus.BAD_REQUEST, "E009", "현재 상태에서는 정보를 수정할 수 없습니다."),
-    INVALID_STATE_CANCEL(HttpStatus.BAD_REQUEST, "E009", "배송이 이미 시작되어 취소할 수 없습니다."),
+    INVALID_STATE_CANCEL(HttpStatus.BAD_REQUEST, "E010", "배송이 이미 시작되어 취소할 수 없습니다."),
 
     // 401 UNAUTHORIZED
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "EU001", "인증이 필요합니다."),
@@ -30,7 +30,9 @@ public enum ErrorCode {
 
     // 500 INTERNAL_SERVER_ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "EI001", "서버 에러가 발생했습니다."),
-    HISTORY_SHIPPING_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "EI002", "배송이력과 배송이 일치하지 않습니다.");
+    HISTORY_SHIPPING_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "EI002", "배송이력과 배송이 일치하지 않습니다."),
+    CONNECTION_NOT_FOUND_BETWEEN_HUBS(HttpStatus.INTERNAL_SERVER_ERROR, "EI003","연결된 허브 간 배송만 가능합니다."),
+    ;
 
     private final HttpStatus status;
     private final String code;

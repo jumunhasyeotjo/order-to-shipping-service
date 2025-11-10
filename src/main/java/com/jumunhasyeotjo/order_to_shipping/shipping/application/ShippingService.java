@@ -19,6 +19,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
@@ -48,7 +49,7 @@ public class ShippingService {
 		UUID arrivalHubId = command.receiverCompany().hubId();
 
 		// 경로 생성
-		List<Route> routes = shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId);
+		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId);
 
 		// 배송 생성
 		Shipping shipping = Shipping.create(command.orderId(), command.receiverCompany().companyId(),
@@ -121,14 +122,12 @@ public class ShippingService {
 			IntStream.range(0, routes.size())
 				.mapToObj(i -> {
 					Route route = routes.get(i);
-					String departureName = getHubNameFromId(route.departureHubId());
-					String destinationName = getHubNameFromId(route.destinationHubId());
 					return ShippingHistory.create(
 						shipping,
 						driverClient.assignDriver(route.departureHubId(), route.destinationHubId()),
 						i + 1,
-						departureName,
-						destinationName,
+						getHubNameFromId(route.departureHubId()),
+						getHubNameFromId(route.destinationHubId()),
 						route.info()
 					);
 				})
