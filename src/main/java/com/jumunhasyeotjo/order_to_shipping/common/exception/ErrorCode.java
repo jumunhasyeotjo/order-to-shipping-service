@@ -25,6 +25,9 @@ public enum ErrorCode {
     // 403 FORBIDDEN
     FORBIDDEN(HttpStatus.FORBIDDEN, "EF001", "접근이 거부되었습니다."),
 
+    // 404 NOT_FOUND
+    NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
+
     // 500 INTERNAL_SERVER_ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "EI001", "서버 에러가 발생했습니다."),
     HISTORY_SHIPPING_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "EI002", "배송이력과 배송이 일치하지 않습니다.");
