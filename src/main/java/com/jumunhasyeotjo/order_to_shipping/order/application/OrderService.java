@@ -4,10 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.CompanyClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.UserClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
@@ -29,6 +26,7 @@ public class OrderService {
     private final ProductClient productClient;
     private final CompanyClient companyClient;
     private final UserClient userClient;
+    private final DeliveryClient deliveryClient;
 
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
@@ -38,6 +36,10 @@ public class OrderService {
         decreaseStock(command.orderProducts());
 
         Order savedOrder = orderRepository.save(Order.create(orderProducts, command.userId(), companyId, command.requestMessage(), command.totalPrice()));
+
+        // Todo : Delivery Client 배송 생성시 필요한 정보 추가
+        deliveryClient.createDelivery();
+
         return savedOrder;
     }
 
@@ -110,8 +112,14 @@ public class OrderService {
         UserRole role = UserRole.convertToUserRole(command.role());
         validateHubManager(role, command.userId(), order.getCompanyId());
 
+        restoreStock(order);
         order.cancel(role, command.userId());
         return order;
+    }
+
+    // 재고 복구
+    private void restoreStock(Order order) {
+        stockClient.restoreStocks(order.getOrderProducts());
     }
 
     @Transactional(readOnly = true)
