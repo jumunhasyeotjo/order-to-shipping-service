@@ -4,6 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -75,7 +76,7 @@ public class Order extends BaseEntity {
         this.totalPrice = totalPrice;
     }
 
-    public void cancel(String role, Long companyManagerId) {
+    public void cancel(UserRole role, Long companyManagerId) {
         validateCancel(role, companyManagerId);
         this.status = OrderStatus.CANCELLED;
     }
@@ -106,9 +107,9 @@ public class Order extends BaseEntity {
             throw new BusinessException(ErrorCode.INVALID_STATE_FOR_UPDATE);
     }
 
-    private void validateCancel(String role, Long companyManagerId) {
+    private void validateCancel(UserRole role, Long companyManagerId) {
         // 업체 담당자
-        if (role.equals("COMPANY_MANAGER")) {
+        if (role.equals(UserRole.COMPANY_MANAGER)) {
             if (!this.companyManagerId.equals(companyManagerId)) throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_CANCEL);
         }
 

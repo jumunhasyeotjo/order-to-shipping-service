@@ -4,6 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -168,10 +169,9 @@ public class OrderDomainTest {
 
         // when
         Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-        ReflectionTestUtils.setField(order, "status", OrderStatus.SHIPPED); // 테스트 목적 강제 상태 변경
 
         // then
-        assertThatThrownBy(() -> order.cancel("COMPANY_MANAGER", 2L))
+        assertThatThrownBy(() -> order.cancel(UserRole.COMPANY_MANAGER, 2L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문을 취소할 권한이 없습니다.");
     }
@@ -190,7 +190,7 @@ public class OrderDomainTest {
         ReflectionTestUtils.setField(order, "status", OrderStatus.SHIPPED);
 
         // then
-        assertThatThrownBy(() -> order.cancel("COMPANY_MANAGER", 1L))
+        assertThatThrownBy(() -> order.cancel(UserRole.COMPANY_MANAGER, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문 취소는 PENDING/PAYED 상태에서만 가능합니다.");
     }
@@ -205,7 +205,7 @@ public class OrderDomainTest {
 
         // when
         Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-        order.cancel("COMPANY_MANAGER", 1L);
+        order.cancel(UserRole.COMPANY_MANAGER, 1L);
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);

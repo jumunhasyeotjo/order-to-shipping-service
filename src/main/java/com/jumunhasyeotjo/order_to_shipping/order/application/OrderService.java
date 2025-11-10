@@ -11,6 +11,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.service.UserClient
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,15 +87,15 @@ public class OrderService {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        validateHubManager(command.role(), command.userId(), order.getCompanyId());
+        validateHubManager(UserRole.convertToUserRole(command.role()), command.userId(), order.getCompanyId());
         order.updateStatus(command.status());
 
         return order;
     }
 
     // 허브 담당자 검증
-    private void validateHubManager(String role, Long userId, UUID companyId) {
-        if (role.equals("HUB_MANAGER")) {
+    private void validateHubManager(UserRole role, Long userId, UUID companyId) {
+        if (role.equals(UserRole.HUB_MANAGER)) {
             UUID hubId = userClient.getHubId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
             if (hubId == null) throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
             if (!companyClient.existCompanyRegionalHub(companyId, hubId)) throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
@@ -106,10 +107,10 @@ public class OrderService {
     public Order cancelOrder(CancelOrderCommand command) {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        UserRole role = UserRole.convertToUserRole(command.role());
+        validateHubManager(role, command.userId(), order.getCompanyId());
 
-        validateHubManager(command.role(), command.userId(), order.getCompanyId());
-
-        order.cancel(command.role(), command.userId());
+        order.cancel(role, command.userId());
         return order;
     }
 
@@ -118,18 +119,18 @@ public class OrderService {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        validateGetOrder(command.role(), command.userId(), order);
+        validateGetOrder(UserRole.convertToUserRole(command.role()), command.userId(), order);
         return OrderResult.of(order);
     }
 
-    private void validateGetOrder(String role, Long userId, Order order) {
+    private void validateGetOrder(UserRole role, Long userId, Order order) {
         switch (role) {
-            case "HUB_MANAGER":
+            case HUB_MANAGER:
                 UUID hubId = userClient.getHubId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
                 if (!companyClient.existCompanyRegionalHub(order.getCompanyId(), hubId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
-            case "COMPANY_MANAGER":
+            case COMPANY_MANAGER:
                 if (!order.getCompanyManagerId().equals(userId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
@@ -138,20 +139,20 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public List<OrderResult> searchOrder(SearchOrderCommand command) {
-        validSearchOrder(command.role(), command.userId(), command.companyId());
+        validSearchOrder(UserRole.convertToUserRole(command.role()), command.userId(), command.companyId());
         List<Order> orderList = orderRepository.findAllByCompanyId(command.companyId(), command.pageable());
 
         return orderList.stream().map(OrderResult::of).toList();
     }
 
-    private void validSearchOrder(String role, Long userId, UUID companyId) {
+    private void validSearchOrder(UserRole role, Long userId, UUID companyId) {
         switch (role) {
-            case "COMPANY_MANAGER":
+            case COMPANY_MANAGER:
                 if (!companyId.equals(userClient.getCompanyId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN))))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
 
-            case "HUB_MANAGER":
+            case HUB_MANAGER:
                 UUID hubId = userClient.getHubId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
                 if (!companyClient.existCompanyRegionalHub(companyId, hubId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
