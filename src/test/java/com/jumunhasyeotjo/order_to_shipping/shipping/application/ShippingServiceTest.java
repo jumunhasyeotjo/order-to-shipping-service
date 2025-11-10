@@ -24,6 +24,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
@@ -160,7 +161,7 @@ class ShippingServiceTest {
 	}
 
 	@Test
-	@DisplayName("배송id로 배송을 조회한다.")
+	@DisplayName("배송id로 배송과 배송기록을 조회한다.")
 	void getShipping_success() {
 		// given
 		GetShippingCommand command = mock(GetShippingCommand.class);
@@ -169,15 +170,23 @@ class ShippingServiceTest {
 		when(command.userId()).thenReturn(1L);
 
 		Shipping shipping = mock(Shipping.class);
+		ShippingHistory h1 = mock(ShippingHistory.class);
+		ShippingHistory h2 = mock(ShippingHistory.class);
+		List<ShippingHistory> histories = List.of(h1, h2);
+
 		when(shippingRepository.findById(shippingId)).thenReturn(Optional.of(shipping));
+		when(shippingHistoryRepository.findAllByShippingId(shippingId)).thenReturn(histories);
 
 		// when
-		Shipping result = shippingService.getShipping(command);
+		ShippingResult result = shippingService.getShipping(command);
 
 		// then
-		assertThat(result).isSameAs(shipping);
+		assertThat(result.shipping()).isSameAs(shipping);
+		assertThat(result.shippingHistories()).isSameAs(histories);
 		verify(shippingRepository, times(1)).findById(shippingId);
+		verify(shippingHistoryRepository, times(1)).findAllByShippingId(shippingId);
 		verifyNoMoreInteractions(shippingRepository);
+		verifyNoMoreInteractions(shippingHistoryRepository);
 	}
 
 

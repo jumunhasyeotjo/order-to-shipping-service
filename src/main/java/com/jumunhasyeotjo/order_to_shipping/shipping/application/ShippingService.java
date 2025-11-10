@@ -16,6 +16,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
@@ -75,7 +76,7 @@ public class ShippingService {
 	public void cancelShipping(CancelShippingCommand command){
 		validateCancellableBy(command.role(),command.userId());
 		Shipping shipping = getShippingById(command.shippingId());
-		List<ShippingHistory> shippingHistories = getShippingHistoryLIst(command.shippingId());
+		List<ShippingHistory> shippingHistories = getShippingHistoryList(command.shippingId());
 
 		shippingDomainService.cancelDelivery(shipping, shippingHistories);
 	}
@@ -84,9 +85,12 @@ public class ShippingService {
 	 * 배송 조회
 	 */
 	@Transactional(readOnly = true)
-	public Shipping getShipping(GetShippingCommand command) {
+	public ShippingResult getShipping(GetShippingCommand command) {
 		validateViewableBy(command.role(),command.userId());
-		return getShippingById(command.shippingId());
+		Shipping shipping = getShippingById(command.shippingId());
+		List<ShippingHistory> shippingHistories = getShippingHistoryList(command.shippingId());
+
+		return ShippingResult.from(shipping, shippingHistories);
 	}
 
 	private void validateCancellableBy(String role, Long userId){
@@ -104,7 +108,7 @@ public class ShippingService {
 	}
 
 
-	private List<ShippingHistory> getShippingHistoryLIst(UUID shippingId){
+	private List<ShippingHistory> getShippingHistoryList(UUID shippingId){
 		List<ShippingHistory> shippingHistories = shippingHistoryRepository.findAllByShippingId(shippingId);
 		if(shippingHistories.isEmpty())
 			throw new BusinessException(NOT_FOUND_BY_ID);
