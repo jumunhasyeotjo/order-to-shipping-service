@@ -8,7 +8,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

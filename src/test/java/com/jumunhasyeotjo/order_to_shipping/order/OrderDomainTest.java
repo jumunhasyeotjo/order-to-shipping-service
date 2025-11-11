@@ -4,7 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;

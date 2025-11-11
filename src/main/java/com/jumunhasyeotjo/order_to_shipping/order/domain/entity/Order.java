@@ -4,7 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
