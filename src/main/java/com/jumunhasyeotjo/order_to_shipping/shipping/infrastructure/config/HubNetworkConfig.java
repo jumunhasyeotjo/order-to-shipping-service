@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route;
+package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.config;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.HubNetwork;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.RouteBasedHubNetwork;
 
 import lombok.RequiredArgsConstructor;
 
