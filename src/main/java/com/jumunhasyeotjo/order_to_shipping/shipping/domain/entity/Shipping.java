@@ -2,6 +2,8 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity;
 
 import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
@@ -12,12 +14,17 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingStatus;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -61,15 +68,16 @@ public class Shipping extends BaseEntity {
 	@Column(nullable = false)
 	private UUID arrivalHubId;
 
-	private UUID currentHubId;
+	@Column(nullable = false)
+	private Integer totalRouteCount;
 
 	/**
 	 * 배송 생성 팩토리 메서드
 	 */
 	public static Shipping create(UUID orderId, UUID receiverCompanyId, ShippingAddress address,
-		PhoneNumber receiverPhoneNumber, String receiverName, UUID originHubId, UUID arrivalHubId) {
+		PhoneNumber receiverPhoneNumber, String receiverName, UUID originHubId, UUID arrivalHubId, Integer totalRouteCount) {
 
-		validateCreateArgs(orderId, receiverCompanyId, address, receiverPhoneNumber, receiverName, originHubId, arrivalHubId);
+		validateCreateArgs(orderId, receiverCompanyId, address, receiverPhoneNumber, receiverName, originHubId, arrivalHubId, totalRouteCount);
 
 		Shipping shipping = new Shipping();
 		shipping.id = orderId;
@@ -80,7 +88,7 @@ public class Shipping extends BaseEntity {
 		shipping.receiverName = receiverName;
 		shipping.originHubId = originHubId;
 		shipping.arrivalHubId = arrivalHubId;
-		shipping.currentHubId = originHubId;
+		shipping.totalRouteCount = totalRouteCount;
 
 		return shipping;
 	}
@@ -95,7 +103,6 @@ public class Shipping extends BaseEntity {
 			throw new BusinessException(INVALID_STATUS_TRANSITION);
 		}
 
-		this.currentHubId = null;
 		this.shippingStatus = newStatus;
 	}
 
@@ -108,7 +115,6 @@ public class Shipping extends BaseEntity {
 			throw new BusinessException(INVALID_STATUS_TRANSITION);
 		}
 
-		this.currentHubId = arrivalHubId;
 		this.shippingStatus = newStatus;
 	}
 
@@ -121,7 +127,6 @@ public class Shipping extends BaseEntity {
 			throw new BusinessException(INVALID_STATUS_TRANSITION);
 		}
 
-		this.currentHubId = null;
 		this.shippingStatus = newStatus;
 	}
 
@@ -134,19 +139,7 @@ public class Shipping extends BaseEntity {
 			throw new BusinessException(INVALID_STATUS_TRANSITION);
 		}
 
-		this.currentHubId = null;
 		this.shippingStatus = newStatus;
-	}
-
-	/**
-	 * 현재 허브 위치 변경
-	 */
-	public void updateCurrentHubId(UUID currentHubId){
-		if(!this.shippingStatus.equals(ShippingStatus.MOVING_TO_HUB)){
-			throw new BusinessException(INVALID_STATE_FOR_MODIFICATION);
-		}
-
-		this.currentHubId = currentHubId;
 	}
 
 	/**
@@ -193,10 +186,11 @@ public class Shipping extends BaseEntity {
 		PhoneNumber receiverPhoneNumber,
 		String receiverName,
 		UUID originHubId,
-		UUID arrivalHubId) {
+		UUID arrivalHubId,
+		Integer totalRouteCount) {
 		if (orderId == null || receiverCompanyId == null || address == null ||
 			receiverPhoneNumber == null || receiverName == null ||
-			originHubId == null || arrivalHubId == null || receiverName.isBlank()) {
+			originHubId == null || arrivalHubId == null || receiverName.isBlank() || totalRouteCount == null || totalRouteCount <= 0) {
 			throw new BusinessException(REQUIRED_VALUE_MISSING);
 		}
 		if (originHubId.equals(arrivalHubId)) {
