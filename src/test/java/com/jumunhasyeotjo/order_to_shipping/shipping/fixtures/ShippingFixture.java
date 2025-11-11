@@ -16,8 +16,10 @@ public class ShippingFixture {
 		String receiverName = "수령인";
 		UUID originHubId = UUID.randomUUID();
 		UUID arrivalHubId = UUID.randomUUID();
+		Integer totalRouteCount = 3;
 
 		return Shipping.create(orderId, receiverCompanyId, address, receiverPhoneNumber, receiverName, originHubId,
-			arrivalHubId);
+			arrivalHubId, totalRouteCount);
 	}
+
 }

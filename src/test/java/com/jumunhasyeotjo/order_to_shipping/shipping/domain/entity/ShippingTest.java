@@ -27,10 +27,11 @@ class ShippingTest {
 		String receiverName = "수령인";
 		UUID originHubId = UUID.randomUUID();
 		UUID arrivalHubId = UUID.randomUUID();
+		Integer totalRouteCount = 3;
 
 		// when
 		Shipping shipping = Shipping.create(orderId, receiverCompanyId, address, receiverPhoneNumber, receiverName, originHubId,
-			arrivalHubId);
+			arrivalHubId, totalRouteCount);
 
 		// then
 		assertThat(shipping.getShippingStatus()).isEqualTo(ShippingStatus.WAITING_AT_HUB);
@@ -72,19 +73,6 @@ class ShippingTest {
 		assertThatThrownBy(shipping::arriveAtDestinationHub)
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("해당 상태로 전환할 수 없습니다.");
-	}
-
-	@Test
-	@DisplayName("현재 허브 위치 변경은 MOVING_TO_HUB 상태일때만 가능하다.")
-	void updateCurrentHubId_OnlyWhenMovingToHub(){
-		// given
-		Shipping shipping = ShippingFixture.createDefault();
-		UUID currentHubId = UUID.randomUUID();
-
-		// when & then
-		assertThatThrownBy(() -> shipping.updateCurrentHubId(currentHubId))
-			.isInstanceOf(BusinessException.class)
-			.hasMessageContaining("현재 상태에서는 정보를 수정할 수 없습니다.");
 	}
 
 	@Test
