@@ -10,6 +10,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,11 +147,11 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderResult> searchOrder(SearchOrderCommand command) {
+    public Page<OrderResult> searchOrder(SearchOrderCommand command) {
         validSearchOrder(UserRole.convertToUserRole(command.role()), command.userId(), command.companyId());
-        List<Order> orderList = orderRepository.findAllByCompanyId(command.companyId(), command.pageable());
+        Page<Order> orderList = orderRepository.findAllByCompanyId(command.companyId(), command.pageable());
 
-        return orderList.stream().map(OrderResult::of).toList();
+        return orderList.map(OrderResult::of);
     }
 
     private void validSearchOrder(UserRole role, Long userId, UUID companyId) {

@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
@@ -387,28 +389,30 @@ public class OrderServiceTest {
     @DisplayName("조회할 주문 미존재 (다건)")
     void searchOrder_whenNoOrdersFound_shouldReturnEmptyList() {
         // given
-        List<Order> orderList = new ArrayList<>();
+        Page<Order> orderList = new PageImpl<>(List.of(), PageRequest.of(0 , 10), 0);
         SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
 
         // when
-        List<OrderResult> result = orderService.searchOrder(request);
+        Page<OrderResult> result = orderService.searchOrder(request);
 
         // then
-        assertThat(result.size()).isEqualTo(0);
+        assertThat(result.getContent().size()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("업체 담당자는 본인이 주문한 상품만 조회 가능하다. - 성공 (다건)")
     void searchOrder_whenCompanyManagerIsOwner_shouldSucceed() {
         // given
-        List<Order> orderList = new ArrayList<>();
-        orderList.add(getOrder());
-        orderList.add(getOrder());
-        orderList.add(getOrder());
-        SearchOrderCommand request = new SearchOrderCommand(1L, orderList.get(0).getCompanyId(), "COMPANY_MANAGER", PageRequest.of(0, 10));
+        Order order1 = getOrder();
+        Order order2 = getOrder();
+        Order order3 = getOrder();
+        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
+                PageRequest.of(0 , 10), 0);
+
+        SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), "COMPANY_MANAGER", PageRequest.of(0, 10));
 
         given(userClient.getCompanyId(request.userId()))
                 .willReturn(Optional.ofNullable(request.companyId()));
@@ -416,10 +420,10 @@ public class OrderServiceTest {
                 .willReturn(orderList);
 
         // when
-        List<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderService.searchOrder(request);
 
         // then
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.getContent().size()).isEqualTo(3);
     }
 
     @Test
@@ -442,12 +446,14 @@ public class OrderServiceTest {
     @DisplayName("허브 담당자는 본인 소속 주문만 조회 가능하다. - 성공 (다건)")
     void searchOrder_whenHubManagerIsInCorrectHub_shouldSucceed() {
         // given
-        List<Order> orderList = new ArrayList<>();
-        orderList.add(getOrder());
-        orderList.add(getOrder());
-        orderList.add(getOrder());
+        Order order1 = getOrder();
+        Order order2 = getOrder();
+        Order order3 = getOrder();
+        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
+                PageRequest.of(0 , 10), 0);
+
         UUID hubId = UUID.randomUUID();
-        SearchOrderCommand request = new SearchOrderCommand(2L, orderList.get(0).getCompanyId(), "HUB_MANAGER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
 
         given(userClient.getHubId(request.userId()))
                 .willReturn(Optional.of(hubId));
@@ -457,10 +463,10 @@ public class OrderServiceTest {
                 .willReturn(orderList);
 
         // when
-        List<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderService.searchOrder(request);
 
         // then
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.getContent().size()).isEqualTo(3);
     }
 
     @Test
@@ -485,20 +491,22 @@ public class OrderServiceTest {
     @DisplayName("마스터는 모든 주문 정보를 조회 가능하다. (다건)")
     void searchOrder_whenUserIsMaster_shouldSucceed() {
         // given
-        List<Order> orderList = new ArrayList<>();
-        orderList.add(getOrder());
-        orderList.add(getOrder());
-        orderList.add(getOrder());
-        SearchOrderCommand request = new SearchOrderCommand(2L, orderList.get(0).getCompanyId(), "MASTER", PageRequest.of(0, 10));
+        Order order1 = getOrder();
+        Order order2 = getOrder();
+        Order order3 = getOrder();
+        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
+                PageRequest.of(0 , 10), 0);
+
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
 
         // when
-        List<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderService.searchOrder(request);
 
         // then
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.getContent().size()).isEqualTo(3);
     }
 
 
