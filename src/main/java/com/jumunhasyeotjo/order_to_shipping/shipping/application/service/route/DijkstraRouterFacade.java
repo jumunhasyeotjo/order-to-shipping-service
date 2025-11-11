@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.ShortestPathCache;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class DijkstraRouterFacade implements ShippingRouteGenerator {
 	private final HubNetwork network;
 	private final ShortestPathCache cache;
+	private final HubClient hubClient;
 	private final WeightStrategy weightStrategy = WeightStrategy.DISTANCE; // default 가중치 전략
 
 	/**
@@ -34,7 +36,10 @@ public class DijkstraRouterFacade implements ShippingRouteGenerator {
 	public List<Route> generateOrRebuildRoute(UUID originHubId, UUID arrivalHubId) {
 		Map<String, Object> cached = cache.get(weightStrategy, originHubId, arrivalHubId);
 		if (cached == null) {
-			HubDijkstraRouter router = new HubDijkstraRouter(network);
+			// 캐시 미스 시, 최신 라우트로 그래프를 재구성하여 사용
+			List<Route> freshRoutes = hubClient.getRoutes();
+			HubNetwork freshNetwork = new RouteBasedHubNetwork(freshRoutes);
+			HubDijkstraRouter router = new HubDijkstraRouter(freshNetwork);
 			return buildShortestRouteForPair(weightStrategy, originHubId, arrivalHubId, router);
 		} else {
 			validateReachable(cached);
