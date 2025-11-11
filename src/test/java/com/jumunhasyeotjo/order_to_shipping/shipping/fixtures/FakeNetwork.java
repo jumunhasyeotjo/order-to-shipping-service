@@ -28,7 +28,7 @@ class FakeNetwork implements HubNetwork {
 	}
 
 	@Override
-	public EdgeWeight weight(UUID a, UUID b) {
+	public EdgeWeight getWeight(UUID a, UUID b) {
 		return weights.get(key(a, b)); // 테스트에서는 존재하는 간선만 요청됨
 	}
 

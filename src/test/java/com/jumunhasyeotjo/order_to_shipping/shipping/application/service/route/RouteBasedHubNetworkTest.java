@@ -71,8 +71,8 @@ class RouteBasedHubNetworkTest {
 		RouteBasedHubNetwork network = new RouteBasedHubNetwork(routes);
 
 		// then
-		HubNetwork.EdgeWeight w1 = network.weight(A, B);
-		HubNetwork.EdgeWeight w2 = network.weight(B, A);
+		HubNetwork.EdgeWeight w1 = network.getWeight(A, B);
+		HubNetwork.EdgeWeight w2 = network.getWeight(B, A);
 
 		assertThat(w1).isNotNull();
 		assertThat(w2).isNotNull();
@@ -96,8 +96,8 @@ class RouteBasedHubNetworkTest {
 		RouteBasedHubNetwork network = new RouteBasedHubNetwork(routes);
 
 		// then
-		assertThat(network.weight(A, D)).isNull();
-		assertThat(network.weight(D, A)).isNull();
+		assertThat(network.getWeight(A, D)).isNull();
+		assertThat(network.getWeight(D, A)).isNull();
 	}
 
 }

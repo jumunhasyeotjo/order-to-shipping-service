@@ -49,7 +49,7 @@ public class RouteBasedHubNetwork implements HubNetwork {
 	}
 
 	@Override
-	public EdgeWeight weight(UUID a, UUID b) {
+	public EdgeWeight getWeight(UUID a, UUID b) {
 		return edgeWeights.get(key(a, b));
 	}
 

@@ -79,7 +79,7 @@ public class DijkstraRouterFacade implements ShippingRouteGenerator {
 			.mapToObj(i -> {
 				UUID a = nodes.get(i);
 				UUID b = nodes.get(i + 1);
-				var w = network.weight(a, b);
+				var w = network.getWeight(a, b);
 				return new Route(a, b, RouteInfo.of(w.distance(), w.interval()));
 			})
 			.toList();

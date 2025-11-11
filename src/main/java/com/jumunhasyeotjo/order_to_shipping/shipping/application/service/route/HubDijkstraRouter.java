@@ -34,7 +34,7 @@ public class HubDijkstraRouter {
 	public HubDijkstraRouter(HubNetwork provider) {
 		provider.adjacency().forEach((a, neighbors) -> {
 			neighbors.forEach(b -> {
-				HubNetwork.EdgeWeight w = provider.weight(a, b);
+				HubNetwork.EdgeWeight w = provider.getWeight(a, b);
 				graph.computeIfAbsent(a, k -> new ArrayList<>()).add(new Edge(b, w.distance(), w.interval()));
 				graph.computeIfAbsent(b, k -> new ArrayList<>()).add(new Edge(a, w.distance(), w.interval()));
 			});
