@@ -29,10 +29,13 @@ public enum ErrorCode {
     INVALID_PRODUCT_STOCK(HttpStatus.BAD_REQUEST, "E050", "주문한 상품의 재고가 부족합니다."),
 
     // 401 UNAUTHORIZED
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E010", "인증이 필요합니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "EU001", "인증이 필요합니다."),
 
     // 403 FORBIDDEN
-    FORBIDDEN(HttpStatus.FORBIDDEN, "E011", "접근이 거부되었습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "EF001", "접근이 거부되었습니다."),
+
+    // 404 NOT_FOUND
+    NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
     FORBIDDEN_ORDER_UPDATE(HttpStatus.FORBIDDEN, "E050", "주문 수정은 주문한 업체 담당자만 가능합니다."),
     FORBIDDEN_ORDER_CANCEL(HttpStatus.FORBIDDEN, "E050", "주문을 취소할 권한이 없습니다."),
     FORBIDDEN_ORDER_HUB(HttpStatus.FORBIDDEN, "E050", "해당 소속 허브만 접근 가능합니다."),
@@ -45,7 +48,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 사용자 입니다."),
 
     // 500 INTERNAL_SERVER_ERROR
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "E012", "서버 에러가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "EI001", "서버 에러가 발생했습니다."),
+    HISTORY_SHIPPING_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "EI002", "배송이력과 배송이 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
