@@ -41,6 +41,9 @@ dependencies {
 
 	// Open Feign 추가
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// 테스트용 H2 DB 추가
+	testImplementation 'com.h2database:h2'
 }
 
 dependencyManagement {
