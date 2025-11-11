@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.order;
+package com.jumunhasyeotjo.order_to_shipping.order.domain;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;

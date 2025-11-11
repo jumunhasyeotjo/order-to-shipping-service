@@ -1,7 +1,6 @@
-package com.jumunhasyeotjo.order_to_shipping.order;
+package com.jumunhasyeotjo.order_to_shipping.order.application;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
-import com.jumunhasyeotjo.order_to_shipping.order.application.OrderService;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;

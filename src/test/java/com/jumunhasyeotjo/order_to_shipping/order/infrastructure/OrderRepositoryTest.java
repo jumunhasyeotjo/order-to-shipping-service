@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.order;
+package com.jumunhasyeotjo.order_to_shipping.order.infrastructure;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;

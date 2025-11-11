@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.order;
+package com.jumunhasyeotjo.order_to_shipping.order.presentation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.order.application.OrderService;
@@ -7,7 +7,6 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.jumunhasyeotjo.order_to_shipping.order.presentation.OrderController;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.UpdateOrderReq;
