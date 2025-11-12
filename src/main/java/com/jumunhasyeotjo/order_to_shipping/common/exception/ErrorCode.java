@@ -43,6 +43,7 @@ public enum ErrorCode {
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 업체 입니다."),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 상품 입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 사용자 입니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "EF001", "접근이 거부되었습니다."),
 
     // 404 NOT_FOUND
     NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
