@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.DijkstraRouterFacade;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.RouteGenerationFacade;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.HubNetwork;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.HubDijkstraRouter;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.WeightStrategy;
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ShortestPathPreBuilder {
-	private final DijkstraRouterFacade dijkstraRouterFacade;
+	private final RouteGenerationFacade dijkstraRouterFacade;
 	private final HubNetwork network;
 	private final ShortestPathCache cache;
 

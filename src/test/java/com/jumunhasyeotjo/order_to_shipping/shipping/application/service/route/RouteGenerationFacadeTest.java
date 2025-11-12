@@ -11,19 +11,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.fixtures.RouteFixture;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.ShortestPathCache;
 
 @ExtendWith(MockitoExtension.class)
-class DijkstraRouterFacadeTest {
+class RouteGenerationFacadeTest {
 
 	private static final UUID A = UUID.fromString("00000000-0000-0000-0000-00000000000A");
 	private static final UUID B = UUID.fromString("00000000-0000-0000-0000-00000000000B");
@@ -41,6 +43,9 @@ class DijkstraRouterFacadeTest {
 		return nodeStr == null ? List.of() : nodeStr.stream().map(UUID::fromString).collect(Collectors.toList());
 	}
 
+	@Mock
+	HubClient hubClient;
+
 	@Nested
 	@DisplayName("캐시 없음 - 다익스트라 수행")
 	class CacheMiss {
@@ -51,9 +56,9 @@ class DijkstraRouterFacadeTest {
 			//given
 			ShortestPathCache cache = mock(ShortestPathCache.class);
 			when(cache.get(eq(WeightStrategy.DISTANCE), eq(A), eq(C))).thenReturn(null);
-
 			HubNetwork network = buildNetwork();
-			DijkstraRouterFacade facade = new DijkstraRouterFacade(network, cache);
+			when(hubClient.getRoutes()).thenReturn(RouteFixture.createDefaultFourNode(A, B, C));
+			RouteGenerationFacade facade = new RouteGenerationFacade(network, cache, hubClient);
 
 			// when
 			List<Route> routes = facade.generateOrRebuildRoute(A, C);
@@ -84,7 +89,7 @@ class DijkstraRouterFacadeTest {
 			when(cache.get(eq(WeightStrategy.DISTANCE), eq(A), eq(D))).thenReturn(null);
 
 			HubNetwork network = buildNetwork();
-			DijkstraRouterFacade facade = new DijkstraRouterFacade(network, cache);
+			RouteGenerationFacade facade = new RouteGenerationFacade(network, cache, hubClient);
 
 			//when&then
 			assertThatThrownBy(() -> facade.generateOrRebuildRoute(A, D))
@@ -106,7 +111,7 @@ class DijkstraRouterFacadeTest {
 			when(cache.get(eq(WeightStrategy.DISTANCE), eq(A), eq(C))).thenReturn(cached);
 
 			HubNetwork network = buildNetwork();
-			DijkstraRouterFacade facade = new DijkstraRouterFacade(network, cache);
+			RouteGenerationFacade facade = new RouteGenerationFacade(network, cache, hubClient);
 
 			//when&then
 			assertThatThrownBy(() -> facade.generateOrRebuildRoute(A, C))
@@ -129,7 +134,7 @@ class DijkstraRouterFacadeTest {
 			when(cache.get(eq(WeightStrategy.DISTANCE), eq(A), eq(C))).thenReturn(cached);
 
 			HubNetwork network = buildNetwork();
-			DijkstraRouterFacade facade = new DijkstraRouterFacade(network, cache);
+			RouteGenerationFacade facade = new RouteGenerationFacade(network, cache, hubClient);
 
 			//when
 			List<Route> routes = facade.generateOrRebuildRoute(A, C);

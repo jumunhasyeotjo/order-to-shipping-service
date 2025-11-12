@@ -13,6 +13,12 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.H
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 
 public class RouteFixture {
+	public static final ToIntBiFunction<Integer, HubDijkstraRouter.Edge> DISTANCE =
+		(idx, e) -> e.distance();
+
+	public static final ToIntBiFunction<Integer, HubDijkstraRouter.Edge> INTERVAL =
+		(idx, e) -> e.interval();
+
 
 	public static List<Route> createDefaultThreeNode(UUID A, UUID B, UUID C){
 		RouteInfo routeInfo = RouteInfo.of(100, 100);
@@ -25,11 +31,19 @@ public class RouteFixture {
 		return routes;
 	}
 
-	public static final ToIntBiFunction<Integer, HubDijkstraRouter.Edge> DISTANCE =
-		(idx, e) -> e.distance();
+	public static List<Route> createDefaultFourNode(UUID A, UUID B, UUID C){
+		RouteInfo routeInfo1 = RouteInfo.of(5, 10);
+		RouteInfo routeInfo2 = RouteInfo.of(5, 10);
+		RouteInfo routeInfo3 = RouteInfo.of(20, 1);
 
-	public static final ToIntBiFunction<Integer, HubDijkstraRouter.Edge> INTERVAL =
-		(idx, e) -> e.interval();
+		List<Route> routes = List.of(
+			Route.of(A, B, routeInfo1),
+			Route.of(B, C, routeInfo2),
+			Route.of(A, C, routeInfo3)
+		);
+
+		return routes;
+	}
 
 	/**
 	 * 그래프:

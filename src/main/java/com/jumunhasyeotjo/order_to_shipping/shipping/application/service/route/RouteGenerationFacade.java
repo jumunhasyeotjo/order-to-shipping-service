@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-public class DijkstraRouterFacade implements ShippingRouteGenerator {
+public class RouteGenerationFacade implements ShippingRouteGenerator {
 	private final HubNetwork network;
 	private final ShortestPathCache cache;
 	private final HubClient hubClient;
@@ -37,9 +37,7 @@ public class DijkstraRouterFacade implements ShippingRouteGenerator {
 		Map<String, Object> cached = cache.get(weightStrategy, originHubId, arrivalHubId);
 		if (cached == null) {
 			// 캐시 미스 시, 최신 라우트로 그래프를 재구성하여 사용
-			List<Route> freshRoutes = hubClient.getRoutes();
-			HubNetwork freshNetwork = new RouteBasedHubNetwork(freshRoutes);
-			HubDijkstraRouter router = new HubDijkstraRouter(freshNetwork);
+			HubDijkstraRouter router = generateNewRouter();
 			return buildShortestRouteForPair(weightStrategy, originHubId, arrivalHubId, router);
 		} else {
 			validateReachable(cached);
@@ -72,6 +70,12 @@ public class DijkstraRouterFacade implements ShippingRouteGenerator {
 					nodes.stream().map(UUID::toString).toList()));
 			return toRoutesFromNodes(nodes);
 		}
+	}
+
+	private HubDijkstraRouter generateNewRouter(){
+		List<Route> freshRoutes = hubClient.getRoutes();
+		HubNetwork freshNetwork = new RouteBasedHubNetwork(freshRoutes);
+		return new HubDijkstraRouter(freshNetwork);
 	}
 
 	private List<Route> toRoutesFromNodes(List<UUID> nodes) {
