@@ -35,9 +35,6 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "E011", "접근이 거부되었습니다."),
     FORBIDDEN_ORDER_UPDATE(HttpStatus.FORBIDDEN, "E050", "주문 수정은 주문한 업체 담당자만 가능합니다."),
     FORBIDDEN_ORDER_CANCEL(HttpStatus.FORBIDDEN, "E050", "주문을 취소할 권한이 없습니다."),
-
-    // 404 NOT_FOUND
-    NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
     FORBIDDEN_ORDER_HUB(HttpStatus.FORBIDDEN, "E050", "해당 소속 허브만 접근 가능합니다."),
     FORBIDDEN_GET_ORDER(HttpStatus.FORBIDDEN, "E050", "주문을 조회할 권한이 없습니다"),
 
@@ -46,6 +43,9 @@ public enum ErrorCode {
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 업체 입니다."),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 상품 입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "E050", "존재하지 않는 사용자 입니다."),
+
+    // 404 NOT_FOUND
+    NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
 
     // 500 INTERNAL_SERVER_ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "EI001", "서버 에러가 발생했습니다."),
