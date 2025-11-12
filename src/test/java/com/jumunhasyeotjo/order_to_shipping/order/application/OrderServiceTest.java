@@ -128,47 +128,6 @@ public class OrderServiceTest {
 
     /** 수정 **/
     @Test
-    @DisplayName("주문 수정은 해당 상품 주문 정보가 존재해야 가능하다.")
-    void updateOrder_whenProductInfoDoesNotExist_shouldThrowException() {
-        // given
-        Order order = getOrder();
-        UpdateOrderCommand request = getUpdateOrderCommand(order);
-        List<ProductResult> productResults  = new ArrayList<>();
-
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
-        given(productClient.findAllProducts(request.orderProducts()))
-                .willReturn(productResults);
-
-        // when & then
-        assertThatThrownBy(() -> orderService.updateOrder(request))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("존재하지 않는 상품 입니다.");
-    }
-
-    @Test
-    @DisplayName("주문 수정시 재고가 부족하면 실패한다.")
-    void updateOrder_whenStockIsInsufficient_shouldThrowException() {
-        Order order = getOrder();
-        UpdateOrderCommand request = getUpdateOrderCommand(order);
-        List<ProductResult> productResults  = new ArrayList<>();
-        ProductResult product = new ProductResult(request.orderProducts().get(0).productId(), "상품1", 1000, request.orderProducts().get(0).quantity());
-        productResults.add(product);
-
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
-        given(productClient.findAllProducts(request.orderProducts()))
-                .willReturn(productResults);
-        given(stockClient.decreaseStock(request.orderProducts()))
-                .willReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> orderService.updateOrder(request))
-                .isInstanceOf(BusinessException.class)
-                        .hasMessageContaining("주문한 상품의 재고가 부족합니다.");
-    }
-
-    @Test
     @DisplayName("마스터는 주문상태 변경이 가능하다")
     void updateOrderStatus_whenUserIsMaster_shouldSucceed() {
         Order order = getOrder();

@@ -9,7 +9,6 @@ import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
-import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.UpdateOrderReq;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.MediaType;
@@ -64,27 +63,6 @@ public class OrderControllerTest {
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.status").value(OrderStatus.PENDING.toString()));
-    }
-
-    @Test
-    @DisplayName("주문 수정 API")
-    void updateOrder_ValidRequest_ReturnsUpdatedOrder() throws Exception {
-        // given
-        List<OrderProductReq> orderProducts = new ArrayList<>();
-        orderProducts.add(new OrderProductReq(UUID.randomUUID(), 5));
-
-        UpdateOrderReq request = new UpdateOrderReq(10000, "수정", orderProducts);
-
-        Order response = getOrder();
-
-        given(orderService.updateOrder(any())).willReturn(response);
-
-        // when & then
-        mockMvc.perform(put("/v1/orders/{orderId}", UUID.randomUUID())
-                        .contentType(String.valueOf(MediaType.APPLICATION_JSON))
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value(OrderStatus.PENDING.toString()));
     }
 

@@ -7,7 +7,6 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
-import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.UpdateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CancelOrderRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CreateOrderRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.UpdateOrderRes;
@@ -20,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -43,24 +41,6 @@ public class OrderController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiRes.success(res));
-    }
-
-    @PutMapping("/{orderId}")
-    public ResponseEntity<ApiRes<UpdateOrderRes>> updateOrder(@PathVariable UUID orderId,
-                                                              @RequestBody @Valid UpdateOrderReq req) {
-        UpdateOrderCommand command = new UpdateOrderCommand(
-                1L,
-                orderId,
-                req.totalPrice(),
-                req.requestMessage(),
-                req.orderProducts());
-
-        Order order = orderService.updateOrder(command);
-        UpdateOrderRes res = new UpdateOrderRes(order.getId(), order.getStatus());
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
                 .body(ApiRes.success(res));
     }
 
