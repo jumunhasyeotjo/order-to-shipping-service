@@ -19,10 +19,21 @@ public enum ErrorCode {
     INVALID_STATE_FOR_MODIFICATION(HttpStatus.BAD_REQUEST, "E009", "현재 상태에서는 정보를 수정할 수 없습니다."),
     INVALID_STATE_CANCEL(HttpStatus.BAD_REQUEST, "E009", "배송이 이미 시작되어 취소할 수 없습니다."),
 
+    EMPTY_ORDER_PRODUCTS(HttpStatus.BAD_REQUEST, "E050", "주문 상품은 1개 이상이어야 합니다."),
+    TOTAL_PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "E050", "총 가격은 상품들의 가격의 총합과 동일해야 됩니다."),
+    INVALID_STATE_FOR_UPDATE(HttpStatus.BAD_REQUEST, "E050", "주문 수정은 PENDING 상태에서만 가능합니다."),
+    ORDER_STATUS_UNCHANGEABLE(HttpStatus.BAD_REQUEST, "E050", "주문 상태는 DONE/CANCELLED 경우 변경 불가능합니다."),
+    INVALID_STATE_FOR_CANCEL(HttpStatus.BAD_REQUEST, "E050", "주문 취소는 PENDING/PAYED 상태에서만 가능합니다."),
+    INVALID_PRODUCT_QUANTITY(HttpStatus.BAD_REQUEST, "E050", "주문상품의 수량은 1 미만이면 안됩니다."),
+    INVALID_PRODUCT_PRICE(HttpStatus.BAD_REQUEST, "E050", "주문상품의 가격은 1 미만이면 안됩니다."),
+
     // 401 UNAUTHORIZED
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "EU001", "인증이 필요합니다."),
 
     // 403 FORBIDDEN
+    FORBIDDEN(HttpStatus.FORBIDDEN, "E011", "접근이 거부되었습니다."),
+    FORBIDDEN_ORDER_UPDATE(HttpStatus.FORBIDDEN, "E050", "주문 수정은 주문한 업체 담당자만 가능합니다."),
+    FORBIDDEN_ORDER_CANCEL(HttpStatus.FORBIDDEN, "E050", "주문을 취소할 권한이 없습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "EF001", "접근이 거부되었습니다."),
 
     // 404 NOT_FOUND
