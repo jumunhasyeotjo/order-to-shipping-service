@@ -1,11 +1,12 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository;
 
-import java.awt.print.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 
@@ -20,5 +21,5 @@ public interface ShippingHistoryRepository {
 
 	Optional<ShippingHistory> findById(UUID shippingHistoryId);
 
-	Page<ShippingHistory> findByDriverId(Long driverId, Pageable pageable);
+	Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable);
 }
