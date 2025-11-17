@@ -94,21 +94,17 @@ class ShippingServiceTest {
 		// when
 		UUID resultId = shippingService.createShipping(command);
 
-		// then
-		// 경로 생성 위임 확인
+		// then=
 		verify(shippingRouteGenerator, times(1)).generatorRoute(originHubId, arrivalHubId);
 
-		// 배송 저장 호출 검증
 		ArgumentCaptor<Shipping> shippingCaptor = ArgumentCaptor.forClass(Shipping.class);
 		verify(shippingRepository, times(1)).save(shippingCaptor.capture());
 		Shipping savedShipping = shippingCaptor.getValue();
 		assertThat(savedShipping).isNotNull();
 
-		// 배송 이력 생성 위임 검증
 		verify(shippingHistoryService, times(1))
 			.createShippingHistoryList(savedShipping, routes, receiver);
 
-		// 반환된 ID 검증
 		assertThat(resultId).isNotNull();
 	}
 
@@ -212,8 +208,7 @@ class ShippingServiceTest {
 	void cancelShipping_whenHubManagerNotManagingHub_shouldThrowForbidden() {
 		// given
 		Long userId = 10L;
-		CancelShippingCommand command =
-			new CancelShippingCommand(shippingId, UserRole.HUB_MANAGER, userId);
+		CancelShippingCommand command = new CancelShippingCommand(shippingId, UserRole.HUB_MANAGER, userId);
 
 		Shipping shipping = mock(Shipping.class);
 		when(shipping.getOriginHubId()).thenReturn(originHubId);
