@@ -3,6 +3,8 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.repository;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +15,6 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHisto
 public interface JpaShippingHistoryRepository extends JpaRepository<ShippingHistory, UUID> {
 
 	List<ShippingHistory> findAllByShippingId(UUID shippingId);
+
+	Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable);
 }
