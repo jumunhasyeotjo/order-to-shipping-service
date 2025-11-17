@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.7'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'com.jumunhasyeotjo'
@@ -58,4 +59,34 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy 'jacocoTestReport'
+	finalizedBy 'jacocoTestCoverageVerification'
+}
+
+jacoco {
+	toolVersion = "0.8.12"
+}
+
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		html.required = true
+	}
+\
+	afterEvaluate {
+		classDirectories.setFrom(
+				// 그 외의 매칭되는 클래스도 제외 대상
+				files(classDirectories.files.collect {
+					fileTree(dir: it, excludes: [
+							"**/common/**",
+							"**/*Application*",
+							"**/*Command*",
+							"**/*Config*",
+							"**/dto/**",
+							"**/*Exception*"
+					])
+				})
+		)
+	}
 }
