@@ -27,4 +27,9 @@ public class ShippingHistoryRepositoryAdapter implements ShippingHistoryReposito
 	public List<ShippingHistory> findAllByShippingId(UUID shippingId) {
 		return jpaShippingHistoryRepository.findAllByShippingId(shippingId);
 	}
+
+	@Override
+	public Optional<ShippingHistory> findById(UUID shippingHistoryId) {
+		return jpaShippingHistoryRepository.findById(shippingHistoryId);
+	}
 }

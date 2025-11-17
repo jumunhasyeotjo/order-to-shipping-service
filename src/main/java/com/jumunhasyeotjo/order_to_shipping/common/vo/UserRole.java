@@ -8,7 +8,9 @@ import lombok.Getter;
 public enum UserRole {
     MASTER("MASTER"),
     HUB_MANAGER("HUB_MANAGER"),
-    COMPANY_MANAGER("COMPANY_MANAGER");
+    COMPANY_MANAGER("COMPANY_MANAGER"),
+    HUB_DRIVER("HUB_DRIVER"),
+    COMPANY_DRIVER("COMPANY_DRIVER");
 
     private final String description;
 
