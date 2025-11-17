@@ -60,6 +60,7 @@ dependencyManagement {
 tasks.named('test') {
 	useJUnitPlatform()
 	finalizedBy 'jacocoTestReport'
+	finalizedBy 'jacocoTestCoverageVerification'
 }
 
 jacoco {
@@ -72,7 +73,7 @@ jacocoTestReport {
 	reports {
 		html.required = true
 	}
-
+\
 	afterEvaluate {
 		classDirectories.setFrom(
 				// 그 외의 매칭되는 클래스도 제외 대상
