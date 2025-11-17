@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application;
 
+import com.jumunhasyeotjo.order_to_shipping.common.event.EventPublisher;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
@@ -8,8 +9,10 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +24,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private final EventPublisher eventPublisher;
+
     private final OrderRepository orderRepository;
 
     private final StockClient stockClient;
     private final ProductClient productClient;
     private final CompanyClient companyClient;
     private final UserClient userClient;
-    private final DeliveryClient deliveryClient;
 
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
@@ -41,9 +45,7 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(Order.create(orderProducts, command.userId(), companyId, command.requestMessage(), command.totalPrice()));
 
-        deliveryClient.createDelivery();
-
-        // 이벤트를 발행시키고 @Async 방식으로 리스너를 처리하지않으면 주문 서비스 쪽에서는 이벤트 리스너가 완료될떄까지 기다리는건지?
+        eventPublisher.publish(OrderCreatedEvent.of(savedOrder));
 
         return savedOrder;
     }

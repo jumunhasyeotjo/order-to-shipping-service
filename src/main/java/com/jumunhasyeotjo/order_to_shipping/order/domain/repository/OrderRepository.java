@@ -11,4 +11,5 @@ public interface OrderRepository {
     Optional<Order> findById(UUID id);
     Order save(Order order);
     Page<Order> findAllByCompanyId(UUID companyId, Pageable pageable);
+    void deleteAll();
 }
