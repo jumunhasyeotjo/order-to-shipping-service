@@ -12,7 +12,7 @@ public class ShippingHistoryFixture {
 
 	public static ShippingHistory createDefault(){
 		Shipping shipping = ShippingFixture.createDefault();
-		UUID driverId = UUID.randomUUID();
+		Long driverId = 1L;
 		Integer sequence = 1;
 		String origin = "출발지";
 		String destination = "도착";
@@ -22,7 +22,7 @@ public class ShippingHistoryFixture {
 	}
 
 	public static ShippingHistory createWithShippingAndSequence(Shipping shipping, Integer sequence){
-		UUID driverId = UUID.randomUUID();
+		Long driverId =1L;
 		String origin = "출발지";
 		String destination = "도착지";
 		RouteInfo expectRouteInfo = RouteInfo.of(100, 100);

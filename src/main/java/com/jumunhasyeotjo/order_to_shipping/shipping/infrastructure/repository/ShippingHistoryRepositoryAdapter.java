@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
@@ -31,5 +33,10 @@ public class ShippingHistoryRepositoryAdapter implements ShippingHistoryReposito
 	@Override
 	public Optional<ShippingHistory> findById(UUID shippingHistoryId) {
 		return jpaShippingHistoryRepository.findById(shippingHistoryId);
+	}
+
+	@Override
+	public Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable) {
+		return jpaShippingHistoryRepository.findAllByDriverId(driverId, pageable);
 	}
 }

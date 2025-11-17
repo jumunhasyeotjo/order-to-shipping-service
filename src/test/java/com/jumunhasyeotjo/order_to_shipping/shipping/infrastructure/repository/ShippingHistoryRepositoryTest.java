@@ -49,7 +49,7 @@ class ShippingHistoryRepositoryTest {
 
 		ShippingHistory h1 = ShippingHistory.create(
 			shipping,
-			UUID.randomUUID(),
+			1L,
 			1,
 			"서울허브",
 			"대전허브",
@@ -58,7 +58,7 @@ class ShippingHistoryRepositoryTest {
 
 		ShippingHistory h2 = ShippingHistory.create(
 			shipping,
-			UUID.randomUUID(),
+			2L,
 			2,
 			"대전허브",
 			"부산허브",
@@ -95,13 +95,13 @@ class ShippingHistoryRepositoryTest {
 		Shipping shipping2 = persistShipping();
 
 		ShippingHistory s1h1 = ShippingHistory.create(
-			shipping1, UUID.randomUUID(), 1, "A", "B", RouteInfo.of(10, 10)
+			shipping1, 1L, 1, "A", "B", RouteInfo.of(10, 10)
 		);
 		ShippingHistory s1h2 = ShippingHistory.create(
-			shipping1, UUID.randomUUID(), 2, "B", "C", RouteInfo.of(20, 20)
+			shipping1, 2L, 2, "B", "C", RouteInfo.of(20, 20)
 		);
 		ShippingHistory s2h1 = ShippingHistory.create(
-			shipping2, UUID.randomUUID(), 1, "X", "Y", RouteInfo.of(30, 30)
+			shipping2, 3L, 1, "X", "Y", RouteInfo.of(30, 30)
 		);
 
 		jpaShippingHistoryRepository.saveAll(List.of(s1h1, s1h2, s2h1));

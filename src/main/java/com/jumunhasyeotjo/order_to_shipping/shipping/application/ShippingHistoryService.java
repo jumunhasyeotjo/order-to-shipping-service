@@ -2,7 +2,6 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 
 import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -10,6 +9,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +46,7 @@ public class ShippingHistoryService {
 	/**
 	 * 배송생성
 	 */
-	public List<ShippingHistory> createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
+	public void createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
 		log.info("상세 배송 이력 생성: shippingId={}", shipping.getId());
 		List<ShippingHistory> hubLegHistories = buildHubLegHistories(shipping, routes);
 
@@ -64,7 +64,6 @@ public class ShippingHistoryService {
 		shippingHistoryRepository.saveAll(shippingHistories);
 
 		log.info("상세 배송이력 생성 완료: shippingHistory size={}", shippingHistories.size());
-		return shippingHistories;
 	}
 
 	/**
@@ -112,7 +111,7 @@ public class ShippingHistoryService {
 	@Transactional(readOnly = true)
 	public Page<ShippingHistory> getAssignedShippingHistories(GetAssignedShippingHistoriesCommand command,
 		Pageable pageable) {
-		return shippingHistoryRepository.findByDriverId(command.driverId(), pageable);
+		return shippingHistoryRepository.findAllByDriverId(command.driverId(), pageable);
 	}
 
 	/**
