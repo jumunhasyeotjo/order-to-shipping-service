@@ -96,7 +96,7 @@ class ShippingServiceTest {
 		when(shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId)).thenReturn(routes);
 		when(hubClient.getHubName(any())).thenReturn(Optional.of("허브이름"));
 		when(driverClient.assignDriver(any(UUID.class), any(UUID.class)))
-			.thenReturn(UUID.randomUUID(), UUID.randomUUID());
+			.thenReturn(1L);
 
 		// when
 		UUID resultId = shippingService.createShipping(command);
