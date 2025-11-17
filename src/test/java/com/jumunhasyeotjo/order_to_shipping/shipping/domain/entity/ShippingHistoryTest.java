@@ -20,7 +20,7 @@ class ShippingHistoryTest {
 	void createShippingHistory_ShouldSetStatusToWaiting() {
 		// given
 		Shipping shipping = ShippingFixture.createDefault();
-		UUID driverId = UUID.randomUUID();
+		Long driverId = 1L;
 		Integer sequence = 1;
 		String origin = "출발지";
 		String destination = "도착지";
@@ -39,7 +39,7 @@ class ShippingHistoryTest {
 	void createShippingHistory_WhenSequenceIsZeroOrNegative_ShouldThrowException() {
 		// given
 		Shipping shipping = ShippingFixture.createDefault();
-		UUID driverId = UUID.randomUUID();
+		Long driverId = 1L;
 		Integer sequence = -1;
 		String origin = "출발지";
 		String destination = "도착지";
@@ -58,7 +58,7 @@ class ShippingHistoryTest {
 		//given
 		ShippingHistory shippingHistory = ShippingHistoryFixture.createDefault();
 		shippingHistory.markAsDeparted();
-		UUID newDriverId = UUID.randomUUID();
+		Long newDriverId = 1L;
 
 		// when & then
 		assertThatThrownBy(() -> shippingHistory.changeDriver(newDriverId))

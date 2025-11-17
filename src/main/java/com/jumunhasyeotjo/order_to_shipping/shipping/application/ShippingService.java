@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
@@ -19,7 +21,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
@@ -37,10 +39,9 @@ public class ShippingService {
 	private final ShippingRouteGenerator shippingRouteGenerator;
 	private final ShippingDomainService shippingDomainService;
 	private final ShippingRepository shippingRepository;
-	private final ShippingHistoryRepository shippingHistoryRepository;
+	private final ShippingHistoryService shippingHistoryService;
 
-	private final HubClient hubClient;
-	private final DriverClient driverClient;
+	private final UserClient userClient;
 
 	@Transactional
 	public UUID createShipping(CreateShippingCommand command) {
@@ -49,7 +50,7 @@ public class ShippingService {
 		UUID arrivalHubId = command.receiverCompany().hubId();
 
 		// 경로 생성
-		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId);
+		List<Route> routes = shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId);
 
 		// 배송 생성
 		Shipping shipping = Shipping.create(command.orderId(), command.receiverCompany().companyId(),
@@ -58,10 +59,8 @@ public class ShippingService {
 			command.receiverCompany().hubId(), routes.size());
 
 		// 배송 이력 생성
-		List<ShippingHistory> shippingHistories = createShippingHistoryList(shipping, routes, command.receiverCompany());
-
+		shippingHistoryService.createShippingHistoryList(shipping, routes, command.receiverCompany());
 		shippingRepository.save(shipping);
-		shippingHistoryRepository.saveAll(shippingHistories);
 
 		// todo 슬랙 메시지 보내기
 
@@ -71,15 +70,16 @@ public class ShippingService {
 
 	/**
 	 * 배송 취소
-	 * @param command
 	 */
 	@Transactional
-	public void cancelShipping(CancelShippingCommand command){
-		validateCancellableBy(command.role(),command.userId());
+	public void cancelShipping(CancelShippingCommand command) {
+		log.info("배송 취소 시작: shippingId={}", command.shippingId());
 		Shipping shipping = getShippingById(command.shippingId());
-		List<ShippingHistory> shippingHistories = getShippingHistoryList(command.shippingId());
+		validateCancellableBy(command.role(), command.userId(), shipping.getOriginHubId());
+		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
 		shippingDomainService.cancelDelivery(shipping, shippingHistories);
+		log.info("배송 취소 완료: shippingId={}", command.shippingId());
 	}
 
 	/**
@@ -87,66 +87,26 @@ public class ShippingService {
 	 */
 	@Transactional(readOnly = true)
 	public ShippingResult getShipping(GetShippingCommand command) {
-		validateViewableBy(command.role(),command.userId());
 		Shipping shipping = getShippingById(command.shippingId());
-		List<ShippingHistory> shippingHistories = getShippingHistoryList(command.shippingId());
+		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
 		return ShippingResult.from(shipping, shippingHistories);
 	}
 
-	private void validateCancellableBy(String role, Long userId){
-		//todo 검증로직 추후 추가
+	private void validateCancellableBy(UserRole userRole, Long userId, UUID hubId) {
+		if (userRole == UserRole.MASTER) {
+			return;
+		}
+
+		if (userRole == UserRole.HUB_MANAGER && !userClient.isManagingHub(userId, hubId)) {
+			throw new BusinessException(FORBIDDEN);
+		}
 	}
 
-	private void validateViewableBy(String role, Long userId){
-		//todo 검증로직 추후 추가
-	}
-
-	private Shipping getShippingById(UUID shippingId){
+	private Shipping getShippingById(UUID shippingId) {
 		return shippingRepository.findById(shippingId).orElseThrow(
 			() -> new BusinessException(NOT_FOUND_BY_ID)
 		);
-	}
-
-
-	private List<ShippingHistory> getShippingHistoryList(UUID shippingId){
-		List<ShippingHistory> shippingHistories = shippingHistoryRepository.findAllByShippingId(shippingId);
-		if(shippingHistories.isEmpty())
-			throw new BusinessException(NOT_FOUND_BY_ID);
-
-		return shippingHistories;
-	}
-
-	private List<ShippingHistory> createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
-		List<ShippingHistory> hubLegHistories =
-			IntStream.range(0, routes.size())
-				.mapToObj(i -> {
-					Route route = routes.get(i);
-					return ShippingHistory.create(
-						shipping,
-						driverClient.assignDriver(route.departureHubId(), route.destinationHubId()),
-						i + 1,
-						getHubNameFromId(route.departureHubId()),
-						getHubNameFromId(route.destinationHubId()),
-						route.info()
-					);
-				})
-				.toList();
-
-		ShippingHistory finalHistory = ShippingHistory.create(
-			shipping,
-			recevierCompany.driverId(),
-			hubLegHistories.size() + 1,
-			getHubNameFromId(recevierCompany.hubId()),
-			recevierCompany.companyName(),
-			recevierCompany.routeInfo()
-		);
-
-		return Stream.concat(hubLegHistories.stream(), Stream.of(finalHistory)).toList();
-	}
-
-	private String getHubNameFromId(UUID hubId){
-		return hubClient.getHubName(hubId).orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
 	}
 
 }
