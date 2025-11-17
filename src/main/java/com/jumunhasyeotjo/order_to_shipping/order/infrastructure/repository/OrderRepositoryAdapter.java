@@ -29,4 +29,9 @@ public class OrderRepositoryAdapter implements OrderRepository {
         return jpaOrderRepository.findAllByCompanyId(companyId, pageable);
     }
 
+    @Override
+    public void deleteAll() {
+        jpaOrderRepository.deleteAll();
+    }
+
 }
