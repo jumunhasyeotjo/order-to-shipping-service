@@ -14,7 +14,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHisto
 @Repository
 public interface JpaShippingHistoryRepository extends JpaRepository<ShippingHistory, UUID> {
 
-	List<ShippingHistory> findAllByShippingId(UUID shippingId);
+	List<ShippingHistory> findAllByShippingIdOrderBySequence(UUID shippingId);
 
-	Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable);
+	Page<ShippingHistory> findAllByDriverIdOrderByCreatedAtDesc(Long driverId, Pageable pageable);
 }
