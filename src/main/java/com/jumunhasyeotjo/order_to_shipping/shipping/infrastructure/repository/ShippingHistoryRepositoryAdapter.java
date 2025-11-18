@@ -27,7 +27,7 @@ public class ShippingHistoryRepositoryAdapter implements ShippingHistoryReposito
 
 	@Override
 	public List<ShippingHistory> findAllByShippingId(UUID shippingId) {
-		return jpaShippingHistoryRepository.findAllByShippingId(shippingId);
+		return jpaShippingHistoryRepository.findAllByShippingIdOrderBySequence(shippingId);
 	}
 
 	@Override
@@ -37,6 +37,6 @@ public class ShippingHistoryRepositoryAdapter implements ShippingHistoryReposito
 
 	@Override
 	public Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable) {
-		return jpaShippingHistoryRepository.findAllByDriverId(driverId, pageable);
+		return jpaShippingHistoryRepository.findAllByDriverIdOrderByCreatedAtDesc(driverId, pageable);
 	}
 }
