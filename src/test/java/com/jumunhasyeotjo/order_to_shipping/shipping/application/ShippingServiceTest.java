@@ -1,7 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -9,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +25,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
@@ -93,7 +92,7 @@ class ShippingServiceTest {
 			new Route(midHubId, arrivalHubId, RouteInfo.of(20, 15))
 		);
 
-		when(shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
 		when(hubClient.getHubName(any())).thenReturn(Optional.of("허브이름"));
 		when(driverClient.assignDriver(any(UUID.class), any(UUID.class)))
 			.thenReturn(UUID.randomUUID(), UUID.randomUUID());
@@ -102,7 +101,7 @@ class ShippingServiceTest {
 		UUID resultId = shippingService.createShipping(command);
 
 		// then
-		verify(shippingRouteGenerator, times(1)).generatorRoute(originHubId, arrivalHubId);
+		verify(shippingRouteGenerator, times(1)).generateOrRebuildRoute(originHubId, arrivalHubId);
 
 		// 배송 저장 호출 검증
 		ArgumentCaptor<Shipping> shippingCaptor = ArgumentCaptor.forClass(Shipping.class);
@@ -146,7 +145,7 @@ class ShippingServiceTest {
 		List<Route> routes = List.of(
 			new Route(originHubId, arrivalHubId, RouteInfo.of(30, 20))
 		);
-		when(shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
 
 		// 허브 이름 조회 실패
 		when(hubClient.getHubName(any())).thenReturn(Optional.empty());
