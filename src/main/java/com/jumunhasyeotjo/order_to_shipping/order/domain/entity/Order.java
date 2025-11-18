@@ -66,16 +66,6 @@ public class Order extends BaseEntity {
                 .build();
     }
 
-    public void update(List<OrderProduct> orderProducts, Long companyManagerId, String requestMessage, int totalPrice) {
-        validateUpdate(companyManagerId);
-        validateOrderProducts(orderProducts, totalPrice);
-
-        this.orderProducts.clear();
-        this.orderProducts.addAll(orderProducts);
-        this.requestMessage = requestMessage;
-        this.totalPrice = totalPrice;
-    }
-
     public void cancel(UserRole role, Long companyManagerId) {
         validateCancel(role, companyManagerId);
         this.status = OrderStatus.CANCELLED;
@@ -97,15 +87,6 @@ public class Order extends BaseEntity {
             throw new BusinessException(ErrorCode.TOTAL_PRICE_MISMATCH);
     }
 
-    private void validateUpdate(Long companyManagerId) {
-        // 업체 담당자 검증
-        if (!this.companyManagerId.equals(companyManagerId))
-            throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_UPDATE);
-
-        // 상태 검증
-        if (!this.status.canUpdateOrder())
-            throw new BusinessException(ErrorCode.INVALID_STATE_FOR_UPDATE);
-    }
 
     private void validateCancel(UserRole role, Long companyManagerId) {
         // 업체 담당자

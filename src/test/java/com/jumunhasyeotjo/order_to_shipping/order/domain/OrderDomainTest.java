@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.order;
+package com.jumunhasyeotjo.order_to_shipping.order.domain;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
@@ -70,75 +70,6 @@ public class OrderDomainTest {
     }
 
     /** 수정 **/
-    @Test
-    @DisplayName("주문 수정은 PENDING 상태에서만 가능해야 한다.")
-    void update_whenUpdate_ShouldHavePendingStatus() {
-        List<OrderProduct> orderProducts = getOrderProduct();
-        UUID companyId = UUID.randomUUID();
-        String requestMessage = "요구사항";
-        int totalPrice = 1000;
-
-        Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-        ReflectionTestUtils.setField(order, "status", OrderStatus.SHIPPED);
-
-        // when & then
-        assertThatThrownBy(() -> order.update(orderProducts, 1L, requestMessage, totalPrice))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("주문 수정은 PENDING 상태에서만 가능합니다.");
-    }
-
-    @Test
-    @DisplayName("주문 수정시 주문 상품은 1개 이상이어야 한다")
-    void update_withEmptyProductList_ShouldThrowException() {
-        // given
-        List<OrderProduct> orderProducts = getOrderProduct();
-        UUID companyId = UUID.randomUUID();
-        String requestMessage = "요구사항";
-        int totalPrice = 1000;
-        List<OrderProduct> UpdateOrderProducts = new ArrayList<>();
-
-        Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-
-        // when& then
-        assertThatThrownBy(() -> order.update(UpdateOrderProducts, 1L, requestMessage, totalPrice))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("주문 상품은 1개 이상이어야 합니다.");
-    }
-
-    @Test
-    @DisplayName("주문 수정시 총 가격은 주문 상품들의 가격의 총합과 동일해야된다")
-    void update_whenTotalPriceMismatchesSumOfProducts_shouldThrowException(){
-        // given
-        List<OrderProduct> orderProducts = getOrderProduct();
-        UUID companyId = UUID.randomUUID();
-        String requestMessage = "요구사항";
-        int totalPrice = 1000;
-        int updateTotalPrice = 100;
-
-        Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-
-        // when & then
-        assertThatThrownBy(() -> order.update(orderProducts, 1L, requestMessage, updateTotalPrice))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("총 가격은 상품들의 가격의 총합과 동일해야 됩니다.");
-    }
-
-    @Test
-    @DisplayName("주문 정보 수정은 주문한 업체의 담당자만 가능하다")
-    void update_byDifferentCompanyManager_ShouldThrowException() {
-        List<OrderProduct> orderProducts = getOrderProduct();
-        UUID companyId = UUID.randomUUID();
-        String requestMessage = "요구사항";
-        int totalPrice = 1000;
-
-        Order order = Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
-
-        // when & then
-        assertThatThrownBy(() -> order.update(orderProducts, 2L, requestMessage, totalPrice))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("주문 수정은 주문한 업체 담당자만 가능합니다.");
-    }
-
     @Test
     @DisplayName("주문 상태는 DONE/CANCELLED 경우 변경 불가능하다")
     void updateStatus() {

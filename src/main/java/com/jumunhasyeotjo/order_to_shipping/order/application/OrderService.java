@@ -2,13 +2,13 @@ package com.jumunhasyeotjo.order_to_shipping.order.application;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
-import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -32,14 +32,18 @@ public class OrderService {
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
         UUID companyId = getUserCompanyId(command.userId());
+
         validateCompany(companyId);
+
         List<OrderProduct> orderProducts = findAllOrderProduct(command.orderProducts());
+
         decreaseStock(command.orderProducts());
 
         Order savedOrder = orderRepository.save(Order.create(orderProducts, command.userId(), companyId, command.requestMessage(), command.totalPrice()));
 
-        // Todo : Delivery Client 배송 생성시 필요한 정보 추가
         deliveryClient.createDelivery();
+
+        // 이벤트를 발행시키고 @Async 방식으로 리스너를 처리하지않으면 주문 서비스 쪽에서는 이벤트 리스너가 완료될떄까지 기다리는건지?
 
         return savedOrder;
     }
@@ -49,7 +53,9 @@ public class OrderService {
         List<OrderProduct> findProducts = productClient.findAllProducts(orderProducts).stream()
                 .map(p -> OrderProduct.create(p.productId(), p.price(), p.quantity(), p.name()))
                 .toList();
+
         if (findProducts.size() != orderProducts.size()) throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
+
         return findProducts;
     }
 
@@ -62,8 +68,11 @@ public class OrderService {
 
     // 사용자 업체 ID 조회
     private UUID getUserCompanyId(Long userId) {
-        UUID companyId = userClient.getCompanyId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+        UUID companyId = userClient.getCompanyId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+
         if (companyId == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+
         return companyId;
     }
 
@@ -74,23 +83,12 @@ public class OrderService {
     }
 
     @Transactional
-    public Order updateOrder(UpdateOrderCommand command) {
-        Order order = orderRepository.findById(command.orderId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
-
-        List<OrderProduct> orderProducts = findAllOrderProduct(command.orderProducts());
-        decreaseStock(command.orderProducts());
-
-        order.update(orderProducts, command.userId(), command.requestMessage(), command.totalPrice());
-        return order;
-    }
-
-    @Transactional
     public Order updateOrderStatus(OrderUpdateStatusCommand command) {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         validateHubManager(UserRole.convertToUserRole(command.role()), command.userId(), order.getCompanyId());
+
         order.updateStatus(command.status());
 
         return order;
@@ -99,9 +97,13 @@ public class OrderService {
     // 허브 담당자 검증
     private void validateHubManager(UserRole role, Long userId, UUID companyId) {
         if (role.equals(UserRole.HUB_MANAGER)) {
-            UUID hubId = userClient.getHubId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-            if (hubId == null) throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
-            if (!companyClient.existCompanyRegionalHub(companyId, hubId)) throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
+            UUID hubId = userClient.getHubId(userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+            if (hubId == null)
+                throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
+
+            if (!companyClient.existCompanyRegionalHub(companyId, hubId))
+                throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
         }
     }
 
@@ -110,11 +112,15 @@ public class OrderService {
     public Order cancelOrder(CancelOrderCommand command) {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
         UserRole role = UserRole.convertToUserRole(command.role());
+
         validateHubManager(role, command.userId(), order.getCompanyId());
 
         restoreStock(order);
+
         order.cancel(role, command.userId());
+
         return order;
     }
 
@@ -129,6 +135,7 @@ public class OrderService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         validateGetOrder(UserRole.convertToUserRole(command.role()), command.userId(), order);
+
         return OrderResult.of(order);
     }
 
@@ -139,6 +146,7 @@ public class OrderService {
                 if (!companyClient.existCompanyRegionalHub(order.getCompanyId(), hubId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
+
             case COMPANY_MANAGER:
                 if (!order.getCompanyManagerId().equals(userId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
@@ -149,6 +157,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Page<OrderResult> searchOrder(SearchOrderCommand command) {
         validSearchOrder(UserRole.convertToUserRole(command.role()), command.userId(), command.companyId());
+
         Page<Order> orderList = orderRepository.findAllByCompanyId(command.companyId(), command.pageable());
 
         return orderList.map(OrderResult::of);
