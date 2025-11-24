@@ -124,11 +124,11 @@ class ShippingServiceTest {
 		when(shippingHistoryService.getShippingHistoryList(shippingId)).thenReturn(histories);
 
 		// when
-		ShippingResult result = shippingService.getShipping(command);
+		List<ShippingHistory> result = shippingService.getShipping(command);
 
 		// then
-		assertThat(result.shipping()).isSameAs(shipping);
-		assertThat(result.shippingHistories()).isSameAs(histories);
+		assertThat(result.get(0).getShipping()).isSameAs(shipping);
+		assertThat(result).isSameAs(histories);
 		verify(shippingRepository, times(1)).findById(shippingId);
 		verify(shippingHistoryService, times(1)).getShippingHistoryList(shippingId);
 		verifyNoMoreInteractions(shippingRepository, shippingHistoryService);

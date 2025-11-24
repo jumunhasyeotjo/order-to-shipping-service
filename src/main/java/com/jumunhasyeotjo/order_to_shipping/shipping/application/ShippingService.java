@@ -86,11 +86,10 @@ public class ShippingService {
 	 * 배송 조회
 	 */
 	@Transactional(readOnly = true)
-	public ShippingResult getShipping(GetShippingCommand command) {
-		Shipping shipping = getShippingById(command.shippingId());
+	public List<ShippingHistory> getShipping(GetShippingCommand command) {
 		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
-		return ShippingResult.from(shipping, shippingHistories);
+		return shippingHistories;
 	}
 
 	private void validateCancellableBy(UserRole userRole, Long userId, UUID hubId) {
