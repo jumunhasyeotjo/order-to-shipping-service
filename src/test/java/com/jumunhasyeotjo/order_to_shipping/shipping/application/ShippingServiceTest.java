@@ -17,6 +17,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShip
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
@@ -89,13 +90,13 @@ class ShippingServiceTest {
 			new Route(midHubId, arrivalHubId, RouteInfo.of(20, 15))
 		);
 
-		when(shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
 
 		// when
 		UUID resultId = shippingService.createShipping(command);
 
 		// then=
-		verify(shippingRouteGenerator, times(1)).generatorRoute(originHubId, arrivalHubId);
+		verify(shippingRouteGenerator, times(1)).generateOrRebuildRoute(originHubId, arrivalHubId);
 
 		ArgumentCaptor<Shipping> shippingCaptor = ArgumentCaptor.forClass(Shipping.class);
 		verify(shippingRepository, times(1)).save(shippingCaptor.capture());
@@ -120,35 +121,15 @@ class ShippingServiceTest {
 		ShippingHistory h2 = mock(ShippingHistory.class);
 		List<ShippingHistory> histories = List.of(h1, h2);
 
-		when(shippingRepository.findById(shippingId)).thenReturn(Optional.of(shipping));
 		when(shippingHistoryService.getShippingHistoryList(shippingId)).thenReturn(histories);
 
 		// when
 		List<ShippingHistory> result = shippingService.getShipping(command);
 
 		// then
-		assertThat(result.get(0).getShipping()).isSameAs(shipping);
 		assertThat(result).isSameAs(histories);
-		verify(shippingRepository, times(1)).findById(shippingId);
 		verify(shippingHistoryService, times(1)).getShippingHistoryList(shippingId);
 		verifyNoMoreInteractions(shippingRepository, shippingHistoryService);
-	}
-
-	@Test
-	@DisplayName("배송 조회할때 존재하지 않으면 NOT_FOUND_BY_ID 예외가 터진다.")
-	void getShipping_whenShippingIdNotExist_shouldThrowException() {
-		// given
-		GetShippingCommand command =
-			new GetShippingCommand(shippingId, UserRole.MASTER, 1L);
-
-		when(shippingRepository.findById(shippingId)).thenReturn(Optional.empty());
-
-		// when & then
-		assertThatThrownBy(() -> shippingService.getShipping(command))
-			.isInstanceOf(BusinessException.class)
-			.hasMessageContaining("해당 ID로 데이터를 찾을 수 없습니다.");
-		verify(shippingRepository, times(1)).findById(shippingId);
-		verifyNoMoreInteractions(shippingRepository);
 	}
 
 	@Test
