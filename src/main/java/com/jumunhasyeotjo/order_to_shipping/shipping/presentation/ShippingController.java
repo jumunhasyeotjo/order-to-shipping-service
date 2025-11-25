@@ -62,8 +62,8 @@ public class ShippingController {
 			request.orderId(),
 			PhoneNumber.of(request.receiverPhoneNumber()),
 			request.receiverName(),
-			request.supplierCompany(),
-			request.receiverCompany());
+			request.supplierCompanyId(),
+			request.receiverCompanyId());
 
 		UUID shippingId = shippingService.createShipping(command);
 
@@ -71,7 +71,7 @@ public class ShippingController {
 		return ResponseEntity.created(URI.create("/api/v1/shippings/" + shippingId)).body(ApiRes.success(shippingId));
 	}
 
-	@PatchMapping("/{shippingId}")
+	@PatchMapping("/{shippingId}/cancel")
 	@Operation(summary = "배송 취소")
 	public ResponseEntity<ApiRes<UUID>> cancelShipping(
 		@PathVariable(name = "shippingId") UUID shippingId
@@ -109,7 +109,7 @@ public class ShippingController {
 		return ResponseEntity.ok(ApiRes.success(shippingRes));
 	}
 
-	@PatchMapping("/{shippingHistoryId}")
+	@PatchMapping("/{shippingHistoryId}/depart")
 	@Operation(summary = "배송 출발")
 	public ResponseEntity<ApiRes<UUID>> departShipping(
 		@PathVariable(name = "shippingHistoryId") UUID shippingHistoryId
@@ -128,7 +128,7 @@ public class ShippingController {
 		return ResponseEntity.ok(ApiRes.success(shippingHistoryId));
 	}
 
-	@PatchMapping("/{shippingHistoryId}")
+	@PatchMapping("/{shippingHistoryId}/arrive")
 	@Operation(summary = "배송 도착")
 	public ResponseEntity<ApiRes<UUID>> arriveShipping(
 		@Valid @RequestBody ArriveShippingReq request

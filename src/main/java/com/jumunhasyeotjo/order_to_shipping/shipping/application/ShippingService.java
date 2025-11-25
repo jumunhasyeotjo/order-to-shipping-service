@@ -4,6 +4,7 @@ import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
@@ -43,24 +45,25 @@ public class ShippingService {
 	private final ShippingHistoryService shippingHistoryService;
 
 	private final UserClient userClient;
+	private final CompanyClient companyClient;
 
 	@Transactional
 	public UUID createShipping(CreateShippingCommand command) {
 		log.info("배송 생성 시작: orderId={}", command.orderId());
-		UUID originHubId = command.supplierCompany().hubId();
-		UUID arrivalHubId = command.receiverCompany().hubId();
+		Company supplierCompany = companyClient.getCompany(command.supplierCompanyId());
+		Company receiverCompany = companyClient.getCompany(command.receiverCompanyId());
 
 		// 경로 생성
-		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId);
+		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(supplierCompany.hubId(), receiverCompany.hubId());
 
 		// 배송 생성
-		Shipping shipping = Shipping.create(command.orderId(), command.receiverCompany().companyId(),
-			ShippingAddress.of(command.receiverCompany().address()),
-			command.receiverPhoneNumber(), command.receiverName(), command.supplierCompany().hubId(),
-			command.receiverCompany().hubId(), routes.size());
+		Shipping shipping = Shipping.create(command.orderId(), command.receiverCompanyId(),
+			ShippingAddress.of(receiverCompany.address()),
+			command.receiverPhoneNumber(), command.receiverName(), supplierCompany.hubId(),
+			receiverCompany.hubId(), routes.size());
 
 		// 배송 이력 생성
-		shippingHistoryService.createShippingHistoryList(shipping, routes, command.receiverCompany());
+		shippingHistoryService.createShippingHistoryList(shipping, routes, receiverCompany);
 		shippingRepository.save(shipping);
 
 		// todo 슬랙 메시지 보내기
@@ -108,5 +111,4 @@ public class ShippingService {
 			() -> new BusinessException(NOT_FOUND_BY_ID)
 		);
 	}
-
 }

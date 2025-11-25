@@ -10,12 +10,14 @@ import java.util.UUID;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
@@ -51,6 +53,9 @@ class ShippingServiceTest {
 	@Mock
 	private UserClient userClient;
 
+	@Mock
+	private CompanyClient companyClient;
+
 	@InjectMocks
 	private ShippingService shippingService;
 
@@ -82,8 +87,12 @@ class ShippingServiceTest {
 			2L,
 			new RouteInfo(40, 20)
 		);
+
+		UUID supplierCompanyId = UUID.randomUUID();
+		UUID receiverCompanyId = UUID.randomUUID();
+
 		PhoneNumber phoneNumber = PhoneNumber.of("010-1234-5678");
-		CreateShippingCommand command = new CreateShippingCommand(orderId, phoneNumber, "아무개", supplier, receiver);
+		CreateShippingCommand command = new CreateShippingCommand(orderId, phoneNumber, "아무개", supplierCompanyId, receiverCompanyId);
 
 		List<Route> routes = List.of(
 			new Route(originHubId, midHubId, RouteInfo.of(10, 5)),
@@ -91,6 +100,8 @@ class ShippingServiceTest {
 		);
 
 		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(companyClient.getCompany(supplierCompanyId)).thenReturn(supplier);
+		when(companyClient.getCompany(receiverCompanyId)).thenReturn(receiver);
 
 		// when
 		UUID resultId = shippingService.createShipping(command);

@@ -20,11 +20,11 @@ public record CreateShippingReq(
 	@NotBlank
 	String receiverName,
 
-	@Schema(description = "공급 업체")
+	@Schema(description = "공급 업체 id")
 	@NotNull
-	Company supplierCompany,
-	@Schema(description = "수령 업체")
+	UUID supplierCompanyId,
+	@Schema(description = "수령 업체 id")
 	@NotNull
-	Company receiverCompany
+	UUID receiverCompanyId
 ) {
 }
