@@ -22,6 +22,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingRes
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
@@ -50,7 +51,7 @@ public class ShippingService {
 		UUID arrivalHubId = command.receiverCompany().hubId();
 
 		// 경로 생성
-		List<Route> routes = shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId);
+		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId);
 
 		// 배송 생성
 		Shipping shipping = Shipping.create(command.orderId(), command.receiverCompany().companyId(),

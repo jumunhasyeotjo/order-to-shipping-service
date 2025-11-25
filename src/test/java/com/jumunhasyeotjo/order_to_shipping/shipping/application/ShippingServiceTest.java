@@ -17,6 +17,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShip
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
@@ -89,13 +90,13 @@ class ShippingServiceTest {
 			new Route(midHubId, arrivalHubId, RouteInfo.of(20, 15))
 		);
 
-		when(shippingRouteGenerator.generatorRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
 
 		// when
 		UUID resultId = shippingService.createShipping(command);
 
 		// then=
-		verify(shippingRouteGenerator, times(1)).generatorRoute(originHubId, arrivalHubId);
+		verify(shippingRouteGenerator, times(1)).generateOrRebuildRoute(originHubId, arrivalHubId);
 
 		ArgumentCaptor<Shipping> shippingCaptor = ArgumentCaptor.forClass(Shipping.class);
 		verify(shippingRepository, times(1)).save(shippingCaptor.capture());
