@@ -32,7 +32,6 @@ public class OrderController {
     public ResponseEntity<ApiRes<CreateOrderRes>> createOrder(@RequestBody @Valid CreateOrderReq req) {
         CreateOrderCommand command = new CreateOrderCommand(
                 1L,
-                req.totalPrice(),
                 req.requestMessage(),
                 req.orderProducts());
 

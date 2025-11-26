@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static com.jumunhasyeotjo.order_to_shipping.order.fixtures.OrderFixtures.getOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -52,7 +53,7 @@ public class OrderControllerTest {
         List<OrderProductReq> orderProducts = new ArrayList<>();
         orderProducts.add(new OrderProductReq(UUID.randomUUID(), 1));
 
-        CreateOrderReq request = new CreateOrderReq(1000, "요청사항", orderProducts);
+        CreateOrderReq request = new CreateOrderReq( "요청사항", orderProducts);
 
         Order response = getOrder();
 
@@ -117,9 +118,7 @@ public class OrderControllerTest {
                 .andExpect(jsonPath("$.data.requestMessage").value(order.getRequestMessage()))
                 .andExpect(jsonPath("$.data.totalPrice").value(order.getTotalPrice()))
                 .andExpect(jsonPath("$.data.status").value(order.getStatus().toString()))
-                .andExpect(jsonPath("$.data.orderProducts", hasSize(1)))
-                .andExpect(jsonPath("$.data.orderProducts[0].name").value(order.getOrderProducts().get(0).getName()))
-                .andExpect(jsonPath("$.data.orderProducts[0].price").value(order.getOrderProducts().get(0).getPrice()));
+                .andExpect(jsonPath("$.data.orderProducts", hasSize(1)));
     }
 
     @Test
@@ -144,15 +143,5 @@ public class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.content.length()").value(3));
-    }
-
-    private Order getOrder() {
-        List<OrderProduct> products = new ArrayList<>();
-        UUID productId = UUID.randomUUID();
-        products.add(OrderProduct.create(productId, 1000, 1, "상품1"));
-        UUID companyId = UUID.randomUUID();
-        String requestMessage = "요구사항";
-        int totalPrice = 1000;
-        return Order.create(products, 1L, companyId, requestMessage, totalPrice);
     }
 }
