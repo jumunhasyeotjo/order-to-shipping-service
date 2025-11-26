@@ -15,4 +15,9 @@ public class UserClientImpl implements UserClient {
 	public boolean isManagingHub(Long userId, UUID hubId) {
 		return true;
 	}
+
+	@Override
+	public void sendSlackMessage(UUID originHubId, String message, String etaMessage, Long driverId) {
+
+	}
 }

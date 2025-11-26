@@ -1,8 +1,10 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +24,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserCli
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
@@ -34,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ShippingServiceTest {
@@ -55,6 +59,8 @@ class ShippingServiceTest {
 
 	@Mock
 	private CompanyClient companyClient;
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
 
 	@InjectMocks
 	private ShippingService shippingService;
@@ -71,53 +77,62 @@ class ShippingServiceTest {
 	@DisplayName("경로 기반으로 배송과 배송이력(허브 구간 + 최종 업체 구간)을 생성/저장한다")
 	void createShipping_success() {
 		// given
-		Company supplier = new Company(
-			UUID.randomUUID(),
-			"공급업체",
-			originHubId,
-			"서울시 테스트구 테스트동 1",
-			1L,
-			new RouteInfo(30, 15)
-		);
-		Company receiver = new Company(
-			companyId,
-			"수령업체",
-			arrivalHubId,
-			"서울시 테스트구 테스트동 2",
-			2L,
-			new RouteInfo(40, 20)
-		);
-
+		UUID orderProductId = UUID.randomUUID();
 		UUID supplierCompanyId = UUID.randomUUID();
 		UUID receiverCompanyId = UUID.randomUUID();
 
-		PhoneNumber phoneNumber = PhoneNumber.of("010-1234-5678");
-		CreateShippingCommand command = new CreateShippingCommand(orderId, phoneNumber, "아무개", supplierCompanyId, receiverCompanyId);
+		PhoneNumber receiverPhoneNumber = PhoneNumber.of("010-1234-5678");
+		String receiverName = "아무개";
+		LocalDateTime createdAt = LocalDateTime.now();
+		String productInfo = "테스트 상품";
+		String orderRequest = "내일 오전까지 도착 희망";
 
-		List<Route> routes = List.of(
-			new Route(originHubId, midHubId, RouteInfo.of(10, 5)),
-			new Route(midHubId, arrivalHubId, RouteInfo.of(20, 15))
+		CreateShippingCommand command = new CreateShippingCommand(
+			orderProductId,
+			receiverPhoneNumber,
+			receiverName,
+			createdAt,
+			productInfo,
+			orderRequest,
+			supplierCompanyId,
+			receiverCompanyId
 		);
 
-		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
-		when(companyClient.getCompany(supplierCompanyId)).thenReturn(supplier);
-		when(companyClient.getCompany(receiverCompanyId)).thenReturn(receiver);
+		UUID supplierHubId = UUID.randomUUID();
+		UUID receiverHubId = UUID.randomUUID();
+
+		Company supplierCompany = mock(Company.class);
+		Company receiverCompany = mock(Company.class);
+
+		given(companyClient.getCompany(supplierCompanyId)).willReturn(supplierCompany);
+		given(companyClient.getCompany(receiverCompanyId)).willReturn(receiverCompany);
+
+		given(supplierCompany.hubId()).willReturn(supplierHubId);
+		given(receiverCompany.hubId()).willReturn(receiverHubId);
+		given(receiverCompany.address()).willReturn("서울시 강남구 어딘가 123-45");
+
+		List<Route> routes = List.of(
+			new Route(supplierHubId, receiverHubId, RouteInfo.of(10, 5))
+		);
+		given(shippingRouteGenerator.generateOrRebuildRoute(supplierHubId, receiverHubId))
+			.willReturn(routes);
+
+		List<ShippingHistory> histories = List.of(mock(ShippingHistory.class));
+		given(shippingHistoryService.createShippingHistoryList(
+			any(Shipping.class),
+			eq(routes),
+			eq(receiverCompany))
+		).willReturn(histories);
+
+		given(shippingRepository.save(any(Shipping.class)))
+			.willAnswer(invocation -> invocation.getArgument(0));
 
 		// when
-		UUID resultId = shippingService.createShipping(command);
+		UUID shippingId = shippingService.createShipping(command);
 
-		// then=
-		verify(shippingRouteGenerator, times(1)).generateOrRebuildRoute(originHubId, arrivalHubId);
-
-		ArgumentCaptor<Shipping> shippingCaptor = ArgumentCaptor.forClass(Shipping.class);
-		verify(shippingRepository, times(1)).save(shippingCaptor.capture());
-		Shipping savedShipping = shippingCaptor.getValue();
-		assertThat(savedShipping).isNotNull();
-
-		verify(shippingHistoryService, times(1))
-			.createShippingHistoryList(savedShipping, routes, receiver);
-
-		assertThat(resultId).isNotNull();
+		// then
+		assertThat(shippingId).isNotNull();
+		verify(eventPublisher).publishEvent(any(ShippingCreatedEvent.class));
 	}
 
 	@Test

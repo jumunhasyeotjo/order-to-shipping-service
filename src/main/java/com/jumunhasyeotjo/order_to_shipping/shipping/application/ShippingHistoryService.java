@@ -46,7 +46,7 @@ public class ShippingHistoryService {
 	/**
 	 * 배송이력 생성
 	 */
-	public void createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
+	public List<ShippingHistory> createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
 		log.info("상세 배송 이력 생성: shippingId={}", shipping.getId());
 		List<ShippingHistory> hubLegHistories = buildHubLegHistories(shipping, routes);
 
@@ -64,6 +64,7 @@ public class ShippingHistoryService {
 		shippingHistoryRepository.saveAll(shippingHistories);
 
 		log.info("상세 배송이력 생성 완료: shippingHistory size={}", shippingHistories.size());
+		return shippingHistories;
 	}
 
 	/**

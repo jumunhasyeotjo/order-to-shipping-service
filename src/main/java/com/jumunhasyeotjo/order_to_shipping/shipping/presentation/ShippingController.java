@@ -56,16 +56,9 @@ public class ShippingController {
 	@PostMapping
 	@Operation(summary = "배송 생성")
 	public ResponseEntity<ApiRes<UUID>> createShipping(@Valid @RequestBody CreateShippingReq request) {
-		log.info("배송 생성 요청: orderId={}", request.orderId());
+		log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
 
-		CreateShippingCommand command = new CreateShippingCommand(
-			request.orderId(),
-			PhoneNumber.of(request.receiverPhoneNumber()),
-			request.receiverName(),
-			request.supplierCompanyId(),
-			request.receiverCompanyId());
-
-		UUID shippingId = shippingService.createShipping(command);
+		UUID shippingId = shippingService.createShipping(request.toCommand());
 
 		log.info("배송 생성 성공: shippingId={}", shippingId);
 		return ResponseEntity.created(URI.create("/api/v1/shippings/" + shippingId)).body(ApiRes.success(shippingId));

@@ -38,7 +38,7 @@ import lombok.NoArgsConstructor;
 public class Shipping extends BaseEntity {
 
 	@Id
-	private UUID id; // 주문 id
+	private UUID id; // 주문 업체 id
 
 	@Column(nullable = false)
 	private UUID receiverCompanyId;
