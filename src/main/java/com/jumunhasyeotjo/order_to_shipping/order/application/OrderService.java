@@ -48,9 +48,12 @@ public class OrderService {
 
         decreaseStock(command.orderProducts());
 
-        List<OrderCompany> orderCompanies = mapOrderCompany(productResult);
+        Map<UUID, Integer> productQuantityMap = command.orderProducts().stream()
+                .collect(Collectors.toMap(OrderProductReq::productId, OrderProductReq::quantity));
 
-        int totalPrice = mapTotalPrice(productResult);
+        List<OrderCompany> orderCompanies = mapOrderCompany(productResult, productQuantityMap);
+
+        int totalPrice = mapTotalPrice(productResult, productQuantityMap);
 
         Order savedOrder = orderRepository.save(Order.create(
                 orderCompanies,
@@ -65,7 +68,7 @@ public class OrderService {
         return savedOrder;
     }
 
-    private List<OrderCompany> mapOrderCompany(List<ProductResult> productResult) {
+    private List<OrderCompany> mapOrderCompany(List<ProductResult> productResult, Map<UUID, Integer> quantityMap) {
         // 공급 업체 ID 기준 그룹화
         Map<UUID, List<ProductResult>> productByCompany = productResult.stream()
                 .collect(Collectors.groupingBy(ProductResult::companyId));
@@ -81,7 +84,7 @@ public class OrderService {
                     .map(p -> OrderProduct.create(
                             p.productId(),
                             p.price(),
-                            p.quantity(),
+                            quantityMap.get(p.productId()),
                             p.name()
                     ))
                     .toList();
@@ -93,13 +96,13 @@ public class OrderService {
     }
 
     // 총 가격 계산
-    private int mapTotalPrice(List<ProductResult> productResult) {
-        return productResult.stream().mapToInt(p -> p.price() * p.quantity()).sum();
+    private int mapTotalPrice(List<ProductResult> productResult, Map<UUID, Integer> quantityMap) {
+        return productResult.stream().mapToInt(p -> p.price() * quantityMap.get(p.productId())).sum();
     }
 
     // 상품 정보 조회 및 검증
     private List<ProductResult> findAllOrderProduct(List<OrderProductReq> orderProducts) {
-        List<ProductResult> allProducts = productClient.findAllProducts(orderProducts);
+        List<ProductResult> allProducts = productClient.findAllProducts(orderProducts.stream().map(OrderProductReq::productId).toList());
         if (!(allProducts.size() == orderProducts.size())) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -176,7 +179,7 @@ public class OrderService {
         List<OrderProduct> orderProducts = order.getOrderCompanies().stream()
                 .flatMap(company -> company.getOrderProducts().stream())
                 .toList();
-        
+
         stockClient.restoreStocks(orderProducts);
     }
 

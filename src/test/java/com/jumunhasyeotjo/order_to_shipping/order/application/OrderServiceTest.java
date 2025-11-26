@@ -89,7 +89,7 @@ public class OrderServiceTest {
                 .willReturn(Optional.of(new UserResult("사용자", "test", companyId)));
         given(companyClient.existCompany(companyId))
                 .willReturn(true);
-        given(productClient.findAllProducts(request.orderProducts()))
+        given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
 
         // when & then
@@ -109,15 +109,14 @@ public class OrderServiceTest {
         ProductResult product = new ProductResult(request.orderProducts().get(0).productId(),
                 UUID.randomUUID(),
                 "상품1",
-                1000,
-                request.orderProducts().get(0).quantity());
+                1000);
         productResults.add(product);
 
         given(orderUserClient.getUser(request.userId()))
                 .willReturn(Optional.of(new UserResult("사용자", "test", companyId)));
         given(companyClient.existCompany(companyId))
                 .willReturn(true);
-        given(productClient.findAllProducts(request.orderProducts()))
+        given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
         given(stockClient.decreaseStock(request.orderProducts()))
                 .willReturn(false);
