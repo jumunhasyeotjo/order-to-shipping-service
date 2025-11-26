@@ -9,5 +9,5 @@ public interface DriverClient {
 	 * @param arrivalHubId
 	 * @return
 	 */
-	UUID assignDriver(UUID originHubId, UUID arrivalHubId);
+	Long assignDriver(UUID originHubId, UUID arrivalHubId);
 }

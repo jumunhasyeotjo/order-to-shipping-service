@@ -4,9 +4,9 @@ import java.util.UUID;
 
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 
-public record GetShippingCommand (
-	UUID shippingId,
-	UserRole role,
-	Long userId
-){
-}
+public record DepartShippingHistoryCommand(
+	UUID shippingHistoryId,
+	UserRole userRole,
+	Long driverId
+
+){}

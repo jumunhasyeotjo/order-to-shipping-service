@@ -41,7 +41,7 @@ public class ShippingHistory extends BaseEntity {
 	private Shipping shipping;
 
 	@Column(nullable = false)
-	private UUID driverId;
+	private Long driverId;
 
 	@Column(nullable = false)
 	private Integer sequence;
@@ -77,7 +77,7 @@ public class ShippingHistory extends BaseEntity {
 	/**
 	 * 배송 생성 팩토리 메서드
 	 */
-	public static ShippingHistory create(Shipping shipping, UUID driverId, Integer sequence, String origin, String destination,
+	public static ShippingHistory create(Shipping shipping, Long driverId, Integer sequence, String origin, String destination,
 		RouteInfo expectRouteInfo) {
 
 		validateCreateArgs(shipping, driverId, sequence, origin, destination, expectRouteInfo);
@@ -97,7 +97,7 @@ public class ShippingHistory extends BaseEntity {
 	/**
 	 * 배송자 수정
 	 */
-	public void changeDriver(UUID driverId){
+	public void changeDriver(Long driverId){
 		if(!this.status.equals(ShippingHistoryStatus.WAITING)){
 			throw new BusinessException(INVALID_STATE_FOR_MODIFICATION);
 		}
@@ -147,7 +147,7 @@ public class ShippingHistory extends BaseEntity {
 		return this.status.getSequence() + 1 == newStatus.getSequence();
 	}
 
-	private static void validateCreateArgs(Shipping shipping, UUID driverId, Integer sequence, String origin, String destination,
+	private static void validateCreateArgs(Shipping shipping, Long driverId, Integer sequence, String origin, String destination,
 		RouteInfo expectRouteInfo) {
 		if (shipping == null || driverId == null || sequence == null ||
 			origin == null || destination == null ||
