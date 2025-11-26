@@ -4,15 +4,15 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-public class DriverClientImpl implements DriverClient {
+public class UserClientImpl implements UserClient {
 	@Override
-	public Long assignDriver(UUID originHubId, UUID arrivalHubId) {
-		return 1L;
+	public boolean isManagingHub(Long userId, UUID hubId) {
+		return true;
 	}
 }

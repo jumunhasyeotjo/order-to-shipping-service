@@ -9,7 +9,7 @@ public record Company(
 	String companyName,
 	UUID hubId,
 	String address,
-	UUID driverId,
+	Long driverId,
 	RouteInfo routeInfo
 ) {
 }

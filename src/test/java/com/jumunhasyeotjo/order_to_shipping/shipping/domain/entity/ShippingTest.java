@@ -51,7 +51,7 @@ class ShippingTest {
 	}
 
 	@Test
-	@DisplayName("배송 취소는 WAITING_AT_HUB 상태 일떄만 가능하다.")
+	@DisplayName("배송 취소는 WAITING_AT_HUB 상태 일때만 가능하다.")
 	void cancelShipping_OnlyWhenWaitingAtHub() {
 		// given
 		Shipping shipping = ShippingFixture.createDefault();
@@ -109,6 +109,41 @@ class ShippingTest {
 		assertThatThrownBy(() -> shipping.changeReceiverName(newName))
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("현재 상태에서는 정보를 수정할 수 없습니다.");
+	}
+
+
+	@Test
+	@DisplayName("배달이 완료되기 전 수령인 전화번호를 변경할 수 있다.")
+	void changeReceiverPhoneNumber_ShouldNAllowBeforeDelivered(){
+		// given
+		Shipping shipping = ShippingFixture.createDefault();
+		shipping.dispatchFromOriginHub();
+
+		PhoneNumber phoneNumber = PhoneNumber.of("010-1111-2222");
+
+		// when
+		shipping.changeReceiverPhoneNumber(phoneNumber);
+
+		// then
+		assertThat(shipping.getReceiverPhoneNumber().equals(phoneNumber));
+	}
+
+	@Test
+	@DisplayName("배달이 완료되기 전 수령인을 변경할 수 있다.")
+	void changeReceiverName_ShouldAllowBeforeDelivered(){
+		// given
+		Shipping shipping = ShippingFixture.createDefault();
+		shipping.dispatchFromOriginHub();
+		shipping.arriveAtDestinationHub();
+		shipping.departFromDestinationHub();
+
+		String newName = "아무개";
+
+		// when
+		shipping.changeReceiverName(newName);
+
+		// then
+		assertThat(shipping.getReceiverName().equals(newName));
 	}
 
 
