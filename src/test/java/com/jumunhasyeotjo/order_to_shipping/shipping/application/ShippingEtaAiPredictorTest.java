@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,6 @@ class ShippingEtaAiPredictorTest {
 
 		// 발송지 / 경유지 / 도착지 설정
 		org.mockito.BDDMockito.given(first.getOrigin()).willReturn("서울 허브");
-		org.mockito.BDDMockito.given(middle.getOrigin()).willReturn("대전 허브");
 		org.mockito.BDDMockito.given(last.getDestination()).willReturn("부산 터미널");
 
 		List<ShippingHistory> histories = List.of(first, middle, last);
@@ -72,7 +72,7 @@ class ShippingEtaAiPredictorTest {
 			.willReturn(expectedEtaText);
 
 		// when
-		String actual = shippingEtaAiPredictor.predictEta(productInfo, orderRequest, histories);
+		String actual = shippingEtaAiPredictor.predictEta(productInfo, orderRequest, histories, "대전 허브");
 
 		// then
 		assertThat(actual).isEqualTo(expectedEtaText);
@@ -108,7 +108,7 @@ class ShippingEtaAiPredictorTest {
 			.willReturn(expectedEtaText);
 
 		// when
-		String actual = shippingEtaAiPredictor.predictEta(productInfo, orderRequest, histories);
+		String actual = shippingEtaAiPredictor.predictEta(productInfo, orderRequest, histories, "");
 
 		// then
 		assertThat(actual).isEqualTo(expectedEtaText);
