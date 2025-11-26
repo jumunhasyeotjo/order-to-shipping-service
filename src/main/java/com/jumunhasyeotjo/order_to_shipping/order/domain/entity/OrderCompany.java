@@ -30,7 +30,7 @@ public class OrderCompany {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "orderCompany", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderProduct> orderProducts = new ArrayList<>();
     
     @Builder
