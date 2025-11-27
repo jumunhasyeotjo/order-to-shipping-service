@@ -27,6 +27,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHisto
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentArrivedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubIdCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class ShippingEventHandler {
 	private final UserClient userClient;
 	private final OrderClient orderClient;
 	private final StockClient stockClient;
-	private final HubClient hubClient;
+	private final HubIdCache hubIdCache;
 
 	@Async
 	@Retryable(
@@ -104,7 +105,7 @@ public class ShippingEventHandler {
 	}
 
 	private UUID getHubIdFromName(String hubName) {
-		return hubClient.getHubId(hubName).orElseThrow(() -> new BusinessException(NOT_FOUND_BY_NAME));
+		return hubIdCache.getOrLoad(hubName);
 	}
 
 	private List<ProductInfo> getProducts(UUID shippingId) {

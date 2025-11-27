@@ -44,7 +44,6 @@ public class ShippingHistoryService {
 	private final ShippingHistoryRepository shippingHistoryRepository;
 	private final ShippingDomainService shippingDomainService;
 
-	private final HubClient hubClient;
 	private final ApplicationEventPublisher eventPublisher;
 	private final HubNameCache hubNameCache;
 	private final DriverClient driverClient;
