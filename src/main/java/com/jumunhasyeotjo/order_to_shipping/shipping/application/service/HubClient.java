@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.HubInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 
 public interface HubClient {
@@ -16,6 +17,6 @@ public interface HubClient {
 
 	List<Route> getRoutes();
 
-	Optional<UUID> getHubId(String hubName);
+	List<HubInfo> getAllHubNames();
 
 }

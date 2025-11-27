@@ -31,6 +31,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmen
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubNameCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +44,8 @@ public class ShippingHistoryService {
 	private final ShippingHistoryRepository shippingHistoryRepository;
 	private final ShippingDomainService shippingDomainService;
 
-	private final HubClient hubClient;
 	private final ApplicationEventPublisher eventPublisher;
+	private final HubNameCache hubNameCache;
 	private final DriverClient driverClient;
 
 	/**
@@ -140,7 +141,7 @@ public class ShippingHistoryService {
 	}
 
 	private String getHubNameFromId(UUID hubId) {
-		return hubClient.getHubName(hubId).orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
+		return hubNameCache.getOrLoad(hubId);
 	}
 
 	private void checkMasterPermission(UserRole userRole) {

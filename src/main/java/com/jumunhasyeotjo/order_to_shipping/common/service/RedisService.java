@@ -17,10 +17,6 @@ public class RedisService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
-
-    /**
-     * 키 삭제
-     */
     public void delete(String key) {
         redisTemplate.delete(key);
     }
@@ -55,4 +51,10 @@ public class RedisService {
         stringRedisTemplate.expire(key, Duration.ofDays(days));
     }
 
+    /**
+     * Hash에서 특정 필드 삭제
+     */
+    public void hashDelete(String key, String field) {
+        stringRedisTemplate.opsForHash().delete(key, field);
+    }
 }
