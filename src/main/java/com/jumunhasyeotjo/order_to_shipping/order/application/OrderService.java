@@ -14,6 +14,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -210,5 +211,10 @@ public class OrderService {
                 if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompanyOrderItemsRes> getCompanyOrderItems(UUID companyOrderId) {
+        return orderRepository.findAllByOrderCompany(companyOrderId);
     }
 }

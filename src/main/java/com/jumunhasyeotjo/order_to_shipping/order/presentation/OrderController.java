@@ -8,6 +8,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CancelOrderRes;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CreateOrderRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.UpdateOrderRes;
 import com.library.passport.annotation.PassportUser;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.library.passport.proto.PassportProto.Passport;
@@ -117,6 +119,15 @@ public class OrderController {
         );
 
         Page<OrderResult> res = orderService.searchOrder(command);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiRes.success(res));
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<ApiRes<List<CompanyOrderItemsRes>>> getCompanyOrderItems(@RequestParam("companyOrderId") UUID companyOrderId) {
+        List<CompanyOrderItemsRes> res = orderService.getCompanyOrderItems(companyOrderId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
