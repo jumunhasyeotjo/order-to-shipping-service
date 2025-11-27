@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record GetOrderCommand(
         UUID orderId,
+        UUID organizationId,
         Long userId,
         String role
 ) {

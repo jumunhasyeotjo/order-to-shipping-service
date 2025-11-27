@@ -1,31 +1,36 @@
 package com.jumunhasyeotjo.order_to_shipping.order.presentation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumunhasyeotjo.order_to_shipping.config.MockPassportArgumentResolver;
 import com.jumunhasyeotjo.order_to_shipping.order.application.OrderService;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.MediaType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static com.jumunhasyeotjo.order_to_shipping.order.fixtures.OrderFixtures.getOrder;
+import static com.library.passport.proto.PassportProto.Passport;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -34,17 +39,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@WebMvcTest(OrderController.class)
+@ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private OrderController orderController;
 
-    @MockitoBean
+    @Mock
     private OrderService orderService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private MockMvc mockMvc;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() {
+        Passport mockPassport = Passport.newBuilder()
+                .setUserId(1L)
+                .setBelong(UUID.randomUUID().toString()) // companyId 등
+                .setRole("MANAGER")
+                .setName("TEST")
+                .build();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(orderController)
+                .setCustomArgumentResolvers(new MockPassportArgumentResolver(mockPassport),
+                        new PageableHandlerMethodArgumentResolver())
+                .build();
+    }
 
     @Test
     @DisplayName("주문 생성 API")
@@ -53,7 +74,7 @@ public class OrderControllerTest {
         List<OrderProductReq> orderProducts = new ArrayList<>();
         orderProducts.add(new OrderProductReq(UUID.randomUUID(), 1));
 
-        CreateOrderReq request = new CreateOrderReq( "요청사항", orderProducts);
+        CreateOrderReq request = new CreateOrderReq("요청사항", orderProducts);
 
         Order response = getOrder();
 
@@ -130,7 +151,7 @@ public class OrderControllerTest {
         OrderResult orderResult3 = OrderResult.of(getOrder());
 
         Page<OrderResult> response = new PageImpl<>(List.of(orderResult1, orderResult2, orderResult3),
-                PageRequest.of(0 , 10), 0);
+                PageRequest.of(0, 10), 0);
 
         given(orderService.searchOrder(any())).willReturn(response);
 

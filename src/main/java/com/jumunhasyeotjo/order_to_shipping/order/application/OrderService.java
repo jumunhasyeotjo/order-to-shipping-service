@@ -6,8 +6,9 @@ import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.dto.UserResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
@@ -35,14 +36,11 @@ public class OrderService {
 
     private final StockClient stockClient;
     private final ProductClient productClient;
-    private final CompanyClient companyClient;
-    private final OrderUserClient orderUserClient;
+    private final OrderCompanyClient orderCompanyClient;
 
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
-        UserResult userInfo = getUserCompanyId(command.userId());
-
-        validateCompany(userInfo.organizationId());
+        validateCompany(command.organizationId());
 
         List<ProductResult> productResult = findAllOrderProduct(command.orderProducts());
 
@@ -58,12 +56,12 @@ public class OrderService {
         Order savedOrder = orderRepository.save(Order.create(
                 orderCompanies,
                 command.userId(),
-                userInfo.organizationId(),
+                command.organizationId(),
                 command.requestMessage(),
                 totalPrice
         ));
 
-        eventPublisher.publishEvent(OrderCreatedEvent.of(savedOrder, userInfo));
+        eventPublisher.publishEvent(OrderCreatedEvent.of(savedOrder));
 
         return savedOrder;
     }
@@ -116,19 +114,9 @@ public class OrderService {
         }
     }
 
-    // 사용자 업체 ID 조회
-    private UserResult getUserCompanyId(Long userId) {
-        UserResult userinfo = orderUserClient.getUser(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-
-        if (userinfo == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-
-        return userinfo;
-    }
-
     // 존재하는 업체 검증
     private void validateCompany(UUID companyId) {
-        if (!companyClient.existCompany(companyId))
+        if (!orderCompanyClient.existCompany(companyId))
             throw new BusinessException(ErrorCode.COMPANY_NOT_FOUND);
     }
 
@@ -137,7 +125,7 @@ public class OrderService {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        validateHubManager(UserRole.convertToUserRole(command.role()), command.userId(), order.getReceiverCompanyId());
+        validateHubManager(command.organizationId(), UserRole.convertToUserRole(command.role()), order.getReceiverCompanyId());
 
         order.updateStatus(command.status());
 
@@ -145,14 +133,9 @@ public class OrderService {
     }
 
     // 허브 담당자 검증
-    private void validateHubManager(UserRole role, Long userId, UUID companyId) {
+    private void validateHubManager(UUID organizationId, UserRole role, UUID companyId) {
         if (role.equals(UserRole.HUB_MANAGER)) {
-            UUID hubId = orderUserClient.getOrganizationId(userId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-            if (hubId == null)
-                throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
-
-            if (!companyClient.existCompanyRegionalHub(companyId, hubId))
+            if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                 throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
         }
     }
@@ -165,7 +148,7 @@ public class OrderService {
 
         UserRole role = UserRole.convertToUserRole(command.role());
 
-        validateHubManager(role, command.userId(), order.getReceiverCompanyId());
+        validateHubManager(command.organizationId(), role, order.getReceiverCompanyId());
 
         restoreStock(order);
 
@@ -188,16 +171,15 @@ public class OrderService {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        validateGetOrder(UserRole.convertToUserRole(command.role()), command.userId(), order);
+        validateGetOrder(command.organizationId(), UserRole.convertToUserRole(command.role()), command.userId(), order);
 
         return OrderResult.of(order);
     }
 
-    private void validateGetOrder(UserRole role, Long userId, Order order) {
+    private void validateGetOrder(UUID organizationId, UserRole role, Long userId, Order order) {
         switch (role) {
             case HUB_MANAGER:
-                UUID hubId = orderUserClient.getOrganizationId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-                if (!companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+                if (!orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
 
@@ -210,23 +192,22 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Page<OrderResult> searchOrder(SearchOrderCommand command) {
-        validSearchOrder(UserRole.convertToUserRole(command.role()), command.userId(), command.companyId());
+        validSearchOrder(command.organizationId(), UserRole.convertToUserRole(command.role()), command.companyId());
 
         Page<Order> orderList = orderRepository.findAllByCompanyId(command.companyId(), command.pageable());
 
         return orderList.map(OrderResult::of);
     }
 
-    private void validSearchOrder(UserRole role, Long userId, UUID companyId) {
+    private void validSearchOrder(UUID organizationId, UserRole role, UUID companyId) {
         switch (role) {
             case COMPANY_MANAGER:
-                if (!companyId.equals(orderUserClient.getOrganizationId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN))))
+                if (!companyId.equals(organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
 
             case HUB_MANAGER:
-                UUID hubId = orderUserClient.getOrganizationId(userId).orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
-                if (!companyClient.existCompanyRegionalHub(companyId, hubId))
+                if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
         }
     }
