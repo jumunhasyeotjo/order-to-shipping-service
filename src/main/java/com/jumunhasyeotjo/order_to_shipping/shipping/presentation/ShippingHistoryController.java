@@ -28,7 +28,6 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartS
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;

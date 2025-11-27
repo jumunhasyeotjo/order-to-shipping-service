@@ -3,16 +3,12 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.application.command;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateShippingCommand(
 	UUID orderProductId,
-	PhoneNumber receiverPhoneNumber,
-	String receiverName,
 	LocalDateTime createdAt,
 	String productInfo,
 	String orderRequest,

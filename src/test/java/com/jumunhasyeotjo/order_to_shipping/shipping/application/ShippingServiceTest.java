@@ -27,7 +27,6 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHisto
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
 import org.junit.jupiter.api.DisplayName;
@@ -81,16 +80,12 @@ class ShippingServiceTest {
 		UUID supplierCompanyId = UUID.randomUUID();
 		UUID receiverCompanyId = UUID.randomUUID();
 
-		PhoneNumber receiverPhoneNumber = PhoneNumber.of("010-1234-5678");
-		String receiverName = "아무개";
 		LocalDateTime createdAt = LocalDateTime.now();
 		String productInfo = "테스트 상품";
 		String orderRequest = "내일 오전까지 도착 희망";
 
 		CreateShippingCommand command = new CreateShippingCommand(
 			orderProductId,
-			receiverPhoneNumber,
-			receiverName,
 			createdAt,
 			productInfo,
 			orderRequest,

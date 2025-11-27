@@ -42,7 +42,7 @@ public class ShippingEtaAiPredictor {
 			"'mm월 dd일 오전/오후 n시' 형식으로만 알려주세요.";
 	}
 
-	public String predictEtaFallback(String productInfo, String orderRequest, List<ShippingHistory> shippingHistories, String waypoints, Throwable t) {
+	public String predictEtaFallback(String productInfo, String orderRequest, String waypoints, Throwable t) {
 		log.error("[shippingEtaPredictor] Failed to predict ETA via Gemini. productInfo={}, orderRequest={}, waypoints={}",
 			productInfo, orderRequest, waypoints, t);
 

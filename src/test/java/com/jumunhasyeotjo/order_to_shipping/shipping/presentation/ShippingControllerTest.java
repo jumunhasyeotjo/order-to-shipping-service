@@ -6,7 +6,6 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
@@ -62,11 +61,9 @@ class ShippingControllerTest {
 
 		CreateShippingReq request = new CreateShippingReq(
 			orderId,
-			"010-1234-5678",
 			LocalDateTime.now(),
 			"테스트 상품 정보",
 			"테스트 요청사항",
-			"아무개",
 			supplierCompanyId,
 			receiverCompanyId
 		);

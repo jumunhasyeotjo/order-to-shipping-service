@@ -56,15 +56,14 @@ public class ShippingService {
 		// 배송 생성
 		Shipping shipping = Shipping.create(command.orderProductId(), command.receiverCompanyId(),
 			ShippingAddress.of(receiverCompany.address()),
-			command.receiverPhoneNumber(), command.receiverName(), supplierCompany.hubId(),
-			receiverCompany.hubId(), routes.size());
+			supplierCompany.hubId(), receiverCompany.hubId(), routes.size());
 
 		// 배송 이력 생성
 		List<ShippingHistory> shippingHistories = shippingHistoryService.createShippingHistoryList(shipping, routes, receiverCompany);
 		shippingRepository.save(shipping);
 
 		eventPublisher.publishEvent(new ShippingCreatedEvent(shipping.getId(), supplierCompany.hubId(),
-			command.receiverName(), command.receiverPhoneNumber().toString(), command.createdAt(), command.productInfo(), command.orderRequest(),
+			command.receiverCompanyId(), command.createdAt(), command.productInfo(), command.orderRequest(),
 			shippingHistories.get(0).getDriverId(), shippingHistories));
 
 		log.info("배송 생성 완료: shippingId={}", shipping.getId());

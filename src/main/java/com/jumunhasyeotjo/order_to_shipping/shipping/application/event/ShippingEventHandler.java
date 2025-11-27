@@ -45,8 +45,9 @@ public class ShippingEventHandler {
             waypoints
         );
 
-        String infoMessage = "주문자 정보 : "+ event.getReceiverName() + "/" + event.getReceiverPhoneNumber()+"\n"
-            + "주문 시간 : "+event.getCreatedAt().format(DateTimeFormatter.ISO_DATE)+"\n"
+        String orderIdMessage = "업체 주문 id : "+event.getShippingId();
+
+        String infoMessage = "주문 시간 : "+event.getCreatedAt().format(DateTimeFormatter.ISO_DATE)+"\n"
             + "상품 정보 : "+event.getProductInfo()+"\n"
             + "요청 사항 : "+event.getOrderRequest()+"\n"
             + "발송지 : " + shippingHistories.get(0).getOrigin() + "\n"
@@ -56,7 +57,8 @@ public class ShippingEventHandler {
 
         String etaMessage = "위 내용을 기반으로 도출된 최종 발송 시한은 "+eta +" 입니다.";
 
-        userClient.sendSlackMessage(event.getOriginHubId(), infoMessage, etaMessage, event.getDriverId());
+        userClient.sendSlackMessage(event.getOriginHubId(), event.getReceiverCompanyId(), orderIdMessage, infoMessage,
+            etaMessage, event.getDriverId());
     }
 
 

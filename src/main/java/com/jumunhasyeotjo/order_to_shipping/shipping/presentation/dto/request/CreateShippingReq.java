@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -15,10 +14,6 @@ public record CreateShippingReq(
 	@Schema(description = "주문 업체 id", example = "")
 	@NotNull
 	UUID orderProductId,
-
-	@Schema(description = "주문자 전화번호", example = "010-1111-2222")
-	@NotBlank
-	String receiverPhoneNumber,
 
 	@Schema(description = "주문 시간", example = "2025-12-08 10:00:00")
 	@NotNull
@@ -32,10 +27,6 @@ public record CreateShippingReq(
 	@NotBlank
 	String orderRequest,
 
-	@Schema(description = "주문자 이름", example = "홍길동")
-	@NotBlank
-	String receiverName,
-
 	@Schema(description = "공급 업체 id")
 	@NotNull
 	UUID supplierCompanyId,
@@ -47,8 +38,6 @@ public record CreateShippingReq(
 	public CreateShippingCommand toCommand(){
 		return new CreateShippingCommand(
 			this.orderProductId,
-			PhoneNumber.of(this.receiverPhoneNumber),
-			this.receiverName,
 			this.createdAt,
 			this.productInfo,
 			this.orderRequest,

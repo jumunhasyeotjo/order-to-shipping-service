@@ -17,7 +17,8 @@ public class UserClientImpl implements UserClient {
 	}
 
 	@Override
-	public void sendSlackMessage(UUID originHubId, String message, String etaMessage, Long driverId) {
+	public void sendSlackMessage(UUID originHubId, UUID receiverCompanyId, String orderIdMessage, String infoMessage,
+		String etaMessage, Long driverId) {
 
 	}
 }
