@@ -4,11 +4,9 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.dto.UserResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.CompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderUserClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
@@ -40,9 +38,6 @@ import static org.mockito.Mockito.verify;
 public class OrderServiceTest {
 
     @Mock
-    private OrderUserClient orderUserClient;
-
-    @Mock
     private CompanyClient companyClient;
 
     @Mock
@@ -57,7 +52,9 @@ public class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
-    /** 생성 **/
+    /**
+     * 생성
+     **/
     @Test
     @DisplayName("주문 생성은 존재하는 수령 업체만 가능하다.")
     void createOrder_whenCompanyDoesNotExist_shouldThrowException() {
@@ -65,9 +62,7 @@ public class OrderServiceTest {
         CreateOrderCommand request = getCreateOrderCommand();
         UUID companyId = UUID.randomUUID();
 
-        given(orderUserClient.getUser(request.userId()))
-                .willReturn(Optional.of(new UserResult("사용자", "test", companyId)));
-        given(companyClient.existCompany(companyId))
+        given(companyClient.existCompany(request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -85,9 +80,7 @@ public class OrderServiceTest {
         UUID companyId = UUID.randomUUID();
         List<ProductResult> productResults = new ArrayList<>();
 
-        given(orderUserClient.getUser(request.userId()))
-                .willReturn(Optional.of(new UserResult("사용자", "test", companyId)));
-        given(companyClient.existCompany(companyId))
+        given(companyClient.existCompany(request.organizationId()))
                 .willReturn(true);
         given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
@@ -112,9 +105,7 @@ public class OrderServiceTest {
                 1000);
         productResults.add(product);
 
-        given(orderUserClient.getUser(request.userId()))
-                .willReturn(Optional.of(new UserResult("사용자", "test", companyId)));
-        given(companyClient.existCompany(companyId))
+        given(companyClient.existCompany(request.organizationId()))
                 .willReturn(true);
         given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
@@ -130,12 +121,14 @@ public class OrderServiceTest {
     }
 
 
-    /** 수정 **/
+    /**
+     * 수정
+     **/
     @Test
     @DisplayName("마스터는 주문상태 변경이 가능하다")
     void updateOrderStatus_whenUserIsMaster_shouldSucceed() {
         Order order = getOrder();
-        OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, order.getId(),"MASTER", OrderStatus.SHIPPED);
+        OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "MASTER", OrderStatus.SHIPPED);
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
@@ -151,14 +144,11 @@ public class OrderServiceTest {
     @DisplayName("소속 허브 담당자만 주문상태 변경이 가능하다.")
     void updateOrderStatus_whenHubManagerIsNotInCorrectHub_shouldThrowException() {
         Order order = getOrder();
-        OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, order.getId(),"HUB_MANAGER", OrderStatus.SHIPPED);
-        UUID hubId = UUID.randomUUID();
+        OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER", OrderStatus.SHIPPED);
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -167,13 +157,15 @@ public class OrderServiceTest {
                 .hasMessageContaining("해당 소속 허브만 접근 가능합니다.");
     }
 
-    /** 삭제 **/
+    /**
+     * 삭제
+     **/
     @Test
     @DisplayName("마스터는 주문 취소가 가능하다")
     void cancelOrder_whenUserIsMaster_shouldSucceed() {
         // given
         Order order = getOrder();
-        CancelOrderCommand request = new CancelOrderCommand(1L, order.getId(), "MASTER");
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "MASTER");
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
@@ -190,14 +182,11 @@ public class OrderServiceTest {
     void cancelOrder_whenUserIsHubManager_shouldSucceed() {
         // given
         Order order = getOrder();
-        UUID hubId = UUID.randomUUID();
-        CancelOrderCommand request = new CancelOrderCommand(1L, order.getId(), "HUB_MANAGER");
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
 
         // when
@@ -212,14 +201,11 @@ public class OrderServiceTest {
     void cancelOrder_whenHubManagerIsNotInCorrectHub_shouldThrowException() {
         // given
         Order order = getOrder();
-        CancelOrderCommand request = new CancelOrderCommand(1L, order.getId(), "HUB_MANAGER");
-        UUID hubId = UUID.randomUUID();
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -228,13 +214,15 @@ public class OrderServiceTest {
                 .hasMessageContaining("해당 소속 허브만 접근 가능합니다.");
     }
 
-    /** 조회 **/
+    /**
+     * 조회
+     **/
     @Test
     @DisplayName("조회할 주문 미존재 (단건)")
     void getOrder_whenOrderDoesNotExist_shouldThrowException() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 1L, "COMPANY_MANAGER");
+        GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
         given(orderRepository.findById(order.getId()))
                 .willReturn(Optional.empty());
@@ -250,7 +238,7 @@ public class OrderServiceTest {
     void getOrder_whenCompanyManagerIsOwner_shouldSucceed() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 1L, "COMPANY_MANAGER");
+        GetOrderCommand request = new GetOrderCommand(order.getId(),UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
         given(orderRepository.findById(order.getId()))
                 .willReturn(Optional.of(order));
@@ -269,7 +257,7 @@ public class OrderServiceTest {
     void getOrder_whenCompanyManagerIsNotOwner_shouldThrowException() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 2L, "COMPANY_MANAGER");
+        GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "COMPANY_MANAGER");
 
         given(orderRepository.findById(order.getId()))
                 .willReturn(Optional.of(order));
@@ -285,14 +273,11 @@ public class OrderServiceTest {
     void getOrder_whenHubManagerIsInCorrectHub_shouldSucceed() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 2L, "HUB_MANAGER");
-        UUID hubId = UUID.randomUUID();
+        GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(),2L, "HUB_MANAGER");
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
 
         // when
@@ -309,14 +294,11 @@ public class OrderServiceTest {
     void getOrder_whenHubManagerIsInWrongHub_shouldThrowException() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 2L, "HUB_MANAGER");
-        UUID hubId = UUID.randomUUID();
+        GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "HUB_MANAGER");
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -330,7 +312,7 @@ public class OrderServiceTest {
     void getOrder_whenUserIsMaster_shouldSucceed() {
         // given
         Order order = getOrder();
-        GetOrderCommand request = new GetOrderCommand(order.getId(), 1L, "MASTER");
+        GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "MASTER");
 
         given(orderRepository.findById(order.getId()))
                 .willReturn(Optional.of(order));
@@ -348,8 +330,8 @@ public class OrderServiceTest {
     @DisplayName("조회할 주문 미존재 (다건)")
     void searchOrder_whenNoOrdersFound_shouldReturnEmptyList() {
         // given
-        Page<Order> orderList = new PageImpl<>(List.of(), PageRequest.of(0 , 10), 0);
-        SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
+        Page<Order> orderList = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+        SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
@@ -368,13 +350,12 @@ public class OrderServiceTest {
         Order order1 = getOrder();
         Order order2 = getOrder();
         Order order3 = getOrder();
+        UUID companyId = UUID.randomUUID();
         Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
-                PageRequest.of(0 , 10), 0);
+                PageRequest.of(0, 10), 0);
 
-        SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), "COMPANY_MANAGER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(1L, companyId, companyId, "COMPANY_MANAGER", PageRequest.of(0, 10));
 
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.ofNullable(request.companyId()));
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
 
@@ -389,11 +370,8 @@ public class OrderServiceTest {
     @DisplayName("업체 담당자는 본인이 주문한 상품만 조회 가능하다. - 실패 (다건)")
     void searchOrder_whenCompanyManagerIsNotOwner_shouldThrowException() {
         // given
-        UUID anotherCompanyId = UUID.randomUUID();
-        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "COMPANY_MANAGER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"COMPANY_MANAGER", PageRequest.of(0, 10));
 
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(anotherCompanyId));
 
         // when & then
         assertThatThrownBy(() -> orderService.searchOrder(request))
@@ -409,14 +387,11 @@ public class OrderServiceTest {
         Order order2 = getOrder();
         Order order3 = getOrder();
         Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
-                PageRequest.of(0 , 10), 0);
+                PageRequest.of(0, 10), 0);
 
-        UUID hubId = UUID.randomUUID();
-        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"HUB_MANAGER", PageRequest.of(0, 10));
 
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(request.companyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
                 .willReturn(true);
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
@@ -432,12 +407,9 @@ public class OrderServiceTest {
     @DisplayName("허브 담당자는 본인 소속 주문만 조회 가능하다. - 실패 (다건)")
     void searchOrder_whenHubManagerIsInWrongHub_shouldThrowException() {
         // given
-        UUID hubId = UUID.randomUUID();
-        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
 
-        given(orderUserClient.getOrganizationId(request.userId()))
-                .willReturn(Optional.of(hubId));
-        given(companyClient.existCompanyRegionalHub(request.companyId(), hubId))
+        given(companyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -454,9 +426,9 @@ public class OrderServiceTest {
         Order order2 = getOrder();
         Order order3 = getOrder();
         Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
-                PageRequest.of(0 , 10), 0);
+                PageRequest.of(0, 10), 0);
 
-        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
+        SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
@@ -477,6 +449,6 @@ public class OrderServiceTest {
         int quantity = 10;
         orderProducts.add(new OrderProductReq(productId, quantity));
 
-        return new CreateOrderCommand(1L, requestMessage, orderProducts);
+        return new CreateOrderCommand(1L, UUID.randomUUID(), requestMessage, orderProducts);
     }
 }

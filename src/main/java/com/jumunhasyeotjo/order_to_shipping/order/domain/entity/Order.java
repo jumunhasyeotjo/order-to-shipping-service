@@ -57,7 +57,7 @@ public class Order extends BaseEntity {
 
 
     public static Order create(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice) {
-        validateCreate(orderCompanies, totalPrice);
+        validateCreate(orderCompanies, companyManagerId, receiverCompanyId, totalPrice);
 
         Order order = Order.builder()
                 .orderCompanies(orderCompanies)
@@ -85,8 +85,8 @@ public class Order extends BaseEntity {
     }
 
 
-    private static void validateCreate(List<OrderCompany> orderCompanies, int totalPrice) {
-        if (orderCompanies.isEmpty() || totalPrice < 0) {
+    private static void validateCreate(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, int totalPrice) {
+        if (orderCompanies.isEmpty() || totalPrice < 0 || companyManagerId == null || receiverCompanyId == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
     }
