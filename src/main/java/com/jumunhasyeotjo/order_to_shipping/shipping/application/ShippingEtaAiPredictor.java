@@ -10,16 +10,20 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.gem
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.gemini.dto.GeminiRequest;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.gemini.dto.GeminiResponse;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ShippingEtaAiPredictor {
 	private final GeminiClient geminiClient;
 
 	@Value("${gemini.api-key}")
 	private String apiKey;
 
+	@CircuitBreaker(name = "shippingEtaPredictor", fallbackMethod = "predictEtaFallback")
 	public String predictEta(String productInfo, String orderRequest, List<ShippingHistory> shippingHistories, String waypoints) {
 		String prompt = buildEtaPredictionPrompt(productInfo, orderRequest, shippingHistories, waypoints);
 		return askGemini(prompt);
@@ -36,6 +40,14 @@ public class ShippingEtaAiPredictor {
 		return shippingInfo +
 			"다음 배송 정보에 기반하여, 요청하신 요청사항을 맞추기 위한 최종 발송 시한이 언제인지 " +
 			"'mm월 dd일 오전/오후 n시' 형식으로만 알려주세요.";
+	}
+
+	public String predictEtaFallback(String productInfo, String orderRequest, List<ShippingHistory> shippingHistories, String waypoints, Throwable t) {
+		log.error("[shippingEtaPredictor] Failed to predict ETA via Gemini. productInfo={}, orderRequest={}, waypoints={}",
+			productInfo, orderRequest, waypoints, t);
+
+		// TODO
+		return "ETA 계산 실패";
 	}
 
 	private String askGemini(String prompt) {
