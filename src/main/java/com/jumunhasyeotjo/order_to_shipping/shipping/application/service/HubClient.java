@@ -16,4 +16,6 @@ public interface HubClient {
 
 	List<Route> getRoutes();
 
+	Optional<UUID> getHubId(String hubName);
+
 }

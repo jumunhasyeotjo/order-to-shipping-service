@@ -24,4 +24,9 @@ public class HubClientImpl implements HubClient{
 	public List<Route> getRoutes() {
 		return Collections.emptyList();
 	}
+
+	@Override
+	public Optional<UUID> getHubId(String hubName) {
+		return Optional.empty();
+	}
 }
