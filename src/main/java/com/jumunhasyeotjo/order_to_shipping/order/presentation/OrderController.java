@@ -10,6 +10,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.Order
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CancelOrderRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CreateOrderRes;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.UpdateOrderRes;
+import com.library.passport.annotation.PassportUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+import static com.library.passport.proto.PassportProto.Passport;
+
 @RestController
 @RequestMapping("/v1/orders")
 @RequiredArgsConstructor
@@ -29,10 +32,11 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<ApiRes<CreateOrderRes>> createOrder(@RequestBody @Valid CreateOrderReq req) {
+    public ResponseEntity<ApiRes<CreateOrderRes>> createOrder(@RequestBody @Valid CreateOrderReq req,
+                                                              @PassportUser Passport passport) {
         CreateOrderCommand command = new CreateOrderCommand(
-                1L,
-                req.totalPrice(),
+                passport.getUserId(),
+                UUID.fromString(passport.getBelong()),
                 req.requestMessage(),
                 req.orderProducts());
 
@@ -46,11 +50,13 @@ public class OrderController {
 
     @PatchMapping("/{orderId}")
     public ResponseEntity<ApiRes<UpdateOrderRes>> updateOrderStatus(@PathVariable UUID orderId,
-                                                                    @RequestBody @Valid OrderUpdateStatusReq req) {
+                                                                    @RequestBody @Valid OrderUpdateStatusReq req,
+                                                                    @PassportUser Passport passport) {
         OrderUpdateStatusCommand command = new OrderUpdateStatusCommand(
-                1L,
+                passport.getUserId(),
+                UUID.fromString(passport.getBelong()),
                 orderId,
-                "MASTER",
+                passport.getRole(),
                 req.status()
         );
 
@@ -63,11 +69,14 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<ApiRes<CancelOrderRes>> deleteOrder(@PathVariable UUID orderId) {
+    public ResponseEntity<ApiRes<CancelOrderRes>> deleteOrder(@PathVariable UUID orderId,
+                                                              @PassportUser Passport passport) {
         CancelOrderCommand command = new CancelOrderCommand(
-                1L,
+                passport.getUserId(),
+                UUID.fromString(passport.getBelong()),
                 orderId,
-                "MASTER");
+                passport.getRole()
+        );
 
         Order order = orderService.cancelOrder(command);
         CancelOrderRes res = new CancelOrderRes(order.getId(), order.getStatus());
@@ -78,11 +87,13 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<ApiRes<OrderResult>> getOrder(@PathVariable UUID orderId) {
+    public ResponseEntity<ApiRes<OrderResult>> getOrder(@PathVariable UUID orderId,
+                                                        @PassportUser Passport passport) {
         GetOrderCommand command = new GetOrderCommand(
                 orderId,
-                1L,
-                "MASTER"
+                UUID.fromString(passport.getBelong()),
+                passport.getUserId(),
+                passport.getRole()
         );
 
         OrderResult res = orderService.getOrder(command);
@@ -94,11 +105,14 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<ApiRes<Page<OrderResult>>> searchOrder(@PageableDefault Pageable pageable,
-                                                                 @RequestParam(name = "companyId") UUID companyId) {
+                                                                 @RequestParam(name = "companyId") UUID companyId,
+                                                                 @PassportUser Passport passport
+                                                                 ) {
         SearchOrderCommand command = new SearchOrderCommand(
-                1L,
+                passport.getUserId(),
+                UUID.fromString(passport.getBelong()),
                 companyId,
-                "MASTER",
+                passport.getRole(),
                 pageable
         );
 

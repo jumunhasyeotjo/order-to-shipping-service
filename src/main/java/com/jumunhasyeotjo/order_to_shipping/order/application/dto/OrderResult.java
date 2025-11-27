@@ -19,7 +19,9 @@ public record OrderResult(
                 order.getRequestMessage(),
                 order.getTotalPrice(),
                 order.getStatus(),
-                order.getOrderProducts().stream().map(OrderProductResult::of).toList()
+                order.getOrderCompanies().stream()
+                        .flatMap(c -> c.getOrderProducts().stream().map(OrderProductResult::of))
+                        .toList()
         );
     }
 }

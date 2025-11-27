@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record SearchOrderCommand(
         Long userId,
+        UUID organizationId,
         UUID companyId,
         String role,
         Pageable pageable
