@@ -84,7 +84,7 @@ public class ShippingEventHandler {
 		List<ProductInfo> productList = getProducts(event.getShippingId());
 		if(!event.isFromOriginHub()){
 			UUID hubId = getHubIdFromName(event.getOrigin());
-			stockClient.decreaseStock(hubId, productList);
+			stockClient.decreaseStock(event.getIdempotencyKey(), hubId, productList);
 		}
 	}
 
@@ -99,7 +99,7 @@ public class ShippingEventHandler {
 		List<ProductInfo> productList = getProducts(event.getShippingId());
 		if(!event.isFinalDestination()){
 			UUID hubId = getHubIdFromName(event.getDestination());
-			stockClient.increaseStock(hubId, productList);
+			stockClient.increaseStock(event.getIdempotencyKey(), hubId, productList);
 		}
 	}
 

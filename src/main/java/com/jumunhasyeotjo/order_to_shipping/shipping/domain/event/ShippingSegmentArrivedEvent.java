@@ -8,6 +8,7 @@ import lombok.Getter;
 public class ShippingSegmentArrivedEvent extends ShippingDomainEvent {
 	private final String destination;
 	private final UUID shippingId;
+	private final UUID idempotencyKey = UUID.randomUUID();
 	private final boolean isFinalDestination;
 
 	public ShippingSegmentArrivedEvent(String destination, UUID shippingId, boolean isFinalDestination) {

@@ -14,12 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class StockClientImpl implements StockClient {
 	@Override
-	public void increaseStock(UUID hubId, List<ProductInfo> productList) {
-		UUID idempotencyKey = UUID.randomUUID();
+	public void increaseStock(UUID idempotencyKey, UUID hubId, List<ProductInfo> productList) {
+
 	}
 
 	@Override
-	public void decreaseStock(UUID hubId, List<ProductInfo> productList) {
-		UUID idempotencyKey = UUID.randomUUID();
+	public void decreaseStock(UUID idempotencyKey, UUID hubId, List<ProductInfo> productList) {
+
 	}
 }

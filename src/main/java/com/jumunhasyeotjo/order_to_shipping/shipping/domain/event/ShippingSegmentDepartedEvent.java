@@ -11,6 +11,7 @@ import lombok.Getter;
 public class ShippingSegmentDepartedEvent extends ShippingDomainEvent{
 	private final String origin;
 	private final UUID shippingId;
+	private final UUID idempotencyKey = UUID.randomUUID();
 	private final boolean isFromOriginHub;
 
 	public ShippingSegmentDepartedEvent(String origin, UUID shippingId, boolean isFromOriginHub) {
