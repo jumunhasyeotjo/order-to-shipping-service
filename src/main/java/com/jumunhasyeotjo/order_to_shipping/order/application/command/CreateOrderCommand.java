@@ -4,7 +4,6 @@ import java.util.List;
 
 public record CreateOrderCommand (
         Long userId,
-        Integer totalPrice,
         String requestMessage,
         List<OrderProductReq> orderProducts
 ){

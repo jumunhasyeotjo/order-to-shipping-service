@@ -1,6 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.order.infrastructure;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.infrastructure.repository.JpaOrderRepository;
 import jakarta.persistence.EntityManager;
@@ -13,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,10 +35,10 @@ public class OrderRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        Order order1 = getOrder(companyId, getOrderProducts(product1Id, 1000, 2, "상품1"), "주문1", 2000);
-        Order order2 = getOrder(companyId, getOrderProducts(product2Id,3000, 5, "상품2"), "주문2", 15000);
-        Order order3 = getOrder(companyId, getOrderProducts(product1Id, 1000, 1, "상품3"), "주문3", 1000);
-        Order order4 = getOrder(companyId, getOrderProducts(product2Id,3000, 4, "상품4"), "주문4", 12000);
+        Order order1 = getOrder(companyId, getOrderCompanies(getOrderProducts(product1Id, 1000, 2, "상품1")), "주문1", 2000);
+        Order order2 = getOrder(companyId, getOrderCompanies(getOrderProducts(product2Id,3000, 5, "상품2")), "주문2", 15000);
+        Order order3 = getOrder(companyId, getOrderCompanies(getOrderProducts(product1Id, 1000, 1, "상품3")), "주문3", 1000);
+        Order order4 = getOrder(companyId, getOrderCompanies(getOrderProducts(product2Id,3000, 4, "상품4")), "주문4", 12000);
 
         jpaOrderRepository.saveAll(List.of(order1, order2, order3, order4));
 
@@ -73,7 +73,7 @@ public class OrderRepositoryTest {
         assertThat(foundOrders.getContent().get(0).getTotalPrice())
                 .isEqualTo(15000);
     }
-    
+
     @Test
     @DisplayName("특정 업체 주문 조회 - 페이징")
     void findAllByCompanyId_whenGivenCompanyIdAndPageable() {
@@ -112,7 +112,7 @@ public class OrderRepositoryTest {
     @DisplayName("주문 상품 조회")
     void findById_whenFindingById() {
         // given
-        Order order = getOrder(companyId, getOrderProducts(product1Id, 1000, 2, "상품1"), "주문1", 2000);
+        Order order = getOrder(companyId, getOrderCompanies(getOrderProducts(product1Id, 1000, 2, "상품1")), "주문1", 2000);
         Order savedOrder = jpaOrderRepository.save(order);
         em.flush();
         em.clear();
@@ -121,22 +121,24 @@ public class OrderRepositoryTest {
         Optional<Order> findOrder = jpaOrderRepository.findById(savedOrder.getId());
 
         // then
-        assertThat(findOrder.get().getOrderProducts().size()).isEqualTo(1);
-        assertThat(findOrder.get().getOrderProducts().get(0).getProductId()).isEqualTo(product1Id);
-        assertThat(findOrder.get().getOrderProducts().get(0).getName()).isEqualTo("상품1");
-        assertThat(findOrder.get().getOrderProducts().get(0).getQuantity()).isEqualTo(2);
-        assertThat(findOrder.get().getOrderProducts().get(0).getPrice()).isEqualTo(1000);
+        assertThat(findOrder.get().getOrderCompanies().size()).isEqualTo(1);
+        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getProductId()).isEqualTo(product1Id);
+        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getName()).isEqualTo("상품1");
+        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getQuantity()).isEqualTo(2);
+        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getPrice()).isEqualTo(1000);
     }
 
 
     // 테스트 헬퍼 메서드
-    private Order getOrder(UUID companyId, List<OrderProduct> orderProducts, String requestMessage, int totalPrice) {
-        return Order.create(orderProducts, 1L, companyId, requestMessage, totalPrice);
+    private Order getOrder(UUID companyId, List<OrderCompany> orderCompanies, String requestMessage, int totalPrice) {
+        return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice);
     }
 
-    private static List<OrderProduct> getOrderProducts(UUID productId,int price, int quantity, String name) {
-        List<OrderProduct> products = new ArrayList<>();
-        products.add(OrderProduct.create(productId, price, quantity, name));
-        return products;
+    private List<OrderCompany> getOrderCompanies(List<OrderProduct> products) {
+        return List.of(OrderCompany.create(UUID.randomUUID(), products));
+    }
+
+    private List<OrderProduct> getOrderProducts(UUID productId,int price, int quantity, String name) {
+        return List.of(OrderProduct.create(productId, price, quantity, name));
     }
 }
