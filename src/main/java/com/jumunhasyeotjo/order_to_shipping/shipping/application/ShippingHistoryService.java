@@ -78,13 +78,14 @@ public class ShippingHistoryService {
 	public void departShippingHistory(DepartShippingHistoryCommand command) {
 		log.info("배송 출발 처리 시작: shippingHistoryId={}", command.shippingHistoryId());
 
-		ShippingHistory shippingHistory = getShippingHistory(command.shippingHistoryId());
-		checkPermission(shippingHistory, command.userRole(), command.driverId());
+		ShippingHistory shippingHistory = getAuthorizedShippingHistory(
+			command.shippingHistoryId(),
+			command.userRole(),
+			command.driverId()
+		);
 
 		shippingDomainService.departHistorySegment(shippingHistory);
-
-		eventPublisher.publishEvent(new ShippingSegmentDepartedEvent(shippingHistory.getOrigin(), shippingHistory.getShipping()
-			.getId(), shippingHistory.getSequence() == 1));
+		publishDepartedEvent(shippingHistory);
 
 		log.info("배송 출발 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
 	}
@@ -95,17 +96,16 @@ public class ShippingHistoryService {
 	public void arriveShippingHistory(ArriveShippingHistoryCommand command) {
 		log.info("배송 도착 처리 시작: shippingHistoryId={}", command.shippingHistoryId());
 
-		ShippingHistory shippingHistory = getShippingHistory(command.shippingHistoryId());
-		checkPermission(shippingHistory, command.userRole(), command.driverId());
+		ShippingHistory shippingHistory = getAuthorizedShippingHistory(
+			command.shippingHistoryId(),
+			command.userRole(),
+			command.driverId()
+		);
 
 		int totalRouteCount = shippingDomainService.arriveHistorySegment(shippingHistory, command.actualDistance());
-		boolean isFinalDestination = shippingHistory.getSequence() == (totalRouteCount-1);
-
-		eventPublisher.publishEvent(new ShippingSegmentArrivedEvent(shippingHistory.getDestination(), shippingHistory.getShipping()
-			.getId(), isFinalDestination));
+		publishArrivedEvent(shippingHistory, totalRouteCount);
 
 		log.info("배송 도착 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
-
 	}
 
 	/**
@@ -169,6 +169,36 @@ public class ShippingHistoryService {
 	private ShippingHistory getShippingHistory(UUID shippingHistoryId) {
 		return shippingHistoryRepository.findById(shippingHistoryId).orElseThrow(
 			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
+		);
+	}
+
+	private ShippingHistory getAuthorizedShippingHistory(UUID shippingHistoryId, UserRole userRole, Long driverId) {
+		ShippingHistory shippingHistory = getShippingHistory(shippingHistoryId);
+		checkPermission(shippingHistory, userRole, driverId);
+		return shippingHistory;
+	}
+
+	private void publishDepartedEvent(ShippingHistory shippingHistory) {
+		boolean isFirstSegment = shippingHistory.getSequence() == 1;
+
+		eventPublisher.publishEvent(
+			new ShippingSegmentDepartedEvent(
+				shippingHistory.getOrigin(),
+				shippingHistory.getShipping().getId(),
+				isFirstSegment
+			)
+		);
+	}
+
+	private void publishArrivedEvent(ShippingHistory shippingHistory, int totalRouteCount) {
+		boolean isFinalDestination = shippingHistory.getSequence() == (totalRouteCount - 1);
+
+		eventPublisher.publishEvent(
+			new ShippingSegmentArrivedEvent(
+				shippingHistory.getDestination(),
+				shippingHistory.getShipping().getId(),
+				isFinalDestination
+			)
 		);
 	}
 
