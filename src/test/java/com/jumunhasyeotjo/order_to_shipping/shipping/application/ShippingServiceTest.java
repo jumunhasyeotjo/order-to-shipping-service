@@ -10,12 +10,14 @@ import java.util.UUID;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
@@ -51,6 +53,9 @@ class ShippingServiceTest {
 	@Mock
 	private UserClient userClient;
 
+	@Mock
+	private CompanyClient companyClient;
+
 	@InjectMocks
 	private ShippingService shippingService;
 
@@ -82,8 +87,12 @@ class ShippingServiceTest {
 			2L,
 			new RouteInfo(40, 20)
 		);
+
+		UUID supplierCompanyId = UUID.randomUUID();
+		UUID receiverCompanyId = UUID.randomUUID();
+
 		PhoneNumber phoneNumber = PhoneNumber.of("010-1234-5678");
-		CreateShippingCommand command = new CreateShippingCommand(orderId, phoneNumber, "아무개", supplier, receiver);
+		CreateShippingCommand command = new CreateShippingCommand(orderId, phoneNumber, "아무개", supplierCompanyId, receiverCompanyId);
 
 		List<Route> routes = List.of(
 			new Route(originHubId, midHubId, RouteInfo.of(10, 5)),
@@ -91,6 +100,8 @@ class ShippingServiceTest {
 		);
 
 		when(shippingRouteGenerator.generateOrRebuildRoute(originHubId, arrivalHubId)).thenReturn(routes);
+		when(companyClient.getCompany(supplierCompanyId)).thenReturn(supplier);
+		when(companyClient.getCompany(receiverCompanyId)).thenReturn(receiver);
 
 		// when
 		UUID resultId = shippingService.createShipping(command);
@@ -121,35 +132,15 @@ class ShippingServiceTest {
 		ShippingHistory h2 = mock(ShippingHistory.class);
 		List<ShippingHistory> histories = List.of(h1, h2);
 
-		when(shippingRepository.findById(shippingId)).thenReturn(Optional.of(shipping));
 		when(shippingHistoryService.getShippingHistoryList(shippingId)).thenReturn(histories);
 
 		// when
-		ShippingResult result = shippingService.getShipping(command);
+		List<ShippingHistory> result = shippingService.getShipping(command);
 
 		// then
-		assertThat(result.shipping()).isSameAs(shipping);
-		assertThat(result.shippingHistories()).isSameAs(histories);
-		verify(shippingRepository, times(1)).findById(shippingId);
+		assertThat(result).isSameAs(histories);
 		verify(shippingHistoryService, times(1)).getShippingHistoryList(shippingId);
 		verifyNoMoreInteractions(shippingRepository, shippingHistoryService);
-	}
-
-	@Test
-	@DisplayName("배송 조회할때 존재하지 않으면 NOT_FOUND_BY_ID 예외가 터진다.")
-	void getShipping_whenShippingIdNotExist_shouldThrowException() {
-		// given
-		GetShippingCommand command =
-			new GetShippingCommand(shippingId, UserRole.MASTER, 1L);
-
-		when(shippingRepository.findById(shippingId)).thenReturn(Optional.empty());
-
-		// when & then
-		assertThatThrownBy(() -> shippingService.getShipping(command))
-			.isInstanceOf(BusinessException.class)
-			.hasMessageContaining("해당 ID로 데이터를 찾을 수 없습니다.");
-		verify(shippingRepository, times(1)).findById(shippingId);
-		verifyNoMoreInteractions(shippingRepository);
 	}
 
 	@Test
