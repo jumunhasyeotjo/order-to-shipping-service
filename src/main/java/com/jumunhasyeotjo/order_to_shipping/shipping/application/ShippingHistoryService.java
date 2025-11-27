@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,8 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverC
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentArrivedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
 
@@ -41,12 +44,14 @@ public class ShippingHistoryService {
 	private final ShippingDomainService shippingDomainService;
 
 	private final HubClient hubClient;
+	private final ApplicationEventPublisher eventPublisher;
 	private final DriverClient driverClient;
 
 	/**
 	 * 배송이력 생성
 	 */
-	public List<ShippingHistory> createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
+	public List<ShippingHistory> createShippingHistoryList(Shipping shipping, List<Route> routes,
+		Company recevierCompany) {
 		log.info("상세 배송 이력 생성: shippingId={}", shipping.getId());
 		List<ShippingHistory> hubLegHistories = buildHubLegHistories(shipping, routes);
 
@@ -78,6 +83,9 @@ public class ShippingHistoryService {
 
 		shippingDomainService.departHistorySegment(shippingHistory);
 
+		eventPublisher.publishEvent(new ShippingSegmentDepartedEvent(shippingHistory.getOrigin(), shippingHistory.getShipping()
+			.getId(), shippingHistory.getSequence() == 1));
+
 		log.info("배송 출발 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
 	}
 
@@ -90,7 +98,11 @@ public class ShippingHistoryService {
 		ShippingHistory shippingHistory = getShippingHistory(command.shippingHistoryId());
 		checkPermission(shippingHistory, command.userRole(), command.driverId());
 
-		shippingDomainService.arriveHistorySegment(shippingHistory, command.actualDistance());
+		int totalRouteCount = shippingDomainService.arriveHistorySegment(shippingHistory, command.actualDistance());
+		boolean isFinalDestination = shippingHistory.getSequence() == (totalRouteCount-1);
+
+		eventPublisher.publishEvent(new ShippingSegmentArrivedEvent(shippingHistory.getDestination(), shippingHistory.getShipping()
+			.getId(), isFinalDestination));
 
 		log.info("배송 도착 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
 
