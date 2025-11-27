@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
 

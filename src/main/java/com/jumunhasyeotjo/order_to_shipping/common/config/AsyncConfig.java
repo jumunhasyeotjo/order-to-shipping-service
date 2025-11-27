@@ -1,5 +1,4 @@
 package com.jumunhasyeotjo.order_to_shipping.common.config;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.scheduling.annotation.AsyncConfigurer;

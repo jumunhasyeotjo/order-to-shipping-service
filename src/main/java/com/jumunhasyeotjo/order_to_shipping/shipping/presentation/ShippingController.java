@@ -30,7 +30,6 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssi
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
@@ -56,16 +55,9 @@ public class ShippingController {
 	@PostMapping
 	@Operation(summary = "배송 생성")
 	public ResponseEntity<ApiRes<UUID>> createShipping(@Valid @RequestBody CreateShippingReq request) {
-		log.info("배송 생성 요청: orderId={}", request.orderId());
+		log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
 
-		CreateShippingCommand command = new CreateShippingCommand(
-			request.orderId(),
-			PhoneNumber.of(request.receiverPhoneNumber()),
-			request.receiverName(),
-			request.supplierCompanyId(),
-			request.receiverCompanyId());
-
-		UUID shippingId = shippingService.createShipping(command);
+		UUID shippingId = shippingService.createShipping(request.toCommand());
 
 		log.info("배송 생성 성공: shippingId={}", shippingId);
 		return ResponseEntity.created(URI.create("/api/v1/shippings/" + shippingId)).body(ApiRes.success(shippingId));

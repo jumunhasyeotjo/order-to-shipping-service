@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingStatus;
 import com.jumunhasyeotjo.order_to_shipping.shipping.fixtures.ShippingFixture;
@@ -23,14 +22,12 @@ class ShippingTest {
 		UUID orderId = UUID.randomUUID();
 		UUID receiverCompanyId = UUID.randomUUID();
 		ShippingAddress address = ShippingAddress.of("서울시 강동구");
-		PhoneNumber receiverPhoneNumber = PhoneNumber.of("010-1234-5678");
-		String receiverName = "수령인";
 		UUID originHubId = UUID.randomUUID();
 		UUID arrivalHubId = UUID.randomUUID();
 		Integer totalRouteCount = 3;
 
 		// when
-		Shipping shipping = Shipping.create(orderId, receiverCompanyId, address, receiverPhoneNumber, receiverName, originHubId,
+		Shipping shipping = Shipping.create(orderId, receiverCompanyId, address, originHubId,
 			arrivalHubId, totalRouteCount);
 
 		// then
@@ -73,77 +70,6 @@ class ShippingTest {
 		assertThatThrownBy(shipping::arriveAtDestinationHub)
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("해당 상태로 전환할 수 없습니다.");
-	}
-
-	@Test
-	@DisplayName("수령인 전화번호는 배달이 완료된 이후에 변경할 수 없다.")
-	void changeReceiverPhoneNumber_ShouldNotAllowAfterDelivered(){
-		// given
-		Shipping shipping = ShippingFixture.createDefault();
-		shipping.dispatchFromOriginHub();
-		shipping.arriveAtDestinationHub();
-		shipping.departFromDestinationHub();
-		shipping.completeDelivery();
-
-		PhoneNumber phoneNumber = PhoneNumber.of("010-1111-2222");
-
-		// when & then
-		assertThatThrownBy(() -> shipping.changeReceiverPhoneNumber(phoneNumber))
-			.isInstanceOf(BusinessException.class)
-			.hasMessageContaining("현재 상태에서는 정보를 수정할 수 없습니다.");
-	}
-
-	@Test
-	@DisplayName("수령인 이름은 배달이 완료된 이후에 변경할 수 없다.")
-	void changeReceiverName_ShouldNotAllowAfterDelivered(){
-		// given
-		Shipping shipping = ShippingFixture.createDefault();
-		shipping.dispatchFromOriginHub();
-		shipping.arriveAtDestinationHub();
-		shipping.departFromDestinationHub();
-		shipping.completeDelivery();
-
-		String newName = "아무개";
-
-		// when & then
-		assertThatThrownBy(() -> shipping.changeReceiverName(newName))
-			.isInstanceOf(BusinessException.class)
-			.hasMessageContaining("현재 상태에서는 정보를 수정할 수 없습니다.");
-	}
-
-
-	@Test
-	@DisplayName("배달이 완료되기 전 수령인 전화번호를 변경할 수 있다.")
-	void changeReceiverPhoneNumber_ShouldNAllowBeforeDelivered(){
-		// given
-		Shipping shipping = ShippingFixture.createDefault();
-		shipping.dispatchFromOriginHub();
-
-		PhoneNumber phoneNumber = PhoneNumber.of("010-1111-2222");
-
-		// when
-		shipping.changeReceiverPhoneNumber(phoneNumber);
-
-		// then
-		assertThat(shipping.getReceiverPhoneNumber().equals(phoneNumber));
-	}
-
-	@Test
-	@DisplayName("배달이 완료되기 전 수령인을 변경할 수 있다.")
-	void changeReceiverName_ShouldAllowBeforeDelivered(){
-		// given
-		Shipping shipping = ShippingFixture.createDefault();
-		shipping.dispatchFromOriginHub();
-		shipping.arriveAtDestinationHub();
-		shipping.departFromDestinationHub();
-
-		String newName = "아무개";
-
-		// when
-		shipping.changeReceiverName(newName);
-
-		// then
-		assertThat(shipping.getReceiverName().equals(newName));
 	}
 
 

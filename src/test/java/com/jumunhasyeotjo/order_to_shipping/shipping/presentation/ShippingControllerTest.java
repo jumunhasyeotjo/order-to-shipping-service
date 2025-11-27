@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -54,13 +55,17 @@ class ShippingControllerTest {
 		// given
 		UUID orderId = UUID.randomUUID();
 		UUID shippingId = UUID.randomUUID();
+		UUID supplierCompanyId = UUID.randomUUID();
+		UUID receiverCompanyId = UUID.randomUUID();
+
 
 		CreateShippingReq request = new CreateShippingReq(
 			orderId,
-			"010-1234-5678",
-			"수신자",
-			UUID.randomUUID(),
-			UUID.randomUUID()
+			LocalDateTime.now(),
+			"테스트 상품 정보",
+			"테스트 요청사항",
+			supplierCompanyId,
+			receiverCompanyId
 		);
 
 		given(shippingService.createShipping(any())).willReturn(shippingId);

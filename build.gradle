@@ -55,10 +55,13 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // Open Feign 추가
 	testImplementation 'com.h2database:h2' // 테스트용 H2 DB 추가
 
+	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.retry:spring-retry'
 
-	// passport 의존성 추가
 	implementation 'com.library:passport:1.0.1'
 	implementation 'com.google.protobuf:protobuf-java:3.21.12'
+
 }
 
 dependencyManagement {
