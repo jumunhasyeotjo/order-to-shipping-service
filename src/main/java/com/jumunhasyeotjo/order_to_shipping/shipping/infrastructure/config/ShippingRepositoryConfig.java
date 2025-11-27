@@ -11,7 +11,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.repository.S
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.repository.ShippingRepositoryAdapter;
 
 @Configuration
-public class RepositoryConfig {
+public class ShippingRepositoryConfig {
     @Bean
     public ShippingRepository shippingRepository(JpaShippingRepository jpaShippingRepository) {
         return new ShippingRepositoryAdapter(jpaShippingRepository);

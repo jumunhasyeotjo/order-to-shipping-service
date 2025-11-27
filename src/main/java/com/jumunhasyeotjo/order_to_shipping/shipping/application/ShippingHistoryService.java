@@ -44,7 +44,7 @@ public class ShippingHistoryService {
 	private final DriverClient driverClient;
 
 	/**
-	 * 배송생성
+	 * 배송이력 생성
 	 */
 	public void createShippingHistoryList(Shipping shipping, List<Route> routes, Company recevierCompany) {
 		log.info("상세 배송 이력 생성: shippingId={}", shipping.getId());
