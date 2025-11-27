@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
+import com.jumunhasyeotjo.order_to_shipping.common.annotation.RequireRole;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingHistoryService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService;
@@ -35,12 +38,15 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.Ch
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingHistoryRes;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
+import com.library.passport.annotation.PassportUser;
+import com.library.passport.proto.PassportProto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import static com.library.passport.proto.PassportProto.Passport;
 
 @Slf4j
 @Tag(name = "Shipping", description = "배송 관련 API")
@@ -49,12 +55,15 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Validated
 public class ShippingController {
-	private final ShippingHistoryService shippingHistoryService;
 	private final ShippingService shippingService;
 
 	@PostMapping
+	@RequireRole(UserRole.MASTER)
 	@Operation(summary = "배송 생성")
-	public ResponseEntity<ApiRes<UUID>> createShipping(@Valid @RequestBody CreateShippingReq request) {
+	public ResponseEntity<ApiRes<UUID>> createShipping(
+		@PassportUser Passport passport,
+		@Valid @RequestBody CreateShippingReq request
+	) {
 		log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
 
 		UUID shippingId = shippingService.createShipping(request.toCommand());
@@ -64,16 +73,18 @@ public class ShippingController {
 	}
 
 	@PatchMapping("/{shippingId}/cancel")
+	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER})
 	@Operation(summary = "배송 취소")
 	public ResponseEntity<ApiRes<UUID>> cancelShipping(
+		@PassportUser Passport passport,
 		@PathVariable(name = "shippingId") UUID shippingId
 	) {
 		log.info("배송 취소 요청: shippingId={}", shippingId);
 
 		CancelShippingCommand command = new CancelShippingCommand(
 			shippingId,
-			UserRole.HUB_MANAGER,
-			1L
+			UserRole.valueOf(passport.getRole()),
+			passport.getBelong()
 		);
 
 		shippingService.cancelShipping(command);
@@ -90,87 +101,12 @@ public class ShippingController {
 		log.info("배송 조회 요청: shippingId={}", shippingId);
 
 		GetShippingCommand command = new GetShippingCommand(
-			shippingId,
-			UserRole.HUB_MANAGER,
-			1L
+			shippingId
 		);
 
 		ShippingRes shippingRes = ShippingRes.from(shippingService.getShipping(command));
 
 		log.info("배송 조회 성공: shippingId={}", shippingId);
 		return ResponseEntity.ok(ApiRes.success(shippingRes));
-	}
-
-	@PatchMapping("/{shippingHistoryId}/depart")
-	@Operation(summary = "배송 출발")
-	public ResponseEntity<ApiRes<UUID>> departShipping(
-		@PathVariable(name = "shippingHistoryId") UUID shippingHistoryId
-	) {
-		log.info("배송 출발 요청: shippingHistoryId={}", shippingHistoryId);
-
-		DepartShippingHistoryCommand command = new DepartShippingHistoryCommand(
-			shippingHistoryId,
-			UserRole.HUB_MANAGER,
-			1L
-		);
-
-		shippingHistoryService.departShippingHistory(command);
-
-		log.info("배송 출발 성공: shippingHistoryId={}", shippingHistoryId);
-		return ResponseEntity.ok(ApiRes.success(shippingHistoryId));
-	}
-
-	@PatchMapping("/{shippingHistoryId}/arrive")
-	@Operation(summary = "배송 도착")
-	public ResponseEntity<ApiRes<UUID>> arriveShipping(
-		@Valid @RequestBody ArriveShippingReq request
-	) {
-		log.info("배송 도착 요청: shippingHistoryId={}", request.shippingHistoryId());
-
-		ArriveShippingHistoryCommand command = new ArriveShippingHistoryCommand(
-			request.shippingHistoryId(),
-			UserRole.HUB_MANAGER,
-			1L,
-			request.actualDistance()
-		);
-
-		shippingHistoryService.arriveShippingHistory(command);
-
-		log.info("배송 도착 성공: shippingHistoryId={}", request.shippingHistoryId());
-		return ResponseEntity.ok(ApiRes.success(request.shippingHistoryId()));
-	}
-
-	@PatchMapping("/{shippingHistoryId}/driver")
-	@Operation(summary = "배송자 수정")
-	public ResponseEntity<ApiRes<UUID>> changeDriver(
-		@Valid @RequestBody ChangeDriverReq request
-	) {
-		log.info("배송자 수정 요청: shippingHistoryId={}, newDriverId={}", request.shippingHistoryId(), request.newDriverId());
-
-		ChangeDriverCommand command = new ChangeDriverCommand(
-			request.shippingHistoryId(),
-			UserRole.HUB_MANAGER,
-			request.newDriverId()
-		);
-
-		shippingHistoryService.changeDriver(command);
-
-		log.info("배송자 수정 성공: shippingHistoryId={}, newDriverId={}", request.shippingHistoryId(), request.newDriverId());
-		return ResponseEntity.ok(ApiRes.success(request.shippingHistoryId()));
-	}
-
-	@GetMapping("/assigned-histories")
-	@Operation(summary = "담당 배송내역 조회 (배송자)")
-	public ResponseEntity<ApiRes<Page<ShippingHistoryRes>>> getAssignedShippingHistories(
-		@PageableDefault Pageable pageable
-	) {
-		GetAssignedShippingHistoriesCommand command = new GetAssignedShippingHistoriesCommand(
-			1L
-		);
-
-		Page<ShippingHistory> shippingHistories = shippingHistoryService.getAssignedShippingHistories(command, pageable);
-		Page<ShippingHistoryRes> response = shippingHistories.map(ShippingHistoryRes::from);
-
-		return ResponseEntity.ok(ApiRes.success(response));
 	}
 }

@@ -3,6 +3,7 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -77,7 +78,7 @@ public class ShippingService {
 	public void cancelShipping(CancelShippingCommand command) {
 		log.info("배송 취소 시작: shippingId={}", command.shippingId());
 		Shipping shipping = getShippingById(command.shippingId());
-		validateCancellableBy(command.role(), command.userId(), shipping.getOriginHubId());
+		validateCancellableBy(command.role(), command.userBelong(), shipping.getOriginHubId());
 		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
 		shippingDomainService.cancelDelivery(shipping, shippingHistories);
@@ -94,12 +95,12 @@ public class ShippingService {
 		return shippingHistories;
 	}
 
-	private void validateCancellableBy(UserRole userRole, Long userId, UUID hubId) {
+	private void validateCancellableBy(UserRole userRole, String userBelong, UUID hubId) {
 		if (userRole == UserRole.MASTER) {
 			return;
 		}
 
-		if (userRole == UserRole.HUB_MANAGER && !userClient.isManagingHub(userId, hubId)) {
+		if (userRole == UserRole.HUB_MANAGER && !Objects.equals(userBelong, hubId.toString())) {
 			throw new BusinessException(FORBIDDEN);
 		}
 	}
