@@ -1,7 +1,5 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache;
-
-import static com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys.field;
-import static com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys.redisHashKey;
+import static com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.key.RouteCacheKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

@@ -12,8 +12,8 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
-import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.ShortestPathCache;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.key.RouteCacheKeys;
 
 import lombok.RequiredArgsConstructor;
 

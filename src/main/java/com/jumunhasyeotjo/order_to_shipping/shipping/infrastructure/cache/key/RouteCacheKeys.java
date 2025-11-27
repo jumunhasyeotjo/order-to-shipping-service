@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache;
+package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.key;
 
 import java.util.UUID;
 

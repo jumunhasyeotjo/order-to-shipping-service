@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.HubInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 
@@ -22,6 +23,11 @@ public class HubClientImpl implements HubClient{
 
 	@Override
 	public List<Route> getRoutes() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<HubInfo> getAllHubNames() {
 		return Collections.emptyList();
 	}
 }
