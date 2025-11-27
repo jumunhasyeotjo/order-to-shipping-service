@@ -4,7 +4,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.CompanyClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 public class OrderServiceTest {
 
     @Mock
-    private CompanyClient companyClient;
+    private OrderCompanyClient orderCompanyClient;
 
     @Mock
     private StockClient stockClient;
@@ -62,7 +62,7 @@ public class OrderServiceTest {
         CreateOrderCommand request = getCreateOrderCommand();
         UUID companyId = UUID.randomUUID();
 
-        given(companyClient.existCompany(request.organizationId()))
+        given(orderCompanyClient.existCompany(request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -80,7 +80,7 @@ public class OrderServiceTest {
         UUID companyId = UUID.randomUUID();
         List<ProductResult> productResults = new ArrayList<>();
 
-        given(companyClient.existCompany(request.organizationId()))
+        given(orderCompanyClient.existCompany(request.organizationId()))
                 .willReturn(true);
         given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
@@ -105,7 +105,7 @@ public class OrderServiceTest {
                 1000);
         productResults.add(product);
 
-        given(companyClient.existCompany(request.organizationId()))
+        given(orderCompanyClient.existCompany(request.organizationId()))
                 .willReturn(true);
         given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
@@ -148,7 +148,7 @@ public class OrderServiceTest {
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -186,7 +186,7 @@ public class OrderServiceTest {
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
 
         // when
@@ -205,7 +205,7 @@ public class OrderServiceTest {
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -277,7 +277,7 @@ public class OrderServiceTest {
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
 
         // when
@@ -298,7 +298,7 @@ public class OrderServiceTest {
 
         given(orderRepository.findById(request.orderId()))
                 .willReturn(Optional.of(order));
-        given(companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then
@@ -391,7 +391,7 @@ public class OrderServiceTest {
 
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"HUB_MANAGER", PageRequest.of(0, 10));
 
-        given(companyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
                 .willReturn(true);
         given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
                 .willReturn(orderList);
@@ -409,7 +409,7 @@ public class OrderServiceTest {
         // given
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
 
-        given(companyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
+        given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
                 .willReturn(false);
 
         // when & then

@@ -6,7 +6,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.CompanyClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
@@ -36,7 +36,7 @@ public class OrderService {
 
     private final StockClient stockClient;
     private final ProductClient productClient;
-    private final CompanyClient companyClient;
+    private final OrderCompanyClient orderCompanyClient;
 
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
@@ -116,7 +116,7 @@ public class OrderService {
 
     // 존재하는 업체 검증
     private void validateCompany(UUID companyId) {
-        if (!companyClient.existCompany(companyId))
+        if (!orderCompanyClient.existCompany(companyId))
             throw new BusinessException(ErrorCode.COMPANY_NOT_FOUND);
     }
 
@@ -135,7 +135,7 @@ public class OrderService {
     // 허브 담당자 검증
     private void validateHubManager(UUID organizationId, UserRole role, UUID companyId) {
         if (role.equals(UserRole.HUB_MANAGER)) {
-            if (!companyClient.existCompanyRegionalHub(companyId, organizationId))
+            if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                 throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
         }
     }
@@ -179,7 +179,7 @@ public class OrderService {
     private void validateGetOrder(UUID organizationId, UserRole role, Long userId, Order order) {
         switch (role) {
             case HUB_MANAGER:
-                if (!companyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), organizationId))
+                if (!orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
 
@@ -207,7 +207,7 @@ public class OrderService {
                 break;
 
             case HUB_MANAGER:
-                if (!companyClient.existCompanyRegionalHub(companyId, organizationId))
+                if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
         }
     }
