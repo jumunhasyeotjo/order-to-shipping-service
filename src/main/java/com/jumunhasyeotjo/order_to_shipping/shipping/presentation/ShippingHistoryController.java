@@ -94,25 +94,6 @@ public class ShippingHistoryController {
 		log.info("배송 도착 성공: shippingHistoryId={}", request.shippingHistoryId());
 		return ResponseEntity.ok(ApiRes.success(request.shippingHistoryId()));
 	}
-	@PatchMapping("/{shippingHistoryId}/driver")
-	@Operation(summary = "배송자 수정")
-	public ResponseEntity<ApiRes<UUID>> changeDriver(
-		@Valid @RequestBody ChangeDriverReq request
-	) {
-		log.info("배송자 수정 요청: shippingHistoryId={}, newDriverId={}", request.shippingHistoryId(), request.newDriverId());
-
-		ChangeDriverCommand command = new ChangeDriverCommand(
-			request.shippingHistoryId(),
-			UserRole.HUB_MANAGER,
-			request.newDriverId()
-		);
-
-		shippingHistoryService.changeDriver(command);
-
-		log.info("배송자 수정 성공: shippingHistoryId={}, newDriverId={}", request.shippingHistoryId(), request.newDriverId());
-		return ResponseEntity.ok(ApiRes.success(request.shippingHistoryId()));
-	}
-
 
 	@PatchMapping("/{shippingHistoryId}/driver")
 	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER})
