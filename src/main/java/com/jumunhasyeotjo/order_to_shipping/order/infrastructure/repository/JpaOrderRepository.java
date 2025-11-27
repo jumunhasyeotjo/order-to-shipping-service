@@ -12,8 +12,7 @@ import java.util.UUID;
 public interface JpaOrderRepository extends JpaRepository<Order, UUID>{
 
     @Query(value = "select distinct o from Order o " +
-            "join fetch o.orderProducts op " +
-            "where o.companyId = :companyId",
-            countQuery = "select count(o) from Order o where o.companyId = :companyId")
+            "where o.receiverCompanyId = :companyId",
+            countQuery = "select count(o) from Order o where o.receiverCompanyId = :companyId")
     Page<Order> findAllByCompanyId(@Param("companyId") UUID companyId, Pageable pageable);
 }
