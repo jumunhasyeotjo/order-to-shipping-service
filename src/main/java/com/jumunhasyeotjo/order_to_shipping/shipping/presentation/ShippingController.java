@@ -58,7 +58,7 @@ public class ShippingController {
 	private final ShippingService shippingService;
 
 	@PostMapping
-	@RequireRole(UserRole.MASTER)
+	@RequireRole
 	@Operation(summary = "배송 생성")
 	public ResponseEntity<ApiRes<UUID>> createShipping(
 		@PassportUser Passport passport,
@@ -73,7 +73,7 @@ public class ShippingController {
 	}
 
 	@PatchMapping("/{shippingId}/cancel")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER})
+	@RequireRole(UserRole.HUB_MANAGER)
 	@Operation(summary = "배송 취소")
 	public ResponseEntity<ApiRes<UUID>> cancelShipping(
 		@PassportUser Passport passport,

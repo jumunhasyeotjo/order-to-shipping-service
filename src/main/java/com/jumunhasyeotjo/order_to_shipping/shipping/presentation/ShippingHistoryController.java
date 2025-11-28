@@ -53,7 +53,7 @@ public class ShippingHistoryController {
 	private final ShippingHistoryService shippingHistoryService;
 
 	@PatchMapping("/{shippingHistoryId}/depart")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
+	@RequireRole({UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 출발")
 	public ResponseEntity<ApiRes<UUID>> departShipping(
 		@PassportUser PassportProto.Passport passport,
@@ -74,7 +74,7 @@ public class ShippingHistoryController {
 	}
 
 	@PatchMapping("/{shippingHistoryId}/arrive")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
+	@RequireRole({UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 도착")
 	public ResponseEntity<ApiRes<UUID>> arriveShipping(
 		@PassportUser PassportProto.Passport passport,
@@ -96,7 +96,7 @@ public class ShippingHistoryController {
 	}
 
 	@PatchMapping("/{shippingHistoryId}/driver")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER})
+	@RequireRole({UserRole.HUB_MANAGER})
 	@Operation(summary = "배송자 수정")
 	public ResponseEntity<ApiRes<UUID>> changeDriver(
 		@PassportUser PassportProto.Passport passport,
@@ -117,7 +117,7 @@ public class ShippingHistoryController {
 	}
 
 	@GetMapping("/assigned-histories")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
+	@RequireRole({UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "담당 배송내역 조회 (배송자)")
 	public ResponseEntity<ApiRes<Page<ShippingHistoryRes>>> getAssignedShippingHistories(
 		@PassportUser PassportProto.Passport passport,

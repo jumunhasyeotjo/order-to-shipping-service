@@ -2,7 +2,6 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
@@ -67,7 +66,7 @@ public class HubNameCache {
     }
 
 	private void cacheAllHubInfo(){
-		List<HubInfo> hubInfoList = hubClient.getAllHubNames();
+		List<HubInfo> hubInfoList = hubClient.getAllHubs();
 		hubInfoList.forEach( hubInfo -> {
 			put(hubInfo.hubId(), hubInfo.hubName());
 		});
