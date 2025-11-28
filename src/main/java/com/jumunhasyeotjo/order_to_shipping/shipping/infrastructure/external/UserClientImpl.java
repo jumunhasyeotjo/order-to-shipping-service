@@ -12,11 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class UserClientImpl implements UserClient {
 	@Override
-	public boolean isManagingHub(Long userId, UUID hubId) {
-		return true;
-	}
-
-	@Override
 	public void sendSlackMessage(UUID originHubId, UUID receiverCompanyId, String orderIdMessage, String infoMessage,
 		String etaMessage, Long driverId) {
 

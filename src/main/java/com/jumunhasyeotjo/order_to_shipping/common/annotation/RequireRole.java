@@ -10,5 +10,5 @@ import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireRole {
-    UserRole[] value();   // 허용할 권한 목록
+    UserRole[] value() default {UserRole.MASTER};  // 허용할 권한 목록
 }
