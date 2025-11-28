@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "hub-product-stock-company", contextId = "productClient")
+@FeignClient(name = "hub-product-stock-company", contextId = "OrderProductClient")
 public interface ProductClientImpl extends ProductClient {
 
     @PostMapping("/order")

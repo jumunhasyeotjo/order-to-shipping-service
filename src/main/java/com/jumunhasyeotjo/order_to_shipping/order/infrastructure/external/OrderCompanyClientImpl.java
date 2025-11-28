@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "hub-product-stock-company", contextId = "companyClient")
+@FeignClient(name = "hub-product-stock-company", contextId = "OrderCompanyClientImpl")
 public interface OrderCompanyClientImpl extends OrderCompanyClient {
 
     @GetMapping("/{companyId}/exists")

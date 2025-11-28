@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 컨테이너
+  postgres:
+    image: postgres:15-alpine
+    container_name: shipping-db
+    restart: always
+    environment:
+      POSTGRES_DB: shipping       # DB 이름
+      POSTGRES_USER: postgres     # 계정 아이디
+      POSTGRES_PASSWORD: password # 계정 비밀번호 (이 값이 application.yml과 일치해야 함)
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/data:/var/lib/postgresql/data # 컨테이너를 내려도 데이터가 유지되도록 설정
+
+  # Redis 컨테이너
+  redis:
+    image: redis:alpine
+    container_name: shipping-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    # 별도 비밀번호 설정 없음 (application.yml에서도 password 비워둠)

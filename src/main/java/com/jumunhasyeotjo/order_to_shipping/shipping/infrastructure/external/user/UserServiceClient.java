@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(
-	name = "hub-product-stock-company"
+	name = "hub-product-stock-company", contextId = "ShippingStockClient"
 )
 public interface UserServiceClient {
 

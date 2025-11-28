@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@FeignClient(name = "hub-product-stock-company", contextId = "stockClient")
+@FeignClient(name = "hub-product-stock-company", contextId = "OrderStockClient")
 public interface StockClientImpl extends StockClient {
 
     @PostMapping("/decrement")
