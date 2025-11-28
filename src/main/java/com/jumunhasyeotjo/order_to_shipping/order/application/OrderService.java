@@ -12,10 +12,13 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClien
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderRolledBackEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -45,22 +49,33 @@ public class OrderService {
 
         List<ProductResult> productResult = findAllOrderProduct(command.orderProducts());
 
-        decreaseStock(command.orderProducts());
+        String idempotentKey = "ORDER_" + command.idempotencyKey();
 
-        Map<UUID, Integer> productQuantityMap = command.orderProducts().stream()
-                .collect(Collectors.toMap(OrderProductReq::productId, OrderProductReq::quantity));
+        Order savedOrder;
+        try {
+            decreaseStock(command.orderProducts(), idempotentKey);
 
-        List<OrderCompany> orderCompanies = mapOrderCompany(productResult, productQuantityMap);
+            Map<UUID, Integer> productQuantityMap = command.orderProducts().stream()
+                    .collect(Collectors.toMap(OrderProductReq::productId, OrderProductReq::quantity));
 
-        int totalPrice = mapTotalPrice(productResult, productQuantityMap);
+            List<OrderCompany> orderCompanies = mapOrderCompany(productResult, productQuantityMap);
 
-        Order savedOrder = orderRepository.save(Order.create(
-                orderCompanies,
-                command.userId(),
-                command.organizationId(),
-                command.requestMessage(),
-                totalPrice
-        ));
+            int totalPrice = mapTotalPrice(productResult, productQuantityMap);
+
+            savedOrder = orderRepository.save(Order.create(
+                    orderCompanies,
+                    command.userId(),
+                    command.organizationId(),
+                    command.requestMessage(),
+                    totalPrice
+            ));
+
+        } catch (Exception e) {
+            log.error("주문 저장 실패로 인한 보상 트랜잭션 실행: {}", e.getMessage());
+            eventPublisher.publishEvent(OrderRolledBackEvent.of(idempotentKey, command.orderProducts()));
+
+            throw e; // 롤백을 위한 예외 발생
+        }
 
         eventPublisher.publishEvent(OrderCreatedEvent.of(savedOrder));
 
@@ -109,8 +124,8 @@ public class OrderService {
     }
 
     // 재고 검증 및 차감
-    private void decreaseStock(List<OrderProductReq> orderProducts) {
-        if (!stockClient.decreaseStock(orderProducts)) {
+    private void decreaseStock(List<OrderProductReq> orderProducts, String idempotentKey) {
+        if (!stockClient.decreaseStock(orderProducts, idempotentKey)) {
             throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
         }
     }
@@ -151,20 +166,12 @@ public class OrderService {
 
         validateHubManager(command.organizationId(), role, order.getReceiverCompanyId());
 
-        restoreStock(order);
-
         order.cancel(role, command.userId());
 
+        String idempotentKey = "ORDER_" + order.getId();
+
+        eventPublisher.publishEvent(OrderCanceledEvent.of(idempotentKey, order));
         return order;
-    }
-
-    // 재고 복구
-    private void restoreStock(Order order) {
-        List<OrderProduct> orderProducts = order.getOrderCompanies().stream()
-                .flatMap(company -> company.getOrderProducts().stream())
-                .toList();
-
-        stockClient.restoreStocks(orderProducts);
     }
 
     @Transactional(readOnly = true)

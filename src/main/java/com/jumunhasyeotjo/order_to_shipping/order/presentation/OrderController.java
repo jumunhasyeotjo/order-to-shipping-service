@@ -35,12 +35,14 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiRes<CreateOrderRes>> createOrder(@RequestBody @Valid CreateOrderReq req,
+                                                              @RequestHeader("x- idempotency-key") String idempotencyKey,
                                                               @PassportUser Passport passport) {
         CreateOrderCommand command = new CreateOrderCommand(
                 passport.getUserId(),
                 UUID.fromString(passport.getBelong()),
                 req.requestMessage(),
-                req.orderProducts());
+                req.orderProducts(),
+                idempotencyKey);
 
         Order order = orderService.createOrder(command);
         CreateOrderRes res = new CreateOrderRes(order.getId(), order.getStatus());

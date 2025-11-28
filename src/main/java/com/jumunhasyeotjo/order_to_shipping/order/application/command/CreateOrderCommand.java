@@ -7,6 +7,7 @@ public record CreateOrderCommand (
         Long userId,
         UUID organizationId,
         String requestMessage,
-        List<OrderProductReq> orderProducts
+        List<OrderProductReq> orderProducts,
+        String idempotencyKey
 ){
 }

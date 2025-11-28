@@ -8,6 +8,7 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompa
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,7 +30,7 @@ import java.util.UUID;
 import static com.jumunhasyeotjo.order_to_shipping.order.fixtures.OrderFixtures.getOrder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,6 +38,9 @@ import static org.mockito.Mockito.verify;
 // Service 단위 테스트
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private OrderCompanyClient orderCompanyClient;
@@ -60,7 +65,6 @@ public class OrderServiceTest {
     void createOrder_whenCompanyDoesNotExist_shouldThrowException() {
         // given
         CreateOrderCommand request = getCreateOrderCommand();
-        UUID companyId = UUID.randomUUID();
 
         given(orderCompanyClient.existCompany(request.organizationId()))
                 .willReturn(false);
@@ -77,7 +81,6 @@ public class OrderServiceTest {
     void createOrder_whenProductInfoDoesNotExist_shouldThrowException() {
         // given
         CreateOrderCommand request = getCreateOrderCommand();
-        UUID companyId = UUID.randomUUID();
         List<ProductResult> productResults = new ArrayList<>();
 
         given(orderCompanyClient.existCompany(request.organizationId()))
@@ -97,7 +100,6 @@ public class OrderServiceTest {
     void createOrder_whenStockIsInsufficient_shouldThrowException() {
         // given
         CreateOrderCommand request = getCreateOrderCommand();
-        UUID companyId = UUID.randomUUID();
         List<ProductResult> productResults = new ArrayList<>();
         ProductResult product = new ProductResult(request.orderProducts().get(0).productId(),
                 UUID.randomUUID(),
@@ -109,7 +111,7 @@ public class OrderServiceTest {
                 .willReturn(true);
         given(productClient.findAllProducts(any()))
                 .willReturn(productResults);
-        given(stockClient.decreaseStock(request.orderProducts()))
+        given(stockClient.decreaseStock(any(), anyString()))
                 .willReturn(false);
 
 
@@ -175,6 +177,7 @@ public class OrderServiceTest {
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(eventPublisher).publishEvent(any(OrderCanceledEvent.class));
     }
 
     @Test
@@ -194,6 +197,7 @@ public class OrderServiceTest {
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(eventPublisher).publishEvent(any(OrderCanceledEvent.class));
     }
 
     @Test
@@ -449,6 +453,6 @@ public class OrderServiceTest {
         int quantity = 10;
         orderProducts.add(new OrderProductReq(productId, quantity));
 
-        return new CreateOrderCommand(1L, UUID.randomUUID(), requestMessage, orderProducts);
+        return new CreateOrderCommand(1L, UUID.randomUUID(), requestMessage, orderProducts, "멱등키");
     }
 }

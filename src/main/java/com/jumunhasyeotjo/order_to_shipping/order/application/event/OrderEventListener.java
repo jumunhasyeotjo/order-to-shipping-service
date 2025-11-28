@@ -1,6 +1,9 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application.event;
 
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderRolledBackEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +15,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 public class OrderEventListener {
+
+    private final StockClient stockClient;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -27,6 +32,17 @@ public class OrderEventListener {
 //                event.getSupplierCompanyId(),
 //                event.getReceiverCompanyId()
 //        );
+    }
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleOrderCanceled(OrderCanceledEvent event) {
+        stockClient.restoreStocks(event.getOrderProducts(), event.getIdempotentKey());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleRolledBack(OrderRolledBackEvent event) {
+//        stockClient.rollbackedStocks(event.getOrderProducts(), event.getIdempotentKey());
     }
 }
