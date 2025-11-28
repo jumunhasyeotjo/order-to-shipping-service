@@ -23,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(TestRedisConfig.class)
+//@Import(TestRedisConfig.class)
 public class OrderRepositoryTest {
 
     @Autowired

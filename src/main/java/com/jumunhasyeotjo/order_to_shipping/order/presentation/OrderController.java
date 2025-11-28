@@ -35,7 +35,7 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiRes<CreateOrderRes>> createOrder(@RequestBody @Valid CreateOrderReq req,
-                                                              @RequestHeader("x- idempotency-key") String idempotencyKey,
+                                                              @RequestHeader("x-idempotency-key") String idempotencyKey,
                                                               @PassportUser Passport passport) {
         CreateOrderCommand command = new CreateOrderCommand(
                 passport.getUserId(),

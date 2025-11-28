@@ -1,21 +1,20 @@
 package com.jumunhasyeotjo.order_to_shipping.order.infrastructure.external;
 
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.StockApiReq;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@Component
-public class StockClientImpl implements StockClient {
+@FeignClient(name = "hub-product-stock-company", contextId = "stockClient")
+public interface StockClientImpl extends StockClient {
 
-    @Override
-    public boolean decreaseStock(List<OrderProductReq> orderProducts, String idempotentKey) {
-        return true;
-    }
+    @PostMapping("/decrement")
+    boolean decreaseStock(StockApiReq orderProducts, @RequestHeader("Idempotency-Key") String idempotentKey);
 
-    @Override
-    public void restoreStocks(List<OrderProductReq> orderProducts, String idempotentKey) {
-
-    }
+    @PostMapping("/increment")
+    void restoreStocks(StockApiReq orderProducts, @RequestHeader("Idempotency-Key") String idempotentKey);
 }

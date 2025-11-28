@@ -6,6 +6,7 @@ import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.StockApiReq;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
@@ -53,7 +54,7 @@ public class OrderService {
 
         Order savedOrder;
         try {
-            decreaseStock(command.orderProducts(), idempotentKey);
+            decreaseStock(new StockApiReq(command.orderProducts()), idempotentKey);
 
             Map<UUID, Integer> productQuantityMap = command.orderProducts().stream()
                     .collect(Collectors.toMap(OrderProductReq::productId, OrderProductReq::quantity));
@@ -124,7 +125,7 @@ public class OrderService {
     }
 
     // 재고 검증 및 차감
-    private void decreaseStock(List<OrderProductReq> orderProducts, String idempotentKey) {
+    private void decreaseStock(StockApiReq orderProducts, String idempotentKey) {
         if (!stockClient.decreaseStock(orderProducts, idempotentKey)) {
             throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
         }

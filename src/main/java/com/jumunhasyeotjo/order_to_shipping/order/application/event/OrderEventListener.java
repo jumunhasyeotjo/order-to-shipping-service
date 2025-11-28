@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application.event;
 
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.StockApiReq;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
@@ -37,7 +38,7 @@ public class OrderEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderCanceled(OrderCanceledEvent event) {
-        stockClient.restoreStocks(event.getOrderProducts(), event.getIdempotentKey());
+        stockClient.restoreStocks(new StockApiReq(event.getOrderProducts()), event.getIdempotentKey());
     }
 
     @Async

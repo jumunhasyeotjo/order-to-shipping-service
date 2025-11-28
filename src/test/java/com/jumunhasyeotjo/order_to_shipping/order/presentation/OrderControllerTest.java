@@ -82,6 +82,7 @@ public class OrderControllerTest {
 
         // when & then
         mockMvc.perform(post("/v1/orders")
+                        .header("x-idempotency-key", "test")
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
