@@ -19,10 +19,6 @@ public record ShippingRes(
 	ShippingStatus shippingStatus,
 	@Schema(description = "배송 주소")
 	String shippingAddress,
-	@Schema(description = "수령자 전화번호")
-	String receiverPhoneNumber,
-	@Schema(description = "수령자 이름")
-	String receiverName,
 	@Schema(description = "상세 배송 이력")
 	List<ShippingHistoryRes> shippingHistories
 ) {
@@ -34,8 +30,6 @@ public record ShippingRes(
 			shipping.getReceiverCompanyId(),
 			shipping.getShippingStatus(),
 			shipping.getShippingAddress().getAddress(),
-			shipping.getReceiverPhoneNumber().getValue(),
-			shipping.getReceiverName(),
 			shippingHistoryResList
 		);
 	}

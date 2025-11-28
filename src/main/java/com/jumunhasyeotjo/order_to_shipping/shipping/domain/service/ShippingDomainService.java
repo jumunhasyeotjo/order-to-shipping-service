@@ -15,7 +15,7 @@ public class ShippingDomainService {
 	/**
 	 * 배송 이력(구간) 출발 처리
 	 */
-	public void departHistorySegment(ShippingHistory shippingHistory){
+	public Integer departHistorySegment(ShippingHistory shippingHistory){
 		Shipping shipping = shippingHistory.getShipping();
 		Integer currentSequence = shippingHistory.getSequence();
 		Integer totalSequence = shipping.getTotalRouteCount();
@@ -26,12 +26,14 @@ public class ShippingDomainService {
 		}else if(currentSequence.equals(totalSequence)){
 			shipping.departFromDestinationHub();
 		}
+
+		return totalSequence;
 	}
 
 	/**
 	 * 배송 이력(구간) 도착 처리
 	 */
-	public void arriveHistorySegment(ShippingHistory shippingHistory, Integer actualDistance){
+	public Integer arriveHistorySegment(ShippingHistory shippingHistory, Integer actualDistance){
 		Shipping shipping = shippingHistory.getShipping();
 		Integer currentSequence = shippingHistory.getSequence();
 		Integer totalSequence = shipping.getTotalRouteCount();
@@ -42,6 +44,8 @@ public class ShippingDomainService {
 		}else if(currentSequence == totalSequence -1){
 			shipping.arriveAtDestinationHub();
 		}
+
+		return totalSequence;
 	}
 
 	/**

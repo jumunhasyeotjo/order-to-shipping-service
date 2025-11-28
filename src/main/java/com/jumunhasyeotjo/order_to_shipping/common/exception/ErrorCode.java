@@ -46,11 +46,13 @@ public enum ErrorCode {
 
     // 404 NOT_FOUND
     NOT_FOUND_BY_ID(HttpStatus.NOT_FOUND, "EN001", "해당 ID로 데이터를 찾을 수 없습니다."),
+    NOT_FOUND_BY_NAME(HttpStatus.NOT_FOUND, "EN002", "해당 이름로 데이터를 찾을 수 없습니다."),
 
     // 500 INTERNAL_SERVER_ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "EI001", "서버 에러가 발생했습니다."),
     HISTORY_SHIPPING_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "EI002", "배송이력과 배송이 일치하지 않습니다."),
     CONNECTION_NOT_FOUND_BETWEEN_HUBS(HttpStatus.INTERNAL_SERVER_ERROR, "EI003","연결된 허브 간 배송만 가능합니다."),
+    NOT_FOUND_HUB_INFO(HttpStatus.INTERNAL_SERVER_ERROR, "EI004","허브 정보를 찾을 수 없습니다. "),
     ;
 
     private final HttpStatus status;

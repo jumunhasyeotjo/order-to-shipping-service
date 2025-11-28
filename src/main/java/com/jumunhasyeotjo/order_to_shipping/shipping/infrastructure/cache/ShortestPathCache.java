@@ -1,6 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache;
 
-import static com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.RouteCacheKeys.*;
+
+import static com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.key.RouteCacheKeys.*;
 
 import java.util.Map;
 import java.util.UUID;

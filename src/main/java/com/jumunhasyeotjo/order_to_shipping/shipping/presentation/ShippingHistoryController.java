@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
+import com.jumunhasyeotjo.order_to_shipping.common.annotation.RequireRole;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingHistoryService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService;
@@ -28,12 +29,13 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartS
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.PhoneNumber;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingHistoryRes;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
+import com.library.passport.annotation.PassportUser;
+import com.library.passport.proto.PassportProto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,17 +52,19 @@ import lombok.extern.slf4j.Slf4j;
 public class ShippingHistoryController {
 	private final ShippingHistoryService shippingHistoryService;
 
-	@PatchMapping("/{shippingHistoryId}")
+	@PatchMapping("/{shippingHistoryId}/depart")
+	@RequireRole({UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 출발")
 	public ResponseEntity<ApiRes<UUID>> departShipping(
+		@PassportUser PassportProto.Passport passport,
 		@PathVariable(name = "shippingHistoryId") UUID shippingHistoryId
 	) {
 		log.info("배송 출발 요청: shippingHistoryId={}", shippingHistoryId);
 
 		DepartShippingHistoryCommand command = new DepartShippingHistoryCommand(
 			shippingHistoryId,
-			UserRole.HUB_MANAGER,
-			1L
+			UserRole.valueOf(passport.getRole()),
+			passport.getUserId()
 		);
 
 		shippingHistoryService.departShippingHistory(command);
@@ -69,17 +73,19 @@ public class ShippingHistoryController {
 		return ResponseEntity.ok(ApiRes.success(shippingHistoryId));
 	}
 
-	@PatchMapping("/{shippingHistoryId}")
+	@PatchMapping("/{shippingHistoryId}/arrive")
+	@RequireRole({UserRole.HUB_MANAGER, UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 도착")
 	public ResponseEntity<ApiRes<UUID>> arriveShipping(
+		@PassportUser PassportProto.Passport passport,
 		@Valid @RequestBody ArriveShippingReq request
 	) {
 		log.info("배송 도착 요청: shippingHistoryId={}", request.shippingHistoryId());
 
 		ArriveShippingHistoryCommand command = new ArriveShippingHistoryCommand(
 			request.shippingHistoryId(),
-			UserRole.HUB_MANAGER,
-			1L,
+			UserRole.valueOf(passport.getRole()),
+			passport.getUserId(),
 			request.actualDistance()
 		);
 
@@ -90,8 +96,10 @@ public class ShippingHistoryController {
 	}
 
 	@PatchMapping("/{shippingHistoryId}/driver")
+	@RequireRole({UserRole.HUB_MANAGER})
 	@Operation(summary = "배송자 수정")
 	public ResponseEntity<ApiRes<UUID>> changeDriver(
+		@PassportUser PassportProto.Passport passport,
 		@Valid @RequestBody ChangeDriverReq request
 	) {
 		log.info("배송자 수정 요청: shippingHistoryId={}, newDriverId={}", request.shippingHistoryId(), request.newDriverId());
@@ -108,16 +116,19 @@ public class ShippingHistoryController {
 		return ResponseEntity.ok(ApiRes.success(request.shippingHistoryId()));
 	}
 
-	@GetMapping("/assigned")
+	@GetMapping("/assigned-histories")
+	@RequireRole({UserRole.HUB_DRIVER, UserRole.COMPANY_DRIVER})
 	@Operation(summary = "담당 배송내역 조회 (배송자)")
 	public ResponseEntity<ApiRes<Page<ShippingHistoryRes>>> getAssignedShippingHistories(
+		@PassportUser PassportProto.Passport passport,
 		@PageableDefault Pageable pageable
 	) {
 		GetAssignedShippingHistoriesCommand command = new GetAssignedShippingHistoriesCommand(
-			1L
+			passport.getUserId()
 		);
 
-		Page<ShippingHistory> shippingHistories = shippingHistoryService.getAssignedShippingHistories(command, pageable);
+		Page<ShippingHistory> shippingHistories = shippingHistoryService.getAssignedShippingHistories(command,
+			pageable);
 		Page<ShippingHistoryRes> response = shippingHistories.map(ShippingHistoryRes::from);
 
 		return ResponseEntity.ok(ApiRes.success(response));
