@@ -36,4 +36,9 @@ public class OrderRepositoryAdapter implements OrderRepository {
         return jpaOrderRepository.findAllByOrderCompany(companyOrderId);
     }
 
+    @Override
+    public boolean existsByIdempotencyKey(String idempotencyKey) {
+        return jpaOrderRepository.existsByIdempotencyKey(idempotencyKey);
+    }
+
 }

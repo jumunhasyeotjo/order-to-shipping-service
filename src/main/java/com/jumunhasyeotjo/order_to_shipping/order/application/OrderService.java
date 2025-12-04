@@ -7,14 +7,19 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.StockClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderProductClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderStockClient;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderRolledBackEvent;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -26,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -34,38 +40,65 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    private final StockClient stockClient;
-    private final ProductClient productClient;
+    private final OrderStockClient orderStockClient;
+    private final OrderProductClient orderProductClient;
     private final OrderCompanyClient orderCompanyClient;
+
+    private final static String ORDER_CREATE_IDEMPOTENCY_KEY_PREFIX = "ORDER_CREATED";
+    private final static String ORDER_CANCEL_IDEMPOTENCY_KEY_PREFIX = "ORDER_CANCELED";
 
     @Transactional
     public Order createOrder(CreateOrderCommand command) {
         validateCompany(command.organizationId());
 
-        List<ProductResult> productResult = findAllOrderProduct(command.orderProducts());
+        validateDuplicateOrder(command.idempotencyKey()); // 중복 주문 검증 (멱등키 활용)
 
-        decreaseStock(command.orderProducts());
+        List<ProductResult> productResult = findAllOrderProduct(command.orderProducts()); // 상품 조회
 
+        // 데이터 처리
         Map<UUID, Integer> productQuantityMap = command.orderProducts().stream()
                 .collect(Collectors.toMap(OrderProductReq::productId, OrderProductReq::quantity));
-
         List<OrderCompany> orderCompanies = mapOrderCompany(productResult, productQuantityMap);
-
         int totalPrice = mapTotalPrice(productResult, productQuantityMap);
 
-        Order savedOrder = orderRepository.save(Order.create(
+        Order createOrder = orderRepository.save(Order.create(
                 orderCompanies,
                 command.userId(),
                 command.organizationId(),
                 command.requestMessage(),
-                totalPrice
-        ));
+                totalPrice,
+                command.idempotencyKey()));
 
-        eventPublisher.publishEvent(OrderCreatedEvent.of(savedOrder));
+        String idempotentKey = ORDER_CREATE_IDEMPOTENCY_KEY_PREFIX + command.idempotencyKey(); // 멱등키 생성
 
-        return savedOrder;
+        try {
+            // Todo : 쿠폰 처리
+            
+            decreaseStock(command.orderProducts(), idempotentKey); // 재고 차감 -> timeout -> retry 시도 -> 안되면 rollback 이벤트 발행
+
+            // Todo : 결제 처리
+
+            createOrder.updateStatus(OrderStatus.ORDERED);
+
+            eventPublisher.publishEvent(OrderCreatedEvent.of(createOrder));
+
+        } catch (Exception e) {
+            log.error("주문 저장 실패로 인한 보상 트랜잭션 실행: {}", e.getMessage());
+            eventPublisher.publishEvent(OrderRolledBackEvent.of(idempotentKey, command.orderProducts()));
+
+            throw e; // 롤백을 위한 예외 발생
+        }
+
+        return createOrder;
     }
 
+    private void validateDuplicateOrder(String idempotencyKey) {
+        if (orderRepository.existsByIdempotencyKey(idempotencyKey)) {
+            throw new BusinessException(ErrorCode.DUPLICATE_ORDER);
+        }
+    }
+
+    // Entity 바인딩
     private List<OrderCompany> mapOrderCompany(List<ProductResult> productResult, Map<UUID, Integer> quantityMap) {
         // 공급 업체 ID 기준 그룹화
         Map<UUID, List<ProductResult>> productByCompany = productResult.stream()
@@ -100,7 +133,7 @@ public class OrderService {
 
     // 상품 정보 조회 및 검증
     private List<ProductResult> findAllOrderProduct(List<OrderProductReq> orderProducts) {
-        List<ProductResult> allProducts = productClient.findAllProducts(orderProducts.stream().map(OrderProductReq::productId).toList());
+        List<ProductResult> allProducts = orderProductClient.findAllProducts(orderProducts.stream().map(OrderProductReq::productId).toList());
         if (!(allProducts.size() == orderProducts.size())) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -108,8 +141,8 @@ public class OrderService {
     }
 
     // 재고 검증 및 차감
-    private void decreaseStock(List<OrderProductReq> orderProducts) {
-        if (!stockClient.decreaseStock(orderProducts)) {
+    private void decreaseStock(List<OrderProductReq> orderProducts, String idempotentKey) {
+        if (!orderStockClient.decreaseStock(orderProducts, idempotentKey)) {
             throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
         }
     }
@@ -150,20 +183,12 @@ public class OrderService {
 
         validateHubManager(command.organizationId(), role, order.getReceiverCompanyId());
 
-        restoreStock(order);
-
         order.cancel(role, command.userId());
 
+        String idempotentKey = ORDER_CANCEL_IDEMPOTENCY_KEY_PREFIX + order.getId();
+
+        eventPublisher.publishEvent(OrderCanceledEvent.of(idempotentKey, order));
         return order;
-    }
-
-    // 재고 복구
-    private void restoreStock(Order order) {
-        List<OrderProduct> orderProducts = order.getOrderCompanies().stream()
-                .flatMap(company -> company.getOrderProducts().stream())
-                .toList();
-
-        stockClient.restoreStocks(orderProducts);
     }
 
     @Transactional(readOnly = true)
@@ -210,5 +235,10 @@ public class OrderService {
                 if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId))
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompanyOrderItemsRes> getCompanyOrderItems(UUID companyOrderId) {
+        return orderRepository.findAllByOrderCompany(companyOrderId);
     }
 }

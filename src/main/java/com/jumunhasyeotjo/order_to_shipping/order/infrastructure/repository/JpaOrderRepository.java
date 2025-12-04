@@ -22,4 +22,6 @@ public interface JpaOrderRepository extends JpaRepository<Order, UUID>{
             "FROM OrderProduct op " +
             "WHERE op.orderCompany.id = :companyOrderId")
     List<CompanyOrderItemsRes> findAllByOrderCompany(UUID companyOrderId);
+
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }

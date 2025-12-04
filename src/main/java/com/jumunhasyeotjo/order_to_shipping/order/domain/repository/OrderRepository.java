@@ -14,4 +14,5 @@ public interface OrderRepository {
     Order save(Order order);
     Page<Order> findAllByCompanyId(UUID companyId, Pageable pageable);
     List<CompanyOrderItemsRes> findAllByOrderCompany(UUID companyOrderId);
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }
