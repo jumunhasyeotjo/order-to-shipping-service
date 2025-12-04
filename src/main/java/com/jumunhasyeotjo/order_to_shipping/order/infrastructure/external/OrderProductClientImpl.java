@@ -1,14 +1,14 @@
 package com.jumunhasyeotjo.order_to_shipping.order.infrastructure.external;
 
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.ProductClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderProductClient;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
-public class ProductClientImpl implements ProductClient {
+public class OrderProductClientImpl implements OrderProductClient {
 
     @Override
     public List<ProductResult> findAllProducts(List<UUID> orderProducts) {
