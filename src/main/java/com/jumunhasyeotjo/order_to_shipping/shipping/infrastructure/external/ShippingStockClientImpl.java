@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-public class StockClientImpl implements StockClient {
+public class ShippingStockClientImpl implements StockClient {
 	@Override
 	public void increaseStock(UUID idempotencyKey, UUID hubId, List<ProductInfo> productList) {
 
