@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
-import com.jumunhasyeotjo.order_to_shipping.common.annotation.RequireRole;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
@@ -38,7 +37,9 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.Ch
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingHistoryRes;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
+import com.library.passport.annotation.PassportAuthorize;
 import com.library.passport.annotation.PassportUser;
+import com.library.passport.entity.PassportUserRole;
 import com.library.passport.proto.PassportProto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,7 +59,7 @@ public class ShippingController {
 	private final ShippingService shippingService;
 
 	@PostMapping
-	@RequireRole(UserRole.MASTER)
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
 	@Operation(summary = "배송 생성")
 	public ResponseEntity<ApiRes<UUID>> createShipping(
 		@PassportUser Passport passport,
@@ -73,7 +74,7 @@ public class ShippingController {
 	}
 
 	@PatchMapping("/{shippingId}/cancel")
-	@RequireRole({UserRole.MASTER, UserRole.HUB_MANAGER})
+	@PassportAuthorize
 	@Operation(summary = "배송 취소")
 	public ResponseEntity<ApiRes<UUID>> cancelShipping(
 		@PassportUser Passport passport,
@@ -83,7 +84,7 @@ public class ShippingController {
 
 		CancelShippingCommand command = new CancelShippingCommand(
 			shippingId,
-			UserRole.valueOf(passport.getRole()),
+			UserRole.fromPassportUserRole(PassportUserRole.of(passport.getRole())),
 			passport.getBelong()
 		);
 
