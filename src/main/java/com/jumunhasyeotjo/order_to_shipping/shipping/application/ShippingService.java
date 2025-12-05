@@ -40,7 +40,6 @@ public class ShippingService {
 
 	private final ShippingRepository shippingRepository;
 
-	private final UserClient userClient;
 	private final CompanyClient companyClient;
 
 	private final ApplicationEventPublisher eventPublisher;

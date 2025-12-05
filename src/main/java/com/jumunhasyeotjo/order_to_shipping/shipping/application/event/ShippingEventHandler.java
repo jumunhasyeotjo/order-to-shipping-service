@@ -38,9 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ShippingEventHandler {
 	private final ShippingEtaAiPredictor shippingEtaAiPredictor;
 	private final UserClient userClient;
-	private final OrderClient orderClient;
-	private final StockClient stockClient;
-	private final HubIdCache hubIdCache;
 
 	@Async
 	@Retryable(
@@ -72,44 +69,6 @@ public class ShippingEventHandler {
 
 		userClient.sendSlackMessage(event.getOriginHubId(), event.getReceiverCompanyId(), orderIdMessage, infoMessage,
 			etaMessage, event.getDriverId());
-	}
-
-	@Async
-	@Retryable(
-		value = NetworkException.class,
-		maxAttempts = 3,
-		backoff = @Backoff(delay = 1000)
-	)
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-	public void handleShippingSegmentDeparted(ShippingSegmentDepartedEvent event) {
-		List<ProductInfo> productList = getProducts(event.getShippingId());
-		if(!event.isFromOriginHub()){
-			UUID hubId = getHubIdFromName(event.getOrigin());
-			stockClient.decreaseStock(event.getIdempotencyKey(), hubId, productList);
-		}
-	}
-
-	@Async
-	@Retryable(
-		value = NetworkException.class,
-		maxAttempts = 3,
-		backoff = @Backoff(delay = 1000)
-	)
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-	public void handleShippingSegmentArrived(ShippingSegmentArrivedEvent event) {
-		List<ProductInfo> productList = getProducts(event.getShippingId());
-		if(!event.isFinalDestination()){
-			UUID hubId = getHubIdFromName(event.getDestination());
-			stockClient.increaseStock(event.getIdempotencyKey(), hubId, productList);
-		}
-	}
-
-	private UUID getHubIdFromName(String hubName) {
-		return hubIdCache.getOrLoad(hubName);
-	}
-
-	private List<ProductInfo> getProducts(UUID shippingId) {
-		return orderClient.getProductsByCompanyOrder(shippingId);
 	}
 
 	private String buildWaypoints(List<ShippingHistory> shippingHistories) {

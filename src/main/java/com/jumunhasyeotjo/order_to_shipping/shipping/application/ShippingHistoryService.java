@@ -22,15 +22,18 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.ChangeD
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartShippingHistoryCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.OrderClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentArrivedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubIdCache;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubNameCache;
 
 import lombok.RequiredArgsConstructor;
@@ -47,6 +50,9 @@ public class ShippingHistoryService {
 	private final ApplicationEventPublisher eventPublisher;
 	private final HubNameCache hubNameCache;
 	private final DriverClient driverClient;
+	private final OrderClient orderClient;
+	private final StockClient stockClient;
+	private final HubIdCache hubIdCache;
 
 	/**
 	 * 배송이력 생성
@@ -86,7 +92,9 @@ public class ShippingHistoryService {
 		);
 
 		shippingDomainService.departHistorySegment(shippingHistory);
-		publishDepartedEvent(shippingHistory);
+		if (shippingHistory.getSequence() != 1) { // 첫 허브 재고는 차감하지않음(주문할때 이미 차감)
+			decreaseOriginHubStock(shippingHistory.getShipping().getId(), shippingHistory.getOrigin());
+		}
 
 		log.info("배송 출발 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
 	}
@@ -104,9 +112,29 @@ public class ShippingHistoryService {
 		);
 
 		int totalRouteCount = shippingDomainService.arriveHistorySegment(shippingHistory, command.actualDistance());
+		Shipping shipping = shippingHistory.getShipping();
+		if (!Objects.equals(shippingHistory.getSequence(), shipping.getTotalRouteCount())) { // 최종경로는 목적지이므로 허브 재고차감 하지않음
+			increaseDestinationHubStock(shipping.getId(), shippingHistory.getDestination());
+		}
 		publishArrivedEvent(shippingHistory, totalRouteCount);
 
 		log.info("배송 도착 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
+	}
+
+	private void decreaseOriginHubStock(UUID shippingId, String originHub) {
+		List<ProductInfo> productList = getProducts(shippingId);
+		UUID hubId = getHubIdFromName(originHub);
+		stockClient.decreaseStock(UUID.randomUUID(), hubId, productList);
+	}
+
+	private void increaseDestinationHubStock(UUID shippingId, String destinationHub) {
+		List<ProductInfo> productList = getProducts(shippingId);
+		UUID hubId = getHubIdFromName(destinationHub);
+		stockClient.increaseStock(UUID.randomUUID(), hubId, productList);
+	}
+
+	private List<ProductInfo> getProducts(UUID shippingId) {
+		return orderClient.getProductsByCompanyOrder(shippingId);
 	}
 
 	/**
@@ -217,6 +245,10 @@ public class ShippingHistoryService {
 				);
 			})
 			.toList();
+	}
+
+	private UUID getHubIdFromName(String hubName) {
+		return hubIdCache.getOrLoad(hubName);
 	}
 
 }
