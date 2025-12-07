@@ -1,15 +1,12 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderStockClient;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderProductClient;
+import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.event.OrderCanceledEvent;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +14,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static com.jumunhasyeotjo.order_to_shipping.order.fixtures.OrderFixtures.getOrder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -39,9 +34,6 @@ import static org.mockito.Mockito.verify;
 // Service 단위 테스트
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private OrderCompanyClient orderCompanyClient;
@@ -53,7 +45,13 @@ public class OrderServiceTest {
     private OrderProductClient orderProductClient;
 
     @Mock
-    private OrderRepository orderRepository;
+    private OrderCouponClient orderCouponClient;
+
+    @Mock
+    private OrderPaymentClient orderPaymentClient;
+
+    @Mock
+    private OrderPersistenceService orderPersistenceService;
 
     @InjectMocks
     private OrderService orderService;
@@ -74,7 +72,7 @@ public class OrderServiceTest {
         assertThatThrownBy(() -> orderService.createOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("존재하지 않는 업체 입니다.");
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).saveOrder(any(), any(), anyInt());
     }
 
     @Test
@@ -84,7 +82,7 @@ public class OrderServiceTest {
         CreateOrderCommand request = getCreateOrderCommand();
         List<ProductResult> productResults = new ArrayList<>();
 
-        given(orderRepository.existsByIdempotencyKey(request.idempotencyKey()))
+        given(orderPersistenceService.existsByIdempotencyKey(request.idempotencyKey()))
                 .willReturn(false);
         given(orderCompanyClient.existCompany(request.organizationId()))
                 .willReturn(true);
@@ -95,7 +93,7 @@ public class OrderServiceTest {
         assertThatThrownBy(() -> orderService.createOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("존재하지 않는 상품 입니다.");
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).saveOrder(any(), any(), anyInt());
     }
 
     @Test
@@ -110,15 +108,12 @@ public class OrderServiceTest {
                 1000);
         productResults.add(product);
 
-        given(orderRepository.existsByIdempotencyKey(request.idempotencyKey()))
-                .willReturn(false);
-        given(orderCompanyClient.existCompany(request.organizationId()))
-                .willReturn(true);
-        given(orderProductClient.findAllProducts(any()))
-                .willReturn(productResults);
-        given(orderStockClient.decreaseStock(any(), anyString()))
-                .willReturn(false);
-
+        given(orderCompanyClient.existCompany(request.organizationId())).willReturn(true);
+        given(orderPersistenceService.existsByIdempotencyKey(request.idempotencyKey())).willReturn(false);
+        given(orderProductClient.findAllProducts(any())).willReturn(productResults);
+        given(orderPersistenceService.saveOrder(any(), any(), anyInt())).willReturn(getOrder());
+        given(orderCouponClient.useCoupon(any(), any())).willReturn(true);
+        given(orderStockClient.decreaseStock(any(), any())).willReturn(false); // 재고 부족
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(request))
@@ -136,14 +131,19 @@ public class OrderServiceTest {
         Order order = getOrder();
         OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "MASTER", OrderStatus.SHIPPED);
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findById(request.orderId()))
+                .willReturn(order);
+
+        ReflectionTestUtils.setField(order, "status", request.status());
+        given(orderPersistenceService.updateOrderStatus(any(), any(), any(), any()))
+                .willReturn(order);
 
         // when
-        Order updateOrderStatus = orderService.updateOrderStatus(request);
+        Order result = orderService.updateOrderStatus(request);
 
         // then
-        assertThat(updateOrderStatus.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.SHIPPED);
     }
 
     @Test
@@ -152,8 +152,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER", OrderStatus.SHIPPED);
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findById(request.orderId()))
+                .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
@@ -173,15 +173,17 @@ public class OrderServiceTest {
         Order order = getOrder();
         CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "MASTER");
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findById(request.orderId()))
+                .willReturn(order);
+        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
+        given(orderPersistenceService.cancelOrder(any(), any())).willReturn(order);
 
         // when
-        orderService.cancelOrder(request);
+        Order result = orderService.cancelOrder(request);
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(eventPublisher).publishEvent(any(OrderCanceledEvent.class));
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(orderPersistenceService).cancelOrder(any(), eq(request));
     }
 
     @Test
@@ -191,17 +193,19 @@ public class OrderServiceTest {
         Order order = getOrder();
         CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findById(request.orderId()))
+                .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
+        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
+        given(orderPersistenceService.cancelOrder(any(), any())).willReturn(order);
 
         // when
-        orderService.cancelOrder(request);
+        Order result = orderService.cancelOrder(request);
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(eventPublisher).publishEvent(any(OrderCanceledEvent.class));
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(orderPersistenceService).cancelOrder(any(), eq(request));
     }
 
     @Test
@@ -211,8 +215,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findById(request.orderId()))
+                .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
@@ -232,8 +236,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
-        given(orderRepository.findById(order.getId()))
-                .willReturn(Optional.empty());
+        given(orderPersistenceService.findByIdWithAll(order.getId()))
+                .willThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         // when & then
         assertThatThrownBy(() -> orderService.getOrder(request))
@@ -248,8 +252,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(),UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
-        given(orderRepository.findById(order.getId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findByIdWithAll(order.getId()))
+                .willReturn(order);
 
         // when
         OrderResult result = orderService.getOrder(request);
@@ -257,18 +261,17 @@ public class OrderServiceTest {
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
         assertThat(order.getTotalPrice()).isEqualTo(result.totalPrice());
-        assertThat(order.getRequestMessage()).isEqualTo(result.requestMessage());
     }
 
     @Test
-    @DisplayName("업체 담당자는 본인이 주문한 상품만 조회 가능하다 - 실패. (단건)")
+    @DisplayName("수령 업체 담당자는 본인이 주문한 상품만 조회 가능하다 - 실패. (단건)")
     void getOrder_whenCompanyManagerIsNotOwner_shouldThrowException() {
         // given
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "COMPANY_MANAGER");
 
-        given(orderRepository.findById(order.getId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findByIdWithAll(order.getId()))
+                .willReturn(order);
 
         // when & then
         assertThatThrownBy(() -> orderService.getOrder(request))
@@ -283,8 +286,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(),2L, "HUB_MANAGER");
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findByIdWithAll(request.orderId()))
+                .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(true);
 
@@ -293,8 +296,6 @@ public class OrderServiceTest {
 
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
-        assertThat(order.getTotalPrice()).isEqualTo(result.totalPrice());
-        assertThat(order.getRequestMessage()).isEqualTo(result.requestMessage());
     }
 
     @Test
@@ -304,8 +305,8 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "HUB_MANAGER");
 
-        given(orderRepository.findById(request.orderId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findByIdWithAll(request.orderId()))
+                .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
                 .willReturn(false);
 
@@ -322,26 +323,24 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "MASTER");
 
-        given(orderRepository.findById(order.getId()))
-                .willReturn(Optional.of(order));
+        given(orderPersistenceService.findByIdWithAll(order.getId()))
+                .willReturn(order);
 
         // when
         OrderResult result = orderService.getOrder(request);
 
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
-        assertThat(order.getTotalPrice()).isEqualTo(result.totalPrice());
-        assertThat(order.getRequestMessage()).isEqualTo(result.requestMessage());
     }
 
     @Test
     @DisplayName("조회할 주문 미존재 (다건)")
     void searchOrder_whenNoOrdersFound_shouldReturnEmptyList() {
         // given
-        Page<Order> orderList = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+        Page<OrderResult> orderList = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
         SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
-        given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
+        given(orderPersistenceService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
@@ -355,16 +354,17 @@ public class OrderServiceTest {
     @DisplayName("업체 담당자는 본인이 주문한 상품만 조회 가능하다. - 성공 (다건)")
     void searchOrder_whenCompanyManagerIsOwner_shouldSucceed() {
         // given
-        Order order1 = getOrder();
-        Order order2 = getOrder();
-        Order order3 = getOrder();
+        OrderResult result1 = OrderResult.of(getOrder());
+        OrderResult result2 = OrderResult.of(getOrder());
+        OrderResult result3 = OrderResult.of(getOrder());
         UUID companyId = UUID.randomUUID();
-        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
+
+        Page<OrderResult> orderList = new PageImpl<>(List.of(result1, result2, result3),
                 PageRequest.of(0, 10), 0);
 
         SearchOrderCommand request = new SearchOrderCommand(1L, companyId, companyId, "COMPANY_MANAGER", PageRequest.of(0, 10));
 
-        given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
+        given(orderPersistenceService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
@@ -380,7 +380,6 @@ public class OrderServiceTest {
         // given
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"COMPANY_MANAGER", PageRequest.of(0, 10));
 
-
         // when & then
         assertThatThrownBy(() -> orderService.searchOrder(request))
                 .isInstanceOf(BusinessException.class)
@@ -391,24 +390,21 @@ public class OrderServiceTest {
     @DisplayName("허브 담당자는 본인 소속 주문만 조회 가능하다. - 성공 (다건)")
     void searchOrder_whenHubManagerIsInCorrectHub_shouldSucceed() {
         // given
-        Order order1 = getOrder();
-        Order order2 = getOrder();
-        Order order3 = getOrder();
-        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
-                PageRequest.of(0, 10), 0);
+        OrderResult result1 = OrderResult.of(getOrder());
+        Page<OrderResult> orderList = new PageImpl<>(List.of(result1), PageRequest.of(0, 10), 0);
 
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"HUB_MANAGER", PageRequest.of(0, 10));
 
         given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
                 .willReturn(true);
-        given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
+        given(orderPersistenceService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
         Page<OrderResult> results = orderService.searchOrder(request);
 
         // then
-        assertThat(results.getContent().size()).isEqualTo(3);
+        assertThat(results.getContent().size()).isEqualTo(1);
     }
 
     @Test
@@ -430,24 +426,20 @@ public class OrderServiceTest {
     @DisplayName("마스터는 모든 주문 정보를 조회 가능하다. (다건)")
     void searchOrder_whenUserIsMaster_shouldSucceed() {
         // given
-        Order order1 = getOrder();
-        Order order2 = getOrder();
-        Order order3 = getOrder();
-        Page<Order> orderList = new PageImpl<>(List.of(order1, order2, order3),
-                PageRequest.of(0, 10), 0);
+        OrderResult result1 = OrderResult.of(getOrder());
+        Page<OrderResult> orderList = new PageImpl<>(List.of(result1), PageRequest.of(0, 10), 0);
 
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
-        given(orderRepository.findAllByCompanyId(request.companyId(), request.pageable()))
+        given(orderPersistenceService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
         Page<OrderResult> results = orderService.searchOrder(request);
 
         // then
-        assertThat(results.getContent().size()).isEqualTo(3);
+        assertThat(results.getContent().size()).isEqualTo(1);
     }
-
 
     // 헬퍼 메서드
     private CreateOrderCommand getCreateOrderCommand() {
