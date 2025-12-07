@@ -23,7 +23,7 @@ public enum ErrorCode {
     TOTAL_PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "E050", "총 가격은 상품들의 가격의 총합과 동일해야 됩니다."),
     INVALID_STATE_FOR_UPDATE(HttpStatus.BAD_REQUEST, "E050", "주문 수정은 PENDING 상태에서만 가능합니다."),
     ORDER_STATUS_UNCHANGEABLE(HttpStatus.BAD_REQUEST, "E050", "주문 상태는 DONE/CANCELLED 경우 변경 불가능합니다."),
-    INVALID_STATE_FOR_CANCEL(HttpStatus.BAD_REQUEST, "E050", "주문 취소는 PENDING/PAYED 상태에서만 가능합니다."),
+    INVALID_STATE_FOR_CANCEL(HttpStatus.BAD_REQUEST, "E050", "주문 취소는 ORDERED 상태에서만 가능합니다."),
     INVALID_PRODUCT_QUANTITY(HttpStatus.BAD_REQUEST, "E050", "주문상품의 수량은 1 미만이면 안됩니다."),
     INVALID_PRODUCT_PRICE(HttpStatus.BAD_REQUEST, "E050", "주문상품의 가격은 1 미만이면 안됩니다."),
     INVALID_PRODUCT_STOCK(HttpStatus.BAD_REQUEST, "E050", "주문한 상품의 재고가 부족합니다."),
