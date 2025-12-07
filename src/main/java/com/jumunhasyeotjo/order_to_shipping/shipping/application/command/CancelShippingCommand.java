@@ -7,6 +7,6 @@ import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 public record CancelShippingCommand(
 	UUID shippingId,
 	UserRole role,
-	Long userId
+	String userBelong
 ) {
 }
