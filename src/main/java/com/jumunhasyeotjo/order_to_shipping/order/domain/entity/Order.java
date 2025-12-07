@@ -3,8 +3,8 @@ package com.jumunhasyeotjo.order_to_shipping.order.domain.entity;
 import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -42,21 +42,25 @@ public class Order extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String requestMessage;
 
+    @Column(nullable = false)
+    private String idempotencyKey;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderCompany> orderCompanies = new ArrayList<>();
 
     @Builder
-    public Order(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice) {
+    public Order(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
         this.orderCompanies = orderCompanies;
         this.companyManagerId = companyManagerId;
         this.receiverCompanyId = receiverCompanyId;
         this.requestMessage = requestMessage;
         this.totalPrice = totalPrice;
+        this.idempotencyKey = idempotencyKey;
         this.status = OrderStatus.PENDING;
     }
 
 
-    public static Order create(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice) {
+    public static Order create(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
         validateCreate(orderCompanies, companyManagerId, receiverCompanyId, totalPrice);
 
         Order order = Order.builder()
@@ -65,6 +69,7 @@ public class Order extends BaseEntity {
                 .receiverCompanyId(receiverCompanyId)
                 .requestMessage(requestMessage)
                 .totalPrice(totalPrice)
+                .idempotencyKey(idempotencyKey)
                 .build();
 
         for (OrderCompany orderCompany : orderCompanies) {

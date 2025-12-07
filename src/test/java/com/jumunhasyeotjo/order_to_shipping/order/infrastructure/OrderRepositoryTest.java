@@ -1,6 +1,5 @@
 package com.jumunhasyeotjo.order_to_shipping.order.infrastructure;
 
-import com.jumunhasyeotjo.order_to_shipping.config.TestRedisConfig;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,7 +21,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(TestRedisConfig.class)
 public class OrderRepositoryTest {
 
     @Autowired
@@ -134,7 +131,7 @@ public class OrderRepositoryTest {
 
     // 테스트 헬퍼 메서드
     private Order getOrder(UUID companyId, List<OrderCompany> orderCompanies, String requestMessage, int totalPrice) {
-        return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice);
+        return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice, "멱등키");
     }
 
     private List<OrderCompany> getOrderCompanies(List<OrderProduct> products) {

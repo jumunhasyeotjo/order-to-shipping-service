@@ -21,6 +21,6 @@ public class OrderFixtures {
         UUID companyId = UUID.randomUUID();
         String requestMessage = "요구사항";
         int totalPrice = 1000;
-        return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice);
+        return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice, "멱등키");
     }
 }

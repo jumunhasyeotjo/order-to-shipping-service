@@ -49,7 +49,7 @@ public class OrderDomainTest {
         int totalPrice = 10000;
 
         // when & then
-        assertThatThrownBy(() -> Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice))
+        assertThatThrownBy(() -> Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice, "멱등키"))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("잘못된 요청입니다.");
     }
