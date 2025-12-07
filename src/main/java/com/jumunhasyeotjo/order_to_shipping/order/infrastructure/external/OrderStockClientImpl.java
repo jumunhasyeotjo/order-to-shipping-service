@@ -5,17 +5,13 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderStock
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class OrderStockClientImpl implements OrderStockClient {
 
     @Override
-    public boolean decreaseStock(List<OrderProductReq> orderProducts, String idempotentKey) {
+    public boolean decreaseStock(List<OrderProductReq> orderProducts, UUID orderId) {
         return true;
-    }
-
-    @Override
-    public void restoreStocks(List<OrderProductReq> orderProducts, String idempotentKey) {
-
     }
 }
