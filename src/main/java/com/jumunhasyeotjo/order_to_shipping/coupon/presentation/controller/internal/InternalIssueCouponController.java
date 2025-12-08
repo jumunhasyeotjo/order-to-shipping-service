@@ -5,6 +5,8 @@ import com.jumunhasyeotjo.order_to_shipping.coupon.application.IssueCouponServic
 import com.jumunhasyeotjo.order_to_shipping.coupon.presentation.dto.req.UseCouponReq;
 import com.jumunhasyeotjo.order_to_shipping.coupon.presentation.dto.res.IssueCouponRes;
 import com.library.passport.entity.ApiRes;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,26 +18,44 @@ import java.util.UUID;
 @RequestMapping("/internal/v1/coupons/issue")
 @RequiredArgsConstructor
 public class InternalIssueCouponController {
+
     private final IssueCouponService issueCouponService;
 
     @PatchMapping("/use")
-    public ResponseEntity<ApiRes<IssueCouponRes>> useCoupon(@RequestBody UseCouponReq useCouponReq) {
+    @Operation(
+        summary = "쿠폰 사용 처리",
+        description = "발급된 쿠폰을 사용 처리합니다. Internal API."
+    )
+    public ResponseEntity<ApiRes<IssueCouponRes>> useCoupon(
+        @RequestBody UseCouponReq useCouponReq
+    ) {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(
                 ApiRes.success(
-                    IssueCouponRes.fromResult(issueCouponService.useCoupon(useCouponReq.toCommand()))
+                    IssueCouponRes.fromResult(
+                        issueCouponService.useCoupon(useCouponReq.toCommand())
+                    )
                 )
             );
     }
 
     @GetMapping("/{issueCouponId}")
-    public ResponseEntity<ApiRes<IssueCouponRes>> getCouponById(@PathVariable("issueCouponId") UUID issueCouponId) {
+    @Operation(
+        summary = "발급 쿠폰 조회",
+        description = "issueCouponId로 발급된 쿠폰 상세 정보를 조회합니다."
+    )
+    public ResponseEntity<ApiRes<IssueCouponRes>> getCouponById(
+        @Parameter(description = "발급 쿠폰 ID")
+        @PathVariable("issueCouponId") UUID issueCouponId
+    ) {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(
                 ApiRes.success(
-                    IssueCouponRes.fromResult(issueCouponService.getIssueCoupon(issueCouponId))
+                    IssueCouponRes.fromResult(
+                        issueCouponService.getIssueCoupon(issueCouponId)
+                    )
                 )
             );
     }
