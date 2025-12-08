@@ -82,7 +82,7 @@ public class OrderDomainTest {
     }
 
     @Test
-    @DisplayName("주문 취소는 PENDING/PAYED 상태에서만 가능하다.")
+    @DisplayName("주문 취소는 ORDERED 상태에서만 가능하다.")
     void cancel_ShouldHavePendingOrPayedStatus() {
         // give
         Order order = getOrder();
@@ -91,7 +91,7 @@ public class OrderDomainTest {
         // when & then
         assertThatThrownBy(() -> order.cancel(UserRole.COMPANY_MANAGER, 1L))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("주문 취소는 PENDING/PAYED 상태에서만 가능합니다.");
+                .hasMessageContaining("주문 취소는 ORDERED 상태에서만 가능합니다.");
     }
 
     @Test
@@ -99,6 +99,7 @@ public class OrderDomainTest {
     void cancel_afterCancel_ShouldHaveCancelledStatus() {
         //given
         Order order = getOrder();
+        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
 
         // when
         order.cancel(UserRole.COMPANY_MANAGER, 1L);

@@ -2,6 +2,7 @@ package com.jumunhasyeotjo.order_to_shipping.order.infrastructure.repository;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,8 +20,13 @@ public class OrderRepositoryAdapter implements OrderRepository {
     private final JpaOrderRepository jpaOrderRepository;
 
     @Override
-    public Optional<Order> findById(UUID id) {
-        return jpaOrderRepository.findById(id);
+    public Optional<Order> findByIdWithAll(UUID id) {
+        return jpaOrderRepository.findByIdWithAll(id);
+    }
+
+    @Override
+    public Optional<Order> findById(UUID orderId) {
+        return jpaOrderRepository.findById(orderId);
     }
 
     @Override
@@ -39,6 +45,11 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public boolean existsByIdempotencyKey(String idempotencyKey) {
         return jpaOrderRepository.existsByIdempotencyKey(idempotencyKey);
+    }
+
+    @Override
+    public List<Order> findAllByStatus(OrderStatus orderStatus, Pageable pageable) {
+        return jpaOrderRepository.findAllByStatus(orderStatus, pageable);
     }
 
 }

@@ -37,16 +37,15 @@ public class OrderCreatedEvent implements DomainEvent {
         this.occurredAt = LocalDateTime.now();
     }
 
-
-    public static OrderCreatedEvent of(Order order) {
+    public static OrderCreatedEvent of(Order order, List<OrderCompany> orderCompanies) {
         return new OrderCreatedEvent(
                 order.getId(),
                 order.getCreatedAt(),
-                getProductInfo(order.getOrderCompanies().stream()
+                getProductInfo(orderCompanies.stream()
                         .flatMap(company -> company.getOrderProducts().stream())
                         .toList()),
                 order.getRequestMessage(),
-                order.getOrderCompanies().stream()
+                orderCompanies.stream()
                         .map(OrderCompany::getSupplierCompanyId)
                         .toList(),
                 order.getReceiverCompanyId()
