@@ -75,9 +75,7 @@ public class PaymentService {
 		Payment payment = getPaymentById(command.paymentId());
 		try {
 			TossPaymentResponse res = tossPaymentService.cancel(command.cancelReason(), payment);
-
-			payment.setPaymentResult(res.getStatus(), res.getMethod(), res.getApprovedAt());
-			savePgRaw(res, payment.getId());
+			updatePgRaw(res, payment.getId());
 
 		} catch (BusinessException e) {
 			payment.failPayment("PAYMENT_CONFIRM_ERROR", "서버에서 결제 처리 중 오류가 발생했습니다.");
@@ -87,15 +85,27 @@ public class PaymentService {
 		}
 	}
 
+	@Transactional(readOnly = true)
+	public PaymentRes getPaymentInfo(UUID orderId) {
+		Payment payment = getPaymentByOrderId(orderId);
+		return PaymentRes.of(tossPaymentService.getPaymentInfo(payment.getTossPaymentKey()), payment.getId());
+	}
+
+	@Transactional(readOnly = true)
+	public String getPaymentDetailInfo(UUID paymentId) {
+		PaymentPgRaw pgRaw = getPaymentPgRawByPaymentId(paymentId);
+
+		return pgRaw.getPgResponseJson();
+	}
+
 	private void savePgRaw(TossPaymentResponse res, UUID paymentId) {
 		PaymentPgRaw paymentPgRaw = new PaymentPgRaw(paymentId, resToJson(res));
 		paymentPgRawRepository.save(paymentPgRaw);
 	}
 
-	@Transactional(readOnly = true)
-	public PaymentRes getPaymentInfo(UUID orderId) {
-		Payment payment = getPaymentByOrderId(orderId);
-		return PaymentRes.of(tossPaymentService.getPaymentInfo(payment.getTossPaymentKey()), payment.getId());
+	private void updatePgRaw(TossPaymentResponse res, UUID paymentId) {
+		PaymentPgRaw raw = getPaymentPgRawByPaymentId(paymentId);
+		raw.updatePgResponseJson(resToJson(res));
 	}
 
 	private void validatePaymentKey(String tossPaymentKey){
@@ -132,11 +142,9 @@ public class PaymentService {
 		}
 	}
 
-	public String getPaymentDetailInfo(UUID paymentId) {
-		PaymentPgRaw pgRaw = paymentPgRawRepository.findByPaymentId(paymentId).orElseThrow(
+	private PaymentPgRaw getPaymentPgRawByPaymentId(UUID paymentId){
+		return paymentPgRawRepository.findByPaymentId(paymentId).orElseThrow(
 			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
 		);
-
-		return pgRaw.getPgResponseJson();
 	}
 }

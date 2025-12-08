@@ -50,7 +50,10 @@ public class TossPaymentService {
 
 	public TossPaymentResponse cancel(String cancelReason, Payment payment) {
 		try {
-			return tossPaymentsClient.cancel(payment.getTossPaymentKey(), TossCancelRequest.of(cancelReason));
+			TossPaymentResponse res = tossPaymentsClient.cancel(payment.getTossPaymentKey(), TossCancelRequest.of(cancelReason));
+			payment.cancel(cancelReason, res.getCancels().get(0).getCanceledAt());
+
+			return res;
 		} catch (TossRemoteException e) {
 			log.warn("[PAY] Toss cacel failed: status={}, code={}, msg={}", e.getStatus(), e.getCode(),
 				e.getMessage());

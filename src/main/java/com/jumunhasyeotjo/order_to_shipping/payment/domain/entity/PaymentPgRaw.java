@@ -21,7 +21,7 @@ public class PaymentPgRaw extends BaseEntity {
 
 	@Column(nullable = false)
 	private UUID paymentId;
-	
+
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "pg_response_json", columnDefinition = "jsonb")
 	private String pgResponseJson;
@@ -29,6 +29,10 @@ public class PaymentPgRaw extends BaseEntity {
 	@Builder
 	public PaymentPgRaw(UUID paymentId, String pgResponseJson) {
 		this.paymentId = paymentId;
+		this.pgResponseJson = pgResponseJson;
+	}
+
+	public void updatePgResponseJson(String pgResponseJson){
 		this.pgResponseJson = pgResponseJson;
 	}
 }
