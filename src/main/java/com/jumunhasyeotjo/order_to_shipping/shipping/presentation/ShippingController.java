@@ -1,6 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.presentation;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,7 +32,12 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartS
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.event.message.ShippingMessageEventHandler;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
@@ -47,6 +53,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import static com.library.passport.proto.PassportProto.Passport;
 
 @Slf4j
@@ -57,6 +64,8 @@ import static com.library.passport.proto.PassportProto.Passport;
 @Validated
 public class ShippingController {
 	private final ShippingService shippingService;
+
+	private final ShippingMessageEventHandler shippingMessageEventHandler;
 
 	@PostMapping
 	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
@@ -109,5 +118,34 @@ public class ShippingController {
 
 		log.info("배송 조회 성공: shippingId={}", shippingId);
 		return ResponseEntity.ok(ApiRes.success(shippingRes));
+	}
+
+	@PostMapping("/test")
+	public ResponseEntity<ApiRes<UUID>> test(
+	) {
+		UUID orderId = UUID.randomUUID();
+		UUID receiverCompanyId = UUID.randomUUID();
+		ShippingAddress address = ShippingAddress.of("서울시 강동구");
+		UUID originHubId = UUID.randomUUID();
+		UUID arrivalHubId = UUID.randomUUID();
+		Integer totalRouteCount = 3;
+
+		Shipping shipping = Shipping.create(orderId, receiverCompanyId, address, originHubId,
+			arrivalHubId, totalRouteCount);
+
+		Long driverId = 1L;
+		Integer sequence = 1;
+		String origin = "출발지";
+		String destination = "도착";
+		RouteInfo expectRouteInfo = RouteInfo.of(100, 100);
+
+		ShippingHistory history = ShippingHistory.create(shipping, driverId, sequence, origin, destination, expectRouteInfo);
+
+		shippingMessageEventHandler.handleShippingCreated(
+			new ShippingCreatedEvent(UUID.randomUUID(), UUID.randomUUID(),
+				UUID.randomUUID(), LocalDateTime.now(), "상품정보", "요청사항",
+				1L, List.of(history, history)));
+
+		return ResponseEntity.ok(ApiRes.success(UUID.randomUUID()));
 	}
 }

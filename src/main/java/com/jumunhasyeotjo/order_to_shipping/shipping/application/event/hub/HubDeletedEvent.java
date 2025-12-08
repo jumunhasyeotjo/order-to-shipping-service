@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-@Getter
 public record HubDeletedEvent(
     UUID hubId,
     String name

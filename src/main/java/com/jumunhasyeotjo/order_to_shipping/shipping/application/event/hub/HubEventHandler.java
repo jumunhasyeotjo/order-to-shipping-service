@@ -26,14 +26,14 @@ public class HubEventHandler {
 
 	@Transactional
 	public void hubCreated(HubCreatedEvent event){
-		hubIdCache.put(event.getName(), event.hubId());
-		hubNameCache.put(event.hubId(), event.getName());
+		hubIdCache.put(event.name(), event.hubId());
+		hubNameCache.put(event.hubId(), event.name());
 
 		shortestPathCache.deleteAll();
 	}
 
 	public void hubDeleted(HubDeletedEvent event){
-		hubIdCache.delete(event.getName());
+		hubIdCache.delete(event.name());
 		hubNameCache.delete(event.hubId());
 
 		shortestPathCache.deleteAll();
@@ -42,8 +42,8 @@ public class HubEventHandler {
 	public void hubNameUpdated(HubNameUpdatedEvent event){
 		String previousHubName = hubNameCache.get(event.hubId());
 		hubIdCache.delete(previousHubName);
-		hubIdCache.put(event.getName(), event.hubId());
-		hubNameCache.put(event.hubId(), event.getName());
+		hubIdCache.put(event.name(), event.hubId());
+		hubNameCache.put(event.hubId(), event.name());
 	}
 
 	public void hubRouteCreated(){
