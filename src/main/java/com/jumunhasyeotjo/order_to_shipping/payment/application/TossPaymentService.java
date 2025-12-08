@@ -1,0 +1,65 @@
+package com.jumunhasyeotjo.order_to_shipping.payment.application;
+
+import org.springframework.stereotype.Service;
+
+import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.TossRemoteException;
+import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.TossPaymentsClient;
+import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossCancelRequest;
+import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossConfirmRequest;
+import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossPaymentResponse;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class TossPaymentService {
+
+	private final TossPaymentsClient tossPaymentsClient;
+
+	public TossPaymentResponse confirm(TossConfirmRequest tossConfirmRequest) {
+		try {
+			return tossPaymentsClient.confirm(tossConfirmRequest);
+		} catch (TossRemoteException e) {
+			log.warn("[PAY] Toss confirm failed: status={}, code={}, msg={}", e.getStatus(), e.getCode(),
+				e.getMessage());
+
+			String clientMsg = e.getTossMessage() != null ? e.getTossMessage() : "결제 처리 중 오류가 발생했습니다.";
+			String clientCode = e.getCode() != null ? e.getCode() : "TOSS_UNKNOWN_ERROR";
+
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	public TossPaymentResponse getPaymentInfo(String tossPaymentKey) {
+		try {
+			return tossPaymentsClient.getPaymentInfo(tossPaymentKey);
+		} catch (TossRemoteException e) {
+			log.warn("[PAY] Toss getPaymentInfo failed: status={}, code={}, msg={}", e.getStatus(), e.getCode(),
+				e.getMessage());
+
+			String clientMsg = e.getTossMessage() != null ? e.getTossMessage() : "결제 조회 중 오류가 발생했습니다.";
+			String clientCode = e.getCode() != null ? e.getCode() : "TOSS_UNKNOWN_ERROR";
+
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+
+	public TossPaymentResponse cancel(String tossPaymentKey, String cancelReason) {
+		try {
+			return tossPaymentsClient.cancel(tossPaymentKey, TossCancelRequest.of(cancelReason));
+		} catch (TossRemoteException e) {
+			log.warn("[PAY] Toss cacel failed: status={}, code={}, msg={}", e.getStatus(), e.getCode(),
+				e.getMessage());
+
+			String clientMsg = e.getTossMessage() != null ? e.getTossMessage() : "결제 취소 중 오류가 발생했습니다.";
+			String clientCode = e.getCode() != null ? e.getCode() : "TOSS_UNKNOWN_ERROR";
+
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
+}
