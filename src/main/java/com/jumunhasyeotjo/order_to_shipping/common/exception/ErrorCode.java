@@ -18,6 +18,8 @@ public enum ErrorCode {
     HUB_ORIGIN_EQUALS_DESTINATION(HttpStatus.BAD_REQUEST, "E008", "도착 허브와 출발 허브가 같을 수 없습니다."),
     INVALID_STATE_FOR_MODIFICATION(HttpStatus.BAD_REQUEST, "E009", "현재 상태에서는 정보를 수정할 수 없습니다."),
     INVALID_STATE_CANCEL(HttpStatus.BAD_REQUEST, "E010", "배송이 이미 시작되어 취소할 수 없습니다."),
+    INVALID_MONEY(HttpStatus.BAD_REQUEST, "E011", "유효하지않은 금액입니다."),
+    DUPLICATE_PAYMENT_INTENT(HttpStatus.BAD_REQUEST, "E012", "이미 결제요청이 진행되었습니다."),
 
     EMPTY_ORDER_PRODUCTS(HttpStatus.BAD_REQUEST, "E050", "주문 상품은 1개 이상이어야 합니다."),
     TOTAL_PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "E050", "총 가격은 상품들의 가격의 총합과 동일해야 됩니다."),
