@@ -11,4 +11,5 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.PaymentPgRaw;
 
 @Repository
 public interface JpaPaymentPgRawRepository extends JpaRepository<PaymentPgRaw, UUID> {
+	Optional<PaymentPgRaw> findByPaymentId(UUID paymentId);
 }

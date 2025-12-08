@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.PaymentService;
+import com.jumunhasyeotjo.order_to_shipping.payment.application.command.CancelPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.ProcessPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.vo.Money;
+import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.request.CancelPaymentReq;
 import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.request.ProcessPaymentReq;
 import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.response.PaymentRes;
 import com.library.passport.annotation.PassportAuthorize;
@@ -38,12 +40,26 @@ public class PaymentController {
 	) {
 		ProcessPaymentCommand command = new ProcessPaymentCommand(
 			request.orderId(),
-			Money.of(request.amount()),
+			request.amount(),
 			request.tossPaymentKey(),
 			request.tossOrderId()
 		);
 
 		UUID paymentId = paymentService.processPayment(command);
+		return ResponseEntity.ok(ApiRes.success(paymentId));
+	}
+
+	@PostMapping("/{paymentId}/cancel")
+	public ResponseEntity<ApiRes<UUID>> cancelPayment(
+		@PathVariable UUID paymentId,
+		@RequestBody CancelPaymentReq request
+	) {
+		CancelPaymentCommand command = new CancelPaymentCommand(
+			paymentId,
+			request.cancelReason()
+		);
+
+		paymentService.cancelPayment(command);
 		return ResponseEntity.ok(ApiRes.success(paymentId));
 	}
 
@@ -54,6 +70,14 @@ public class PaymentController {
 		@PassportUser PassportProto.Passport passport
 	) {
 		PaymentRes res = paymentService.getPaymentInfo(orderId);
+		return ResponseEntity.ok(ApiRes.success(res));
+	}
+
+	@GetMapping("/{paymentId}/detail")
+	public ResponseEntity<ApiRes<String>> getPaymentDetailInfo(
+		@PathVariable UUID paymentId
+	) {
+		String res = paymentService.getPaymentDetailInfo(paymentId);
 		return ResponseEntity.ok(ApiRes.success(res));
 	}
 }

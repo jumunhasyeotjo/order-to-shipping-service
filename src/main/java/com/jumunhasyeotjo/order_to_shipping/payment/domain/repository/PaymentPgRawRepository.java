@@ -8,4 +8,6 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.PaymentPgRaw;
 
 public interface PaymentPgRawRepository {
 	void save(PaymentPgRaw paymentPgRaw);
+
+	Optional<PaymentPgRaw> findByPaymentId(UUID paymentId);
 }

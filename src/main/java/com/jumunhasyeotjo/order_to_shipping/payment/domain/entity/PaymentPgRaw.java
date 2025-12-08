@@ -6,6 +6,9 @@ import lombok.*;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "p_payment_pg_raw")
 @Getter
@@ -18,9 +21,9 @@ public class PaymentPgRaw extends BaseEntity {
 
 	@Column(nullable = false)
 	private UUID paymentId;
-
-	@Lob
-	@Column(nullable = false, columnDefinition = "TEXT")
+	
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "pg_response_json", columnDefinition = "jsonb")
 	private String pgResponseJson;
 
 	@Builder

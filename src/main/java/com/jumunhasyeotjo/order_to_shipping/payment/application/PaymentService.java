@@ -2,6 +2,7 @@ package com.jumunhasyeotjo.order_to_shipping.payment.application;
 
 import static org.springframework.transaction.annotation.Propagation.*;
 
+import java.awt.desktop.PrintFilesEvent;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.payment.application.command.CancelPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.ProcessPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.Payment;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.PaymentPgRaw;
@@ -32,10 +34,12 @@ public class PaymentService {
 	private final TossPaymentService tossPaymentService;
 	private final PaymentPgRawRepository paymentPgRawRepository;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper;
 
-	@Transactional
+	@Transactional(noRollbackFor = BusinessException.class)
 	public UUID processPayment(ProcessPaymentCommand command) {
+		validatePaymentKey(command.tossPaymentKey());
+
 		Payment newPayment = Payment.builder()
 			.orderId(command.orderId())
 			.amount(command.amount())
@@ -44,24 +48,48 @@ public class PaymentService {
 			.build();
 
 		paymentRepository.save(newPayment);
+
 		confirmPayment(newPayment);
 
 		return newPayment.getOrderId();
 	}
 
-	@Transactional(propagation = REQUIRES_NEW)
-	public void confirmPayment(Payment payment) {
+	private void confirmPayment(Payment payment) {
 		TossConfirmRequest req = buildTossConfirm(payment);
 		try {
-			TossPaymentResponse res = tossPaymentService.confirm(req);
+			TossPaymentResponse res = tossPaymentService.confirm(req, payment);
+
 			payment.setPaymentResult(res.getStatus(), res.getMethod(), res.getApprovedAt());
-			PaymentPgRaw paymentPgRaw = new PaymentPgRaw(payment.getId(), resToJson(res));
-			paymentPgRawRepository.save(paymentPgRaw);
+			savePgRaw(res, payment.getId());
+
 		} catch (BusinessException e) {
+			payment.failPayment("PAYMENT_CONFIRM_ERROR", "서버에서 결제 처리 중 오류가 발생했습니다.");
+
 			log.error("PG 결제 확정 실패. orderId={}", payment.getOrderId(), e);
-			payment.failPayment();
 			throw e;
 		}
+	}
+
+	@Transactional(noRollbackFor = BusinessException.class)
+	public void cancelPayment(CancelPaymentCommand command) {
+		Payment payment = getPaymentById(command.paymentId());
+		try {
+			TossPaymentResponse res = tossPaymentService.cancel(command.cancelReason(), payment);
+
+			payment.setPaymentResult(res.getStatus(), res.getMethod(), res.getApprovedAt());
+			savePgRaw(res, payment.getId());
+
+		} catch (BusinessException e) {
+			payment.failPayment("PAYMENT_CONFIRM_ERROR", "서버에서 결제 처리 중 오류가 발생했습니다.");
+
+			log.error("PG 결제 취소 실패. orderId={}", payment.getOrderId(), e);
+			throw e;
+		}
+	}
+
+	private void savePgRaw(TossPaymentResponse res, UUID paymentId) {
+		PaymentPgRaw paymentPgRaw = new PaymentPgRaw(paymentId, resToJson(res));
+		paymentPgRawRepository.save(paymentPgRaw);
 	}
 
 	@Transactional(readOnly = true)
@@ -70,11 +98,24 @@ public class PaymentService {
 		return PaymentRes.of(tossPaymentService.getPaymentInfo(payment.getTossPaymentKey()), payment.getId());
 	}
 
-	private Payment getPaymentByOrderId(UUID orderId){
+	private void validatePaymentKey(String tossPaymentKey){
+		paymentRepository.findByTossPaymentKey(tossPaymentKey).orElseThrow(
+			() -> new BusinessException(ErrorCode.DUPLICATE_PAYMENT_INTENT)
+		);
+	}
+
+	private Payment getPaymentById(UUID paymentId){
+		return paymentRepository.findById(paymentId).orElseThrow(
+			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
+		);
+	}
+
+	private Payment getPaymentByOrderId(UUID orderId) {
 		return paymentRepository.findByOrderId(orderId).orElseThrow(
 			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
 		);
 	}
+
 	private TossConfirmRequest buildTossConfirm(Payment payment) {
 		return TossConfirmRequest.builder()
 			.orderId(payment.getTossOrderId())
@@ -89,5 +130,13 @@ public class PaymentService {
 		} catch (JsonProcessingException e) {
 			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	public String getPaymentDetailInfo(UUID paymentId) {
+		PaymentPgRaw pgRaw = paymentPgRawRepository.findByPaymentId(paymentId).orElseThrow(
+			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
+		);
+
+		return pgRaw.getPgResponseJson();
 	}
 }

@@ -6,7 +6,7 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.vo.Money;
 
 public record ProcessPaymentCommand(
 	UUID orderId,
-	Money amount,
+	Integer amount,
 	String tossPaymentKey,
 	String tossOrderId
 ) {

@@ -11,4 +11,5 @@ public interface PaymentRepository{
 	void save(Payment payment);
 	Optional<Payment> findByTossPaymentKey(String paymentKey);
 	Optional<Payment> findByOrderId(UUID orderId);
+	Optional<Payment> findById(UUID paymentId);
 }

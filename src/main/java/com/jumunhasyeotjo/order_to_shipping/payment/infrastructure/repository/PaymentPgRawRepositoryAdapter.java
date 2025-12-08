@@ -20,4 +20,9 @@ public class PaymentPgRawRepositoryAdapter implements PaymentPgRawRepository {
 	public void save(PaymentPgRaw paymentPgRaw) {
 		jpaPaymentPgRawRepository.save(paymentPgRaw);
 	}
+
+	@Override
+	public Optional<PaymentPgRaw> findByPaymentId(UUID paymentId) {
+		return jpaPaymentPgRawRepository.findByPaymentId(paymentId);
+	}
 }

@@ -39,7 +39,7 @@ public class Payment extends BaseEntity{
 
 	@Embedded
 	@AttributeOverrides({
-		@AttributeOverride(name = "amount", column = @Column(name = "amount"))
+		@AttributeOverride(name = "amount", column = @Column(name = "payment_amount"))
 	})
 	private Money amount;
 
@@ -58,9 +58,16 @@ public class Payment extends BaseEntity{
 	private OffsetDateTime approvedAt;
 	private OffsetDateTime cancelAt;
 
+	private String cancelReason;
+
+	private String errorCode;
+
+	@Column(length = 500)
+	private String failMessage;
+
 	@Builder
-	public Payment(Money amount, UUID orderId, String tossPaymentKey, String tossOrderId) {
-		this.amount = amount;
+	public Payment(Integer amount, UUID orderId, String tossPaymentKey, String tossOrderId) {
+		this.amount = Money.of(amount);
 		this.orderId = orderId;
 		this.tossPaymentKey = tossPaymentKey;
 		this.tossOrderId = tossOrderId;
@@ -73,8 +80,18 @@ public class Payment extends BaseEntity{
 		this.approvedAt = approvedAt;
 	}
 
-	public void failPayment(){
+	public void failPayment(String errorCode, String failMessage) {
+		if(this.status.equals(PaymentStatus.ABORTED) || this.status.equals(PaymentStatus.DONE)) return;
+
 		this.status = PaymentStatus.ABORTED;
+		this.errorCode = errorCode;
+		this.failMessage = failMessage;
+	}
+
+	public void cancel(String cancelReason, OffsetDateTime cancelAt){
+		this.status = PaymentStatus.CANCELED;
+		this.cancelReason = cancelReason;
+		this.cancelAt = cancelAt;
 	}
 
 }
