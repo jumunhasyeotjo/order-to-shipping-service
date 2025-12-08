@@ -23,6 +23,7 @@ import com.library.passport.annotation.PassportUser;
 import com.library.passport.entity.PassportUserRole;
 import com.library.passport.proto.PassportProto;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +36,7 @@ public class PaymentController {
 	private final PaymentService paymentService;
 
 	@PostMapping
+	@Operation(summary = "결제 요청")
 	public ResponseEntity<ApiRes<UUID>> processPayment(
 		@RequestBody ProcessPaymentReq request
 	) {
@@ -50,6 +52,7 @@ public class PaymentController {
 	}
 
 	@PostMapping("/{paymentId}/cancel")
+	@Operation(summary = "결제 취소 요청")
 	public ResponseEntity<ApiRes<UUID>> cancelPayment(
 		@PathVariable UUID paymentId,
 		@RequestBody CancelPaymentReq request
@@ -64,6 +67,7 @@ public class PaymentController {
 	}
 
 	@GetMapping("/{orderId}")
+	@Operation(summary = "결제 정보 조회")
 	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.COMPANY_MANAGER})
 	public ResponseEntity<ApiRes<PaymentRes>> getPaymentInfo(
 		@PathVariable UUID orderId,
@@ -74,8 +78,11 @@ public class PaymentController {
 	}
 
 	@GetMapping("/{paymentId}/detail")
+	@Operation(summary = "결제 PG 정보 상세 조회")
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.COMPANY_MANAGER})
 	public ResponseEntity<ApiRes<String>> getPaymentDetailInfo(
-		@PathVariable UUID paymentId
+		@PathVariable UUID paymentId,
+		@PassportUser PassportProto.Passport passport
 	) {
 		String res = paymentService.getPaymentDetailInfo(paymentId);
 		return ResponseEntity.ok(ApiRes.success(res));
