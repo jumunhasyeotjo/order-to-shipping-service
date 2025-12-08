@@ -24,9 +24,10 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
 	}
 
 	@Override
-	public Optional<Payment> findByTossPaymentKey(String paymentKey) {
-		return jpaPaymentRepository.findByTossPaymentKey(paymentKey);
+	public boolean existsByTossPaymentKey(String paymentKey) {
+		return jpaPaymentRepository.existsByTossPaymentKey(paymentKey);
 	}
+
 
 	@Override
 	public Optional<Payment> findByOrderId(UUID orderId) {

@@ -10,7 +10,7 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.Payment;
 
 @Repository
 public interface JpaPaymentRepository extends JpaRepository<Payment, UUID> {
-	Optional<Payment> findByTossPaymentKey(String paymentKey);
+	boolean existsByTossPaymentKey(String paymentKey);
 
 	Optional<Payment> findByOrderId(UUID orderId);
 }

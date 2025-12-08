@@ -99,9 +99,9 @@ public class PaymentService {
 	}
 
 	private void validatePaymentKey(String tossPaymentKey){
-		paymentRepository.findByTossPaymentKey(tossPaymentKey).orElseThrow(
-			() -> new BusinessException(ErrorCode.DUPLICATE_PAYMENT_INTENT)
-		);
+		if(paymentRepository.existsByTossPaymentKey(tossPaymentKey)) {
+			throw new BusinessException(ErrorCode.DUPLICATE_PAYMENT_INTENT);
+		}
 	}
 
 	private Payment getPaymentById(UUID paymentId){

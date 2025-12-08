@@ -9,7 +9,7 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.Payment;
 
 public interface PaymentRepository{
 	void save(Payment payment);
-	Optional<Payment> findByTossPaymentKey(String paymentKey);
+	boolean existsByTossPaymentKey(String paymentKey);
 	Optional<Payment> findByOrderId(UUID orderId);
 	Optional<Payment> findById(UUID paymentId);
 }
