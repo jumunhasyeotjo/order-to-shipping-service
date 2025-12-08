@@ -1,4 +1,4 @@
-package com.jumunhasyeotjo.order_to_shipping.shipping.application.event;
+package com.jumunhasyeotjo.order_to_shipping.shipping.application.event.handler;
 
 import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 

@@ -1,8 +1,5 @@
 package com.jumunhasyeotjo.order_to_shipping.payment.application;
 
-import static org.springframework.transaction.annotation.Propagation.*;
-
-import java.awt.desktop.PrintFilesEvent;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.CancelPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.ProcessPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.Payment;
@@ -21,7 +19,6 @@ import com.jumunhasyeotjo.order_to_shipping.payment.domain.repository.PaymentRep
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossConfirmRequest;
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossPaymentResponse;
 import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.response.PaymentRes;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.OrderClient;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +31,7 @@ public class PaymentService {
 	private final TossPaymentService tossPaymentService;
 	private final PaymentPgRawRepository paymentPgRawRepository;
 
-	private final ObjectMapper objectMapper;
+	private final JsonUtil jsonUtil;
 
 	@Transactional(noRollbackFor = BusinessException.class)
 	public UUID processPayment(ProcessPaymentCommand command) {
@@ -72,7 +69,7 @@ public class PaymentService {
 
 	@Transactional(noRollbackFor = BusinessException.class)
 	public void cancelPayment(CancelPaymentCommand command) {
-		Payment payment = getPaymentById(command.paymentId());
+		Payment payment = getPaymentByOrderId(command.orderId());
 		try {
 			TossPaymentResponse res = tossPaymentService.cancel(command.cancelReason(), payment);
 			updatePgRaw(res, payment.getId());
@@ -99,25 +96,19 @@ public class PaymentService {
 	}
 
 	private void savePgRaw(TossPaymentResponse res, UUID paymentId) {
-		PaymentPgRaw paymentPgRaw = new PaymentPgRaw(paymentId, resToJson(res));
+		PaymentPgRaw paymentPgRaw = new PaymentPgRaw(paymentId, jsonUtil.toJson(res));
 		paymentPgRawRepository.save(paymentPgRaw);
 	}
 
 	private void updatePgRaw(TossPaymentResponse res, UUID paymentId) {
 		PaymentPgRaw raw = getPaymentPgRawByPaymentId(paymentId);
-		raw.updatePgResponseJson(resToJson(res));
+		raw.updatePgResponseJson(jsonUtil.toJson(res));
 	}
 
 	private void validatePaymentKey(String tossPaymentKey){
 		if(paymentRepository.existsByTossPaymentKey(tossPaymentKey)) {
 			throw new BusinessException(ErrorCode.DUPLICATE_PAYMENT_INTENT);
 		}
-	}
-
-	private Payment getPaymentById(UUID paymentId){
-		return paymentRepository.findById(paymentId).orElseThrow(
-			() -> new BusinessException(ErrorCode.NOT_FOUND_BY_ID)
-		);
 	}
 
 	private Payment getPaymentByOrderId(UUID orderId) {
@@ -132,14 +123,6 @@ public class PaymentService {
 			.paymentKey(payment.getTossPaymentKey())
 			.amount(payment.getAmount().getAmount())
 			.build();
-	}
-
-	private String resToJson(TossPaymentResponse res) {
-		try {
-			return objectMapper.writeValueAsString(res);
-		} catch (JsonProcessingException e) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-		}
 	}
 
 	private PaymentPgRaw getPaymentPgRawByPaymentId(UUID paymentId){
