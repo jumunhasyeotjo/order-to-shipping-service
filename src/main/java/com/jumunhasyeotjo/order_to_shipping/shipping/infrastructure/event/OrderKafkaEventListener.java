@@ -4,9 +4,12 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jumunhasyeotjo.order_to_shipping.common.inbox.InboxService;
+import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
 import com.jumunhasyeotjo.order_to_shipping.common.util.KafkaUtil;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.event.order.OrderCanceledEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.event.order.OrderCreatedEvent;
@@ -24,6 +27,8 @@ public class OrderKafkaEventListener {
 
 	private final OrderEventHandler orderEventHandler;
 	private final ObjectMapper objectMapper;
+	private final InboxService inboxService;
+	private final JsonUtil jsonUtil;
 
 	@KafkaListener(
 		topics = "${spring.kafka.topics.order}",
@@ -46,15 +51,18 @@ public class OrderKafkaEventListener {
 		switch (OrderEvent.ofString(simpleClassName)){
 			case CREATED ->{
 				OrderCreatedEvent orderCreatedEvent = objectMapper.readValue(payload, OrderCreatedEvent.class);
-				orderEventHandler.orderCreated(orderCreatedEvent);
+				inboxService.process(orderCreatedEvent.orderId().toString(), OrderEvent.CREATED.getEventName(), jsonUtil.toJson(orderCreatedEvent),
+				() -> orderEventHandler.orderCreated(orderCreatedEvent));
 			}
 			case CANCELED -> {
 				OrderCanceledEvent orderCanceledEvent = objectMapper.readValue(payload, OrderCanceledEvent.class);
-				orderEventHandler.orderCanceled(orderCanceledEvent);
+				inboxService.process(orderCanceledEvent.orderId().toString(), OrderEvent.CANCELED.getEventName(), jsonUtil.toJson(orderCanceledEvent),
+					() -> orderEventHandler.orderCanceled(orderCanceledEvent));
 			}
 			case ROLLED_BACK -> {
 				OrderRolledBackEvent orderRolledBackEvent = objectMapper.readValue(payload, OrderRolledBackEvent.class);
-				orderEventHandler.orderRolledBack(orderRolledBackEvent);
+				inboxService.process(orderRolledBackEvent.orderId().toString(), OrderEvent.ROLLED_BACK.getEventName(), jsonUtil.toJson(orderRolledBackEvent),
+					() -> orderEventHandler.orderRolledBack(orderRolledBackEvent));
 			}
 		}
 	}
