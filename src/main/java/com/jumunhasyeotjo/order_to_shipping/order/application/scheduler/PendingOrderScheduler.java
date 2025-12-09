@@ -1,6 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application.scheduler;
 
-import com.jumunhasyeotjo.order_to_shipping.order.application.OrderPersistenceService;
+import com.jumunhasyeotjo.order_to_shipping.order.application.OrderService;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
@@ -20,7 +20,7 @@ import java.util.List;
 public class PendingOrderScheduler {
 
     private final OrderRepository orderRepository;
-    private final OrderPersistenceService orderPersistenceService;
+    private final OrderService orderService;
 
     private static final int BATCH_SIZE = 10;
 
@@ -35,7 +35,7 @@ public class PendingOrderScheduler {
 
         for (Order order : pendingOrderList) {
             try {
-                orderPersistenceService.rollbackSingleOrder(order);
+                orderService.rollbackSingleOrder(order);
             } catch (Exception e) {
                 log.error("서버 크래시 스케줄러 처리 실패 OrderId: {}", order.getId(), e);
             }
