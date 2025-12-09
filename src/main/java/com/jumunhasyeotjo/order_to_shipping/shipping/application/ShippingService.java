@@ -39,6 +39,7 @@ public class ShippingService {
 	private final ShippingHistoryService shippingHistoryService;
 
 	private final ShippingRepository shippingRepository;
+
 	private final CompanyClient companyClient;
 
 	private final ApplicationEventPublisher eventPublisher;

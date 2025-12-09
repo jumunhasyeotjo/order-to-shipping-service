@@ -66,7 +66,7 @@ public class HubIdCache {
     }
 
 	private void cacheAllHubInfo(){
-		List<HubInfo> hubInfoList = hubClient.getAllHubNames();
+		List<HubInfo> hubInfoList = hubClient.getAllHubs();
 		hubInfoList.forEach( hubInfo -> {
 			put(hubInfo.hubName(),hubInfo.hubId());
 		});
