@@ -63,7 +63,6 @@ import static com.library.passport.proto.PassportProto.Passport;
 @Validated
 public class ShippingController {
     private final ShippingService shippingService;
-	private final ShippingMessageEventHandler shippingMessageEventHandler;
 
 	@PostMapping
 	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
