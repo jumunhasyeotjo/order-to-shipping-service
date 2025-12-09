@@ -1,11 +1,11 @@
 package com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure;
 
-import com.jumunhasyeotjo.order_to_shipping.coupon.application.CouponService;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.IssueCouponService;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.command.CancelCouponCommand;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.command.IssueCouponCommand;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.event.CouponIssueEvent;
-import com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure.dto.OrderRollbackEvent;
+import com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure.event.OrderCancelledEvent;
+import com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure.event.OrderRollbackEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -22,21 +22,22 @@ public class CouponEventConsumer {
     private final IssueCouponService issueCouponService;
 
     @KafkaListener(
-        topics = "order",
+        topics = "${spring.kafka.topics.order}",
         groupId = "coupon",
         containerFactory = "kafkaListenerContainerFactory"
     )
     public void listen(ConsumerRecord<String, Object> record) {
 
         String key = record.key();
-        String type = new String(record.headers().lastHeader("type").value());
+        String type = new String(record.headers().lastHeader("eventType").value());
         Object value = record.value();
 
         log.info("Received message: type={}, key={}, value={}", type, key, value);
 
         switch (type) {
-            case "issueCoupon" -> handleIssueCoupon(value);
-            case "orderRollback" -> handleRollback(value);
+            case "ISSUE_COUPON" -> handleIssueCoupon(value);
+            case "ORDER_ROLLEDBACK" -> handleRollback(value);
+            case "ORDER_CANCELLED" -> handleCancel(value);
             default -> throw new RuntimeException("Unexpected message type: " + type);
         }
     }
@@ -68,7 +69,17 @@ public class CouponEventConsumer {
         log.info("[rollback] event: {}", event);
 
         issueCouponService.cancelCoupon(
-            new CancelCouponCommand(event.issueCouponId(), event.orderId())
+            new CancelCouponCommand(event.orderId())
+        );
+    }
+
+    private void handleCancel(Object value) {
+        OrderCancelledEvent event = (OrderCancelledEvent) value;
+
+        log.info("[cancel] event: {}", event);
+
+        issueCouponService.cancelCoupon(
+            new CancelCouponCommand(event.orderId())
         );
     }
 }

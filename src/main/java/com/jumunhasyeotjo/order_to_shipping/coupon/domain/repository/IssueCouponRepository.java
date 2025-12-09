@@ -7,5 +7,6 @@ import java.util.UUID;
 public interface IssueCouponRepository {
     IssueCoupon save(IssueCoupon issueCoupon);
     IssueCoupon findById(UUID issueCouponId);
+    IssueCoupon findByOrderId(UUID orderId);
     boolean existsByCoupon_CouponIdAndUserId(UUID couponId, Long userId);
 }

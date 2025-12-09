@@ -45,10 +45,9 @@ public class IssueCouponService {
 
     @Transactional
     public IssueCouponResult cancelCoupon(CancelCouponCommand command) {
-        UUID issueCouponId = command.issueCouponId();
         UUID orderId = command.orderId();
 
-        IssueCoupon issueCoupon = issueCouponRepository.findById(issueCouponId);
+        IssueCoupon issueCoupon = issueCouponRepository.findByOrderId(orderId);
         issueCoupon.cancelCoupon(orderId);
         return IssueCouponResult.fromIssueCoupon(issueCoupon);
     }
