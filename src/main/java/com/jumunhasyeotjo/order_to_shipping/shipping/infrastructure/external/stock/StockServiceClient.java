@@ -19,8 +19,8 @@ import com.library.passport.entity.ApiRes;
 )
 public interface StockServiceClient {
 	@PostMapping("/decrement")
-	ApiRes<StockResponse> decreaseStock(List<OrderProductReq> productList, UUID hubId, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
+	ApiRes<StockResponse> decreaseStock(List<OrderProductReq> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
 
 	@PostMapping("/increment")
-	ApiRes<StockResponse> incrementStock(List<OrderProductReq> productList, UUID hubId, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
+	ApiRes<StockResponse> incrementStock(List<OrderProductReq> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
 }
