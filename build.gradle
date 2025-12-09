@@ -64,6 +64,8 @@ dependencies {
 	implementation 'com.google.protobuf:protobuf-java:3.21.12'
 
 	implementation 'org.springframework.kafka:spring-kafka'
+
+	implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 }
 
 dependencyManagement {
