@@ -21,6 +21,6 @@ public class ShippingRepositoryAdapter implements ShippingRepository {
 
 	@Override
 	public Optional<Shipping> findById(UUID shippingId) {
-		return findById(shippingId);
+		return jpaShippingRepository.findById(shippingId);
 	}
 }
