@@ -25,6 +25,11 @@ public class IssueCouponRepositoryAdapter implements IssueCouponRepository {
     }
 
     @Override
+    public IssueCoupon findByOrderId(UUID orderId) {
+        return jpaIssueCouponRepository.findByOrderId(orderId).orElseThrow(IllegalArgumentException::new);
+    }
+
+    @Override
     public boolean existsByCoupon_CouponIdAndUserId(UUID couponId, Long userId) {
         return jpaIssueCouponRepository.existsByCoupon_CouponIdAndUserId(couponId, userId);
     }
