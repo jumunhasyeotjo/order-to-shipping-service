@@ -44,6 +44,8 @@ public class InboxMessage extends BaseEntity{
     @Column(nullable = false)
     private InboxStatus status;
 
+    private String errorMessage;
+
     @Builder
     public InboxMessage(String eventKey, String eventType, String payload){
         this.eventKey =eventKey;
@@ -51,14 +53,17 @@ public class InboxMessage extends BaseEntity{
         this.payload = payload;
         this.status = InboxStatus.RECEIVED;
     }
-
-    // 상태 변경 메서드
-    public void updateStatus(InboxStatus newStatus) {
-        this.status = newStatus;
-    }
-
     public void completed(){
         this.status = InboxStatus.COMPLETED;
         this.processedAt = LocalDateTime.now();
+    }
+
+    public void markProcessed(){
+        this.status = InboxStatus.PROCESSING;
+    }
+
+    public void markFailed(String errorMessage){
+        this.status = InboxStatus.FAILED;
+        this.errorMessage = errorMessage;
     }
 }
