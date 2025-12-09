@@ -1,6 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.presentation;
 
-import  java.net.URI;
+import java.net.URI;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -11,30 +11,23 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingHistoryService;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.ArriveShippingHistoryCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.ChangeDriverCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartShippingHistoryCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
-import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingHistoryRes;
-import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
 import com.library.passport.annotation.PassportAuthorize;
 import com.library.passport.annotation.PassportUser;
+import com.library.passport.entity.ApiRes;
 import com.library.passport.entity.PassportUserRole;
 import com.library.passport.proto.PassportProto;
 
@@ -54,7 +47,8 @@ public class ShippingHistoryController {
 	private final ShippingHistoryService shippingHistoryService;
 
 	@PatchMapping("/{shippingHistoryId}/depart")
-	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_MANAGER, PassportUserRole.HUB_DRIVER, PassportUserRole.COMPANY_DRIVER})
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_MANAGER,
+		PassportUserRole.HUB_DRIVER, PassportUserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 출발")
 	public ResponseEntity<ApiRes<UUID>> departShipping(
 		@PassportUser PassportProto.Passport passport,
@@ -75,7 +69,8 @@ public class ShippingHistoryController {
 	}
 
 	@PatchMapping("/{shippingHistoryId}/arrive")
-	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_MANAGER, PassportUserRole.HUB_DRIVER, PassportUserRole.COMPANY_DRIVER})
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_MANAGER,
+		PassportUserRole.HUB_DRIVER, PassportUserRole.COMPANY_DRIVER})
 	@Operation(summary = "배송 도착")
 	public ResponseEntity<ApiRes<UUID>> arriveShipping(
 		@PassportUser PassportProto.Passport passport,
@@ -118,7 +113,8 @@ public class ShippingHistoryController {
 	}
 
 	@GetMapping("/assigned-histories")
-	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_DRIVER, PassportUserRole.COMPANY_DRIVER})
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER, PassportUserRole.HUB_DRIVER,
+		PassportUserRole.COMPANY_DRIVER})
 	@Operation(summary = "담당 배송내역 조회 (배송자)")
 	public ResponseEntity<ApiRes<Page<ShippingHistoryRes>>> getAssignedShippingHistories(
 		@PassportUser PassportProto.Passport passport,

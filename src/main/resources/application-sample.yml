@@ -1,9 +1,22 @@
 server:
   port: 8086
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
 spring:
   config:
     import: optional:file:./.env[.properties]
+
+  main:
+    allow-bean-definition-overriding: true
+
+  application:
+    name: order-to-shipping-service
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -26,6 +39,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         show_sql: true
+        default_batch_fetch_size: 100
     open-in-view: false
 
   sql:
