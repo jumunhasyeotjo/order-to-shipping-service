@@ -1,9 +1,20 @@
 server:
   port: 8086
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
 spring:
   config:
     import: optional:file:./.env[.properties]
+
+  main:
+    allow-bean-definition-overriding: true
+
+  application:
+    name: order-to-shipping-service
 
   datasource:
     driver-class-name: org.postgresql.Driver

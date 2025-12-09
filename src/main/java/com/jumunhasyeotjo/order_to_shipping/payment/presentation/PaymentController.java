@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.PaymentService;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.CancelPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.ProcessPaymentCommand;
@@ -20,6 +19,7 @@ import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.request.Pro
 import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.response.PaymentRes;
 import com.library.passport.annotation.PassportAuthorize;
 import com.library.passport.annotation.PassportUser;
+import com.library.passport.entity.ApiRes;
 import com.library.passport.entity.PassportUserRole;
 import com.library.passport.proto.PassportProto;
 
