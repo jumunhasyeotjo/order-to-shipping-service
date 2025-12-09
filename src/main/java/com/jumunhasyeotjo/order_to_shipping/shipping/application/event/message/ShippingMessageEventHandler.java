@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -33,8 +32,6 @@ import java.util.List;
 public class ShippingMessageEventHandler {
 	private final ShippingEtaAiPredictor shippingEtaAiPredictor;
 	private final KafkaShippingMessageEventPublisher kafkaShippingMessageEventPublisher;
-
-	private final KafkaTemplate<String, String> kafkaTemplate;
 
 	@Value("${spring.kafka.topic.shipping-events:shipping-message-events}")
 	private String SHIPPING_MESSAGE_TOPIC;
@@ -84,7 +81,7 @@ public class ShippingMessageEventHandler {
 			ProducerRecord<String, String> record = new ProducerRecord<>(SHIPPING_MESSAGE_TOPIC, objectMapper.writeValueAsString(event));
 			record.headers().add(new RecordHeader("eventType", eventType.getBytes(StandardCharsets.UTF_8)));
 
-			kafkaTemplate.send(record).get(); // 예외 캐치를 위해 동기적으로 결과 호출
+			kafkaShippingMessageEventPublisher.publishEvent(event); // 예외 캐치를 위해 동기적으로 결과 호출
 			log.info("Kafka 발행 성공 ID: {}, Type: {}", event.getShippingId(), eventType);
 
 		} catch (Exception e) {
