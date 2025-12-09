@@ -59,10 +59,10 @@ public class ShippingController {
 	private final ShippingService shippingService;
 
 	@PostMapping
-	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
+	// @PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
 	@Operation(summary = "배송 생성")
 	public ResponseEntity<ApiRes<UUID>> createShipping(
-		@PassportUser Passport passport,
+		// @PassportUser Passport passport,
 		@Valid @RequestBody CreateShippingReq request
 	) {
 		log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
@@ -105,7 +105,7 @@ public class ShippingController {
 			shippingId
 		);
 
-		ShippingRes shippingRes = ShippingRes.from(shippingService.getShipping(command));
+		ShippingRes shippingRes = shippingService.getShipping(command);
 
 		log.info("배송 조회 성공: shippingId={}", shippingId);
 		return ResponseEntity.ok(ApiRes.success(shippingRes));
