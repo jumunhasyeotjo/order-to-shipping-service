@@ -17,6 +17,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DelayShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.RouteBasedHubNetwork;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.DelayShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
@@ -117,4 +118,5 @@ public class ShippingController {
       log.info("배송 조회 성공: shippingId={}", shippingId);
       return ResponseEntity.ok(ApiRes.success(shippingRes));
     }
+
 }
