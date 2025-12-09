@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfoName;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDelayedEvent;
@@ -128,7 +127,7 @@ public class ShippingService {
 		Shipping shipping = shippingRepository.findById(command.shippingId())
 				.orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
 
-		List<ProductInfoName> products = orderClientImpl.getProductsByCompanyOrderNameAndQuantity(shipping.getId());
+		List<ProductInfoName> products = orderClientImpl.getProductsByVendorOrderNameAndQuantity(shipping.getId());
 		String message = shippingDelayAiMessageGenerator.generateMessage(products, command);
 
 		eventPublisher.publishEvent(ShippingDelayedEvent.of(shipping.getId(), shipping.getReceiverCompanyId(), message));

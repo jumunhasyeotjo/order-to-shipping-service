@@ -46,11 +46,11 @@ public class Order extends BaseEntity {
     private String idempotencyKey;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderCompany> orderCompanies = new ArrayList<>();
+    private List<VendorOrder> vendorOrders = new ArrayList<>();
 
     @Builder
-    public Order(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
-        this.orderCompanies = orderCompanies;
+    public Order(List<VendorOrder> vendorOrders, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
+        this.vendorOrders = vendorOrders;
         this.companyManagerId = companyManagerId;
         this.receiverCompanyId = receiverCompanyId;
         this.requestMessage = requestMessage;
@@ -60,11 +60,11 @@ public class Order extends BaseEntity {
     }
 
 
-    public static Order create(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
-        validateCreate(orderCompanies, companyManagerId, receiverCompanyId, totalPrice);
+    public static Order create(List<VendorOrder> vendorOrders, Long companyManagerId, UUID receiverCompanyId, String requestMessage, int totalPrice, String idempotencyKey) {
+        validateCreate(vendorOrders, companyManagerId, receiverCompanyId, totalPrice);
 
         Order order = Order.builder()
-                .orderCompanies(orderCompanies)
+                .vendorOrders(vendorOrders)
                 .companyManagerId(companyManagerId)
                 .receiverCompanyId(receiverCompanyId)
                 .requestMessage(requestMessage)
@@ -72,8 +72,8 @@ public class Order extends BaseEntity {
                 .idempotencyKey(idempotencyKey)
                 .build();
 
-        for (OrderCompany orderCompany : orderCompanies) {
-            orderCompany.setOrder(order);
+        for (VendorOrder vendorOrder : vendorOrders) {
+            vendorOrder.setOrder(order);
         }
 
         return order;
@@ -90,8 +90,8 @@ public class Order extends BaseEntity {
     }
 
 
-    private static void validateCreate(List<OrderCompany> orderCompanies, Long companyManagerId, UUID receiverCompanyId, int totalPrice) {
-        if (orderCompanies.isEmpty() || totalPrice < 0 || companyManagerId == null || receiverCompanyId == null) {
+    private static void validateCreate(List<VendorOrder> vendorOrders, Long companyManagerId, UUID receiverCompanyId, int totalPrice) {
+        if (vendorOrders.isEmpty() || totalPrice < 0 || companyManagerId == null || receiverCompanyId == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
     }

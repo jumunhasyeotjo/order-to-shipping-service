@@ -35,8 +35,8 @@ public class OrderProduct extends BaseEntity {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_company_id")
-    private OrderCompany orderCompany;
+    @JoinColumn(name = "vendor_order_id")
+    private VendorOrder vendorOrder;
 
     @Builder
     public OrderProduct(UUID productId, int price, int quantity, String name) {
@@ -61,7 +61,7 @@ public class OrderProduct extends BaseEntity {
         if (quantity <= 0) throw new BusinessException(ErrorCode.INVALID_PRODUCT_QUANTITY);
     }
 
-    public void setOrderCompany(OrderCompany orderCompany) {
-        this.orderCompany = orderCompany;
+    public void setVendorOrder(VendorOrder vendorOrder) {
+        this.vendorOrder = vendorOrder;
     }
 }

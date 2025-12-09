@@ -15,12 +15,12 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "p_order_company")
-public class OrderCompany {
+@Table(name = "p_vendor_order")
+public class VendorOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "order_company_id")
+    @Column(name = "vendor_order_id")
     private UUID id;
 
     @Column(nullable = false)
@@ -30,26 +30,26 @@ public class OrderCompany {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @OneToMany(mappedBy = "orderCompany", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "vendorOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderProduct> orderProducts = new ArrayList<>();
     
     @Builder
-    public OrderCompany(UUID supplierCompanyId, List<OrderProduct> orderProducts) {
+    public VendorOrder(UUID supplierCompanyId, List<OrderProduct> orderProducts) {
         this.supplierCompanyId = supplierCompanyId;
         this.orderProducts = orderProducts;
     }
 
-    public static OrderCompany create(UUID supplierCompanyId, List<OrderProduct> orderProducts) {
+    public static VendorOrder create(UUID supplierCompanyId, List<OrderProduct> orderProducts) {
         validateOrderCompany(supplierCompanyId, orderProducts);
-        OrderCompany orderCompany = OrderCompany.builder()
+        VendorOrder vendorOrder = VendorOrder.builder()
                 .supplierCompanyId(supplierCompanyId)
                 .orderProducts(orderProducts)
                 .build();
 
         for (OrderProduct orderProduct : orderProducts) {
-            orderProduct.setOrderCompany(orderCompany);
+            orderProduct.setVendorOrder(vendorOrder);
         }
-        return orderCompany;
+        return vendorOrder;
     }
 
     private static void validateOrderCompany(UUID supplierCompanyId, List<OrderProduct> orderProducts) {

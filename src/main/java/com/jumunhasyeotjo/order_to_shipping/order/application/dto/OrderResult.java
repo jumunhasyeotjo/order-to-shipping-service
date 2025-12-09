@@ -19,7 +19,7 @@ public record OrderResult(
                 order.getRequestMessage(),
                 order.getTotalPrice(),
                 order.getStatus(),
-                order.getOrderCompanies().stream()
+                order.getVendorOrders().stream()
                         .flatMap(c -> c.getOrderProducts().stream().map(OrderProductResult::of))
                         .toList()
         );
