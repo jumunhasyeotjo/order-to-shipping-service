@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "hub-product-stock-company", path = "/api/v1/products/internal", configuration = OrderFeignConfig.class)
+@FeignClient(name = "hub-product-stock-company", path = "/internal/api/v1/products", configuration = OrderFeignConfig.class)
 public interface OrderProductClientImpl extends OrderProductClient {
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackFindAllProducts")

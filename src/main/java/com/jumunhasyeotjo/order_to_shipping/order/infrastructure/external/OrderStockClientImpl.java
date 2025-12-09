@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "hub-product-stock-company", path = "/api/v1/stocks/internal", configuration = OrderFeignConfig.class)
+@FeignClient(name = "hub-product-stock-company", path = "/internal/api/v1/stocks", configuration = OrderFeignConfig.class)
 public interface OrderStockClientImpl extends OrderStockClient {
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackDecreaseStock")
