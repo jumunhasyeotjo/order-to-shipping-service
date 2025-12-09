@@ -180,4 +180,4 @@ jobs:
             echo "Deployment failed - Application is not running"
             tail -50 $HOME/${{ secrets.LOG_DIR }}/app.log
             exit 1
-          fig
+          fi
