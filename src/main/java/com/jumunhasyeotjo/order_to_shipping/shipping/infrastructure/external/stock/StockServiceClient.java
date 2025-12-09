@@ -4,13 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
-import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderStockClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.RouteResponse;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.ShippingStockProduct;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.stock.dto.StockResponse;
 import com.library.passport.entity.ApiRes;
 
@@ -19,8 +16,8 @@ import com.library.passport.entity.ApiRes;
 )
 public interface StockServiceClient {
 	@PostMapping("/decrement")
-	ApiRes<StockResponse> decreaseStock(List<OrderProductReq> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
+	ApiRes<StockResponse> decreaseStock(List<ShippingStockProduct> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
 
 	@PostMapping("/increment")
-	ApiRes<StockResponse> incrementStock(List<OrderProductReq> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
+	ApiRes<StockResponse> incrementStock(List<ShippingStockProduct> productList, @RequestHeader("Idempotency-Key") UUID idempotencyKey);
 }
