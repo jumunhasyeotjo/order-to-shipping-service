@@ -1,0 +1,31 @@
+package com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure.repository;
+
+
+import com.jumunhasyeotjo.order_to_shipping.coupon.domain.entity.IssueCoupon;
+import com.jumunhasyeotjo.order_to_shipping.coupon.domain.repository.IssueCouponRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+public class IssueCouponRepositoryAdapter implements IssueCouponRepository {
+
+    private final JpaIssueCouponRepository jpaIssueCouponRepository;
+
+    @Override
+    public IssueCoupon save(IssueCoupon issueCoupon) {
+        return jpaIssueCouponRepository.save(issueCoupon);
+    }
+
+    @Override
+    public IssueCoupon findById(UUID issueCouponId) {
+        return jpaIssueCouponRepository.findById(issueCouponId).orElseThrow(IllegalArgumentException::new);
+    }
+
+    @Override
+    public boolean existsByCoupon_CouponIdAndUserId(UUID couponId, Long userId) {
+        return jpaIssueCouponRepository.existsByCoupon_CouponIdAndUserId(couponId, userId);
+    }
+}

@@ -1,36 +1,34 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 
-import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.*;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfoName;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDelayedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.OrderClientImpl;
+import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.*;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfoName;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDelayedEvent;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
-import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.OrderClientImpl;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
-import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
-import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.FORBIDDEN;
+import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.NOT_FOUND_BY_ID;
 
 @Slf4j
 @Service
@@ -45,7 +43,6 @@ public class ShippingService {
 
 	private final ShippingDelayAiMessageGenerator shippingDelayAiMessageGenerator;
 
-	private final UserClient userClient;
 	private final CompanyClient companyClient;
 
 	private final ApplicationEventPublisher eventPublisher;
@@ -89,6 +86,18 @@ public class ShippingService {
 
 		shippingDomainService.cancelDelivery(shipping, shippingHistories);
 		log.info("배송 취소 완료: shippingId={}", command.shippingId());
+	}
+
+	@Transactional
+	public void cancelShippingList(List<UUID> shippingId) {
+		log.info("배송 취소 시작: shipping Size={}", shippingId.size());
+		shippingId.forEach(id  -> {
+			Shipping shipping = getShippingById(id);
+			List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(id);
+
+			shippingDomainService.cancelDelivery(shipping, shippingHistories);
+		});
+		log.info("배송 취소 완료: shipping Size={}", shippingId.size());
 	}
 
 	/**

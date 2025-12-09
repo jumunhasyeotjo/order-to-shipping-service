@@ -15,4 +15,6 @@ public interface ShippingRepository {
 
 	Optional<Shipping> findById(UUID shippingId);
 
+
+
 }
