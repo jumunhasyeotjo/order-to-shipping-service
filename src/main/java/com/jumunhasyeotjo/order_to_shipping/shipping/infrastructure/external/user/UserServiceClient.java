@@ -3,11 +3,13 @@ package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.us
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.library.passport.entity.ApiRes;
+
 @FeignClient(
 	name = "user-interaction-service"
 )
 public interface UserServiceClient {
 
 	@GetMapping("/v1/user/internal/hubDriver/random")
-	public Long getRandomHubDriver();
+	ApiRes<Long> getRandomHubDriver();
 }

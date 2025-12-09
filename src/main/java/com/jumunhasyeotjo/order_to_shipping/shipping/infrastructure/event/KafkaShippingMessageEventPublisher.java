@@ -1,15 +1,15 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.event;
 
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDomainEvent;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
-
 import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingMsgReqEvent;
-
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDomainEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -22,6 +22,14 @@ public class KafkaShippingMessageEventPublisher {
 	private String shippingMessageTopic;
 
 	public void publishEvent(ShippingDomainEvent event) {
-		kafkaTemplate.send(shippingMessageTopic, jsonUtil.toJson(event));
+		String payload = jsonUtil.toJson(event);
+
+		Message<String> message = MessageBuilder
+			.withPayload(payload)
+			.setHeader(KafkaHeaders.TOPIC, shippingMessageTopic)
+			.setHeader("eventType", event.getClass().getSimpleName())
+			.build();
+
+		kafkaTemplate.send(message);
 	}
 }

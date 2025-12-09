@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.HubResponse;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.RouteResponse;
+import com.library.passport.entity.ApiRes;
 
 @FeignClient(
     name = "hub-product-stock-company"
@@ -14,8 +15,8 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub
 public interface HubServiceClient {
 
     @GetMapping("/internal/api/v1/hubs")
-    List<RouteResponse> getRoutes();
+    ApiRes<List<RouteResponse>> getRoutes();
 
     @GetMapping("/internal/api/v1/hubs/routes")
-    List<HubResponse> getAllHubs();
+    ApiRes<List<HubResponse>> getAllHubs();
 }

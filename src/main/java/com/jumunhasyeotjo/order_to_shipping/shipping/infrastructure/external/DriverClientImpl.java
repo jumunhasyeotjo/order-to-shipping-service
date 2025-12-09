@@ -18,6 +18,6 @@ public class DriverClientImpl implements DriverClient {
 
 	@Override
 	public Long assignDriver(UUID originHubId, UUID arrivalHubId) {
-		return userServiceClient.getRandomHubDriver();
+		return userServiceClient.getRandomHubDriver().getData();
 	}
 }
