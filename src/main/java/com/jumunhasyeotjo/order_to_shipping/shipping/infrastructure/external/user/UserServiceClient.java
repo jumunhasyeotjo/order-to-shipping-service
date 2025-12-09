@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.library.passport.entity.ApiRes;
 
 @FeignClient(
-	name = "user-interaction-service"
+	name = "user-service"
 )
 public interface UserServiceClient {
 
