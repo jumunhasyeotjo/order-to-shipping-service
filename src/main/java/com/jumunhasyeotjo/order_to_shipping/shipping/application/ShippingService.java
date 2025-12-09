@@ -6,6 +6,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.*;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfoName;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDelayedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.OrderClientImpl;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CreateShippingCommand;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.route.ShippingRouteGenerator;
@@ -26,6 +28,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreate
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
+import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +42,14 @@ public class ShippingService {
 	private final ShippingHistoryService shippingHistoryService;
 
 	private final ShippingRepository shippingRepository;
+	private final ShippingHistoryRepository shippingHistoryRepository;
+
+	private final ShippingDelayAiMessageGenerator shippingDelayAiMessageGenerator;
 
 	private final CompanyClient companyClient;
 
 	private final ApplicationEventPublisher eventPublisher;
+	private final OrderClientImpl orderClientImpl;
 
 	@Transactional
 	public UUID createShipping(CreateShippingCommand command) {
@@ -100,10 +107,10 @@ public class ShippingService {
 	 * 배송 조회
 	 */
 	@Transactional(readOnly = true)
-	public List<ShippingHistory> getShipping(GetShippingCommand command) {
+	public ShippingRes getShipping(GetShippingCommand command) {
 		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
-		return shippingHistories;
+		return ShippingRes.from(shippingHistories, shippingHistories.get(0).getShipping());
 	}
 
 	private void validateCancellableBy(UserRole userRole, String userBelong, UUID hubId) {
@@ -120,5 +127,27 @@ public class ShippingService {
 		return shippingRepository.findById(shippingId).orElseThrow(
 			() -> new BusinessException(NOT_FOUND_BY_ID)
 		);
+	}
+
+	@Transactional(readOnly = true)
+	public void delayShipping(DelayShippingCommand command) {
+		ShippingHistory shippingHistory = shippingHistoryRepository.findByShippingId(command.shippingId())
+				.orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
+
+		validateDriver(command, shippingHistory);
+
+		Shipping shipping = shippingRepository.findById(command.shippingId())
+				.orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
+
+		List<ProductInfoName> products = orderClientImpl.getProductsByCompanyOrderNameAndQuantity(shipping.getId());
+		String message = shippingDelayAiMessageGenerator.generateMessage(products, command);
+
+		eventPublisher.publishEvent(ShippingDelayedEvent.of(shipping.getId(), shipping.getReceiverCompanyId(), message));
+	}
+
+	private void validateDriver(DelayShippingCommand command, ShippingHistory shippingHistory) {
+		if (!command.driverId().equals(shippingHistory.getDriverId())) {
+			throw new BusinessException(FORBIDDEN);
+		}
 	}
 }

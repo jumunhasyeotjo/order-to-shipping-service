@@ -1,34 +1,17 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity;
 
-import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingStatus;
-
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
 
 @Entity
 @Getter
