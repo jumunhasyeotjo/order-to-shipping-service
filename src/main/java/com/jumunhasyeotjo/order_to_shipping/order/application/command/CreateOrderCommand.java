@@ -8,6 +8,9 @@ public record CreateOrderCommand (
         UUID organizationId,
         String requestMessage,
         List<OrderProductReq> orderProducts,
-        String idempotencyKey
+        String idempotencyKey,
+        UUID couponId,
+        String tossPaymentKey,
+        String tossOrderId
 ){
 }

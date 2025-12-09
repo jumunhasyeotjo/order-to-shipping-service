@@ -2,11 +2,13 @@ package com.jumunhasyeotjo.order_to_shipping.order.presentation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.config.MockPassportArgumentResolver;
-import com.jumunhasyeotjo.order_to_shipping.order.application.OrderService;
+import com.jumunhasyeotjo.order_to_shipping.order.application.OrderOrchestrator;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.CancelReason;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CancelOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.CreateOrderReq;
 import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.request.OrderUpdateStatusReq;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +48,7 @@ public class OrderControllerTest {
     private OrderController orderController;
 
     @Mock
-    private OrderService orderService;
+    private OrderOrchestrator orderOrchestrator;
 
     private MockMvc mockMvc;
 
@@ -74,14 +76,14 @@ public class OrderControllerTest {
         List<OrderProductReq> orderProducts = new ArrayList<>();
         orderProducts.add(new OrderProductReq(UUID.randomUUID(), 1));
 
-        CreateOrderReq request = new CreateOrderReq("요청사항", orderProducts);
+        CreateOrderReq request = new CreateOrderReq("요청사항", orderProducts, UUID.randomUUID(), "paymentKey", "tossOrderId");
 
         Order response = getOrder();
 
-        given(orderService.createOrder(any())).willReturn(response);
+        given(orderOrchestrator.createOrder(any())).willReturn(response);
 
         // when & then
-        mockMvc.perform(post("/v1/orders")
+        mockMvc.perform(post("/api/v1/orders")
                         .header("x-idempotency-key", "멱등키")
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                         .content(objectMapper.writeValueAsString(request)))
@@ -98,10 +100,10 @@ public class OrderControllerTest {
         Order response = getOrder();
         ReflectionTestUtils.setField(response, "status", OrderStatus.DONE);
 
-        given(orderService.updateOrderStatus(any())).willReturn(response);
+        given(orderOrchestrator.updateOrderStatus(any())).willReturn(response);
 
         // when & then
-        mockMvc.perform(patch("/v1/orders/{orderId}", UUID.randomUUID())
+        mockMvc.perform(patch("/api/v1/orders/{orderId}", UUID.randomUUID())
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON))
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -113,13 +115,15 @@ public class OrderControllerTest {
     void cancelOrder_ValidOrderId_ReturnsCancelledOrder() throws Exception {
         // given
         Order response = getOrder();
+        CancelOrderReq request = new CancelOrderReq(CancelReason.ETC);
         ReflectionTestUtils.setField(response, "status", OrderStatus.CANCELLED);
 
-        given(orderService.cancelOrder(any())).willReturn(response);
+        given(orderOrchestrator.cancelOrder(any())).willReturn(response);
 
         // when & then
-        mockMvc.perform(delete("/v1/orders/{orderId}", UUID.randomUUID())
-                        .contentType(String.valueOf(MediaType.APPLICATION_JSON)))
+        mockMvc.perform(delete("/api/v1/orders/{orderId}", UUID.randomUUID())
+                        .contentType(String.valueOf(MediaType.APPLICATION_JSON))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value(OrderStatus.CANCELLED.toString()));
     }
@@ -131,10 +135,10 @@ public class OrderControllerTest {
         Order order = getOrder();
         OrderResult response = OrderResult.of(order);
 
-        given(orderService.getOrder(any())).willReturn(response);
+        given(orderOrchestrator.getOrder(any())).willReturn(response);
 
         // when & then
-        mockMvc.perform(get("/v1/orders/{orderId}", UUID.randomUUID())
+        mockMvc.perform(get("/api/v1/orders/{orderId}", UUID.randomUUID())
                         .contentType(String.valueOf(MediaType.APPLICATION_JSON)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.requestMessage").value(order.getRequestMessage()))
@@ -154,10 +158,10 @@ public class OrderControllerTest {
         Page<OrderResult> response = new PageImpl<>(List.of(orderResult1, orderResult2, orderResult3),
                 PageRequest.of(0, 10), 0);
 
-        given(orderService.searchOrder(any())).willReturn(response);
+        given(orderOrchestrator.searchOrder(any())).willReturn(response);
 
         // when & then
-        mockMvc.perform(get("/v1/orders")
+        mockMvc.perform(get("/api/v1/orders")
                         .param("companyId", String.valueOf(UUID.randomUUID()))
                         .param("page", "0")
                         .param("size", "10")

@@ -2,7 +2,8 @@ package com.jumunhasyeotjo.order_to_shipping.order.domain.repository;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.VendorOrderItemsNameRes;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.VendorOrderItemsRes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,7 +16,10 @@ public interface OrderRepository {
     Optional<Order> findById(UUID orderId);
     Order save(Order order);
     Page<Order> findAllByCompanyId(UUID companyId, Pageable pageable);
-    List<CompanyOrderItemsRes> findAllByOrderCompany(UUID companyOrderId);
     boolean existsByIdempotencyKey(String idempotencyKey);
     List<Order> findAllByStatus(OrderStatus orderStatus, Pageable pageable);
+
+    // Internal Query
+    List<VendorOrderItemsRes> findAllByVendorOrder(UUID companyOrderId);
+    List<VendorOrderItemsNameRes> findAllByVendorOrderName(UUID vendorOrderId);
 }

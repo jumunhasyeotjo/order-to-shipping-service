@@ -1,7 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.order.infrastructure;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.VendorOrder;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 import com.jumunhasyeotjo.order_to_shipping.order.infrastructure.repository.JpaOrderRepository;
 import jakarta.persistence.EntityManager;
@@ -121,21 +121,21 @@ public class OrderRepositoryTest {
         Optional<Order> findOrder = jpaOrderRepository.findById(savedOrder.getId());
 
         // then
-        assertThat(findOrder.get().getOrderCompanies().size()).isEqualTo(1);
-        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getProductId()).isEqualTo(product1Id);
-        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getName()).isEqualTo("상품1");
-        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getQuantity()).isEqualTo(2);
-        assertThat(findOrder.get().getOrderCompanies().get(0).getOrderProducts().get(0).getPrice()).isEqualTo(1000);
+        assertThat(findOrder.get().getVendorOrders().size()).isEqualTo(1);
+        assertThat(findOrder.get().getVendorOrders().get(0).getOrderProducts().get(0).getProductId()).isEqualTo(product1Id);
+        assertThat(findOrder.get().getVendorOrders().get(0).getOrderProducts().get(0).getName()).isEqualTo("상품1");
+        assertThat(findOrder.get().getVendorOrders().get(0).getOrderProducts().get(0).getQuantity()).isEqualTo(2);
+        assertThat(findOrder.get().getVendorOrders().get(0).getOrderProducts().get(0).getPrice()).isEqualTo(1000);
     }
 
 
     // 테스트 헬퍼 메서드
-    private Order getOrder(UUID companyId, List<OrderCompany> orderCompanies, String requestMessage, int totalPrice) {
+    private Order getOrder(UUID companyId, List<VendorOrder> orderCompanies, String requestMessage, int totalPrice) {
         return Order.create(orderCompanies, 1L, companyId, requestMessage, totalPrice, "멱등키");
     }
 
-    private List<OrderCompany> getOrderCompanies(List<OrderProduct> products) {
-        return List.of(OrderCompany.create(UUID.randomUUID(), products));
+    private List<VendorOrder> getOrderCompanies(List<OrderProduct> products) {
+        return List.of(VendorOrder.create(UUID.randomUUID(), products));
     }
 
     private List<OrderProduct> getOrderProducts(UUID productId,int price, int quantity, String name) {

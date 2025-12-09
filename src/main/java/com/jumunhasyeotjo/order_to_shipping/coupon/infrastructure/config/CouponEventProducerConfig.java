@@ -36,7 +36,7 @@ public class CouponEventProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
+    public KafkaTemplate<String, Object> couponKafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }

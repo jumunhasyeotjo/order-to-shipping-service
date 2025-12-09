@@ -3,7 +3,8 @@ package com.jumunhasyeotjo.order_to_shipping.order.infrastructure.repository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.repository.OrderRepository;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.CompanyOrderItemsRes;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.VendorOrderItemsNameRes;
+import com.jumunhasyeotjo.order_to_shipping.order.presentation.dto.response.VendorOrderItemsRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,11 +39,6 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public List<CompanyOrderItemsRes> findAllByOrderCompany(UUID companyOrderId) {
-        return jpaOrderRepository.findAllByOrderCompany(companyOrderId);
-    }
-
-    @Override
     public boolean existsByIdempotencyKey(String idempotencyKey) {
         return jpaOrderRepository.existsByIdempotencyKey(idempotencyKey);
     }
@@ -50,6 +46,17 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public List<Order> findAllByStatus(OrderStatus orderStatus, Pageable pageable) {
         return jpaOrderRepository.findAllByStatus(orderStatus, pageable);
+    }
+
+    // Internal Query
+    @Override
+    public List<VendorOrderItemsRes> findAllByVendorOrder(UUID vendorOrderId) {
+        return jpaOrderRepository.findAllByVendorOrder(vendorOrderId);
+    }
+
+    @Override
+    public List<VendorOrderItemsNameRes> findAllByVendorOrderName(UUID vendorOrderId) {
+        return jpaOrderRepository.findAllByVendorOrderName(vendorOrderId);
     }
 
 }

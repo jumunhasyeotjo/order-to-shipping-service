@@ -3,7 +3,7 @@ package com.jumunhasyeotjo.order_to_shipping.order.domain;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.VendorOrder;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ public class OrderDomainTest {
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
-        assertThat(order.getOrderCompanies().size()).isEqualTo(1);
+        assertThat(order.getVendorOrders().size()).isEqualTo(1);
         assertThat(order.getTotalPrice()).isEqualTo(totalPrice);
         assertThat(order.getRequestMessage()).isEqualTo(requestMessage);
     }
@@ -43,7 +43,7 @@ public class OrderDomainTest {
     void create_withEmptyProductList_ShouldThrowException() {
         // given
         UUID companyId = UUID.randomUUID();
-        List<OrderCompany> orderCompanies = new ArrayList<>();
+        List<VendorOrder> orderCompanies = new ArrayList<>();
 
         String requestMessage = "요구사항";
         int totalPrice = 10000;
@@ -99,7 +99,7 @@ public class OrderDomainTest {
     void cancel_afterCancel_ShouldHaveCancelledStatus() {
         //given
         Order order = getOrder();
-        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
+        ReflectionTestUtils.setField(order, "status", OrderStatus.ORDERED);
 
         // when
         order.cancel(UserRole.COMPANY_MANAGER, 1L);

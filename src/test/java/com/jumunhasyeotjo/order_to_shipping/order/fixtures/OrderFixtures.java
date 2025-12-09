@@ -1,7 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.order.fixtures;
 
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
-import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderCompany;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.VendorOrder;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.OrderProduct;
 
 import java.util.ArrayList;
@@ -15,8 +15,8 @@ public class OrderFixtures {
         UUID productId = UUID.randomUUID();
         products.add(OrderProduct.create(productId, 1000, 1, "상품1"));
 
-        List<OrderCompany> orderCompanies = new ArrayList<>();
-        orderCompanies.add(OrderCompany.create(UUID.randomUUID(), products));
+        List<VendorOrder> orderCompanies = new ArrayList<>();
+        orderCompanies.add(VendorOrder.create(UUID.randomUUID(), products));
 
         UUID companyId = UUID.randomUUID();
         String requestMessage = "요구사항";

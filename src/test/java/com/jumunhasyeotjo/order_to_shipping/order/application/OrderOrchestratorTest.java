@@ -7,7 +7,9 @@ import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.CancelReason;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
+import com.library.passport.entity.ApiRes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +35,7 @@ import static org.mockito.Mockito.verify;
 
 // Service 단위 테스트
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+public class OrderOrchestratorTest {
 
     @Mock
     private OrderCompanyClient orderCompanyClient;
@@ -51,10 +53,10 @@ public class OrderServiceTest {
     private OrderPaymentClient orderPaymentClient;
 
     @Mock
-    private OrderPersistenceService orderPersistenceService;
+    private OrderService orderService;
 
     @InjectMocks
-    private OrderService orderService;
+    private OrderOrchestrator orderOrchestrator;
 
     /**
      * 생성
@@ -66,13 +68,13 @@ public class OrderServiceTest {
         CreateOrderCommand request = getCreateOrderCommand();
 
         given(orderCompanyClient.existCompany(request.organizationId()))
-                .willReturn(false);
+                .willReturn(ApiRes.success(false));
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("존재하지 않는 업체 입니다.");
-        verify(orderPersistenceService, never()).saveOrder(any(), any(), anyInt());
+        verify(orderService, never()).saveOrder(any(), any(), anyInt());
     }
 
     @Test
@@ -82,18 +84,18 @@ public class OrderServiceTest {
         CreateOrderCommand request = getCreateOrderCommand();
         List<ProductResult> productResults = new ArrayList<>();
 
-        given(orderPersistenceService.existsByIdempotencyKey(request.idempotencyKey()))
+        given(orderService.existsByIdempotencyKey(request.idempotencyKey()))
                 .willReturn(false);
         given(orderCompanyClient.existCompany(request.organizationId()))
-                .willReturn(true);
+                .willReturn(ApiRes.success(true));
         given(orderProductClient.findAllProducts(any()))
-                .willReturn(productResults);
+                .willReturn(ApiRes.success(productResults));
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("존재하지 않는 상품 입니다.");
-        verify(orderPersistenceService, never()).saveOrder(any(), any(), anyInt());
+        verify(orderService, never()).saveOrder(any(), any(), anyInt());
     }
 
     @Test
@@ -108,15 +110,15 @@ public class OrderServiceTest {
                 1000);
         productResults.add(product);
 
-        given(orderCompanyClient.existCompany(request.organizationId())).willReturn(true);
-        given(orderPersistenceService.existsByIdempotencyKey(request.idempotencyKey())).willReturn(false);
-        given(orderProductClient.findAllProducts(any())).willReturn(productResults);
-        given(orderPersistenceService.saveOrder(any(), any(), anyInt())).willReturn(getOrder());
+        given(orderCompanyClient.existCompany(request.organizationId())).willReturn(ApiRes.success(true));
+        given(orderService.existsByIdempotencyKey(request.idempotencyKey())).willReturn(false);
+        given(orderProductClient.findAllProducts(any())).willReturn(ApiRes.success(productResults));
+        given(orderService.saveOrder(any(), any(), anyInt())).willReturn(getOrder());
         given(orderCouponClient.useCoupon(any(), any())).willReturn(true);
-        given(orderStockClient.decreaseStock(any(), any())).willReturn(false); // 재고 부족
+        given(orderStockClient.decreaseStock(any(), any())).willReturn(ApiRes.success(false)); // 재고 부족
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문한 상품의 재고가 부족합니다.");
     }
@@ -131,15 +133,15 @@ public class OrderServiceTest {
         Order order = getOrder();
         OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "MASTER", OrderStatus.SHIPPED);
 
-        given(orderPersistenceService.findById(request.orderId()))
+        given(orderService.findById(request.orderId()))
                 .willReturn(order);
 
         ReflectionTestUtils.setField(order, "status", request.status());
-        given(orderPersistenceService.updateOrderStatus(any(), any(), any(), any()))
+        given(orderService.updateOrderStatus(any(), any(), any(), any()))
                 .willReturn(order);
 
         // when
-        Order result = orderService.updateOrderStatus(request);
+        Order result = orderOrchestrator.updateOrderStatus(request);
 
         // then
         assertThat(result).isNotNull();
@@ -152,13 +154,13 @@ public class OrderServiceTest {
         Order order = getOrder();
         OrderUpdateStatusCommand request = new OrderUpdateStatusCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER", OrderStatus.SHIPPED);
 
-        given(orderPersistenceService.findById(request.orderId()))
+        given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(false);
+                .willReturn(ApiRes.success(false));
 
         // when & then
-        assertThatThrownBy(() -> orderService.updateOrderStatus(request))
+        assertThatThrownBy(() -> orderOrchestrator.updateOrderStatus(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("해당 소속 허브만 접근 가능합니다.");
     }
@@ -171,19 +173,19 @@ public class OrderServiceTest {
     void cancelOrder_whenUserIsMaster_shouldSucceed() {
         // given
         Order order = getOrder();
-        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "MASTER");
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "MASTER", CancelReason.ETC);
 
-        given(orderPersistenceService.findById(request.orderId()))
+        given(orderService.findById(request.orderId()))
                 .willReturn(order);
         ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
-        given(orderPersistenceService.cancelOrder(any(), any())).willReturn(order);
+        given(orderService.cancelOrder(any(), any())).willReturn(order);
 
         // when
-        Order result = orderService.cancelOrder(request);
+        Order result = orderOrchestrator.cancelOrder(request);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(orderPersistenceService).cancelOrder(any(), eq(request));
+        verify(orderService).cancelOrder(any(), eq(request));
     }
 
     @Test
@@ -191,21 +193,21 @@ public class OrderServiceTest {
     void cancelOrder_whenUserIsHubManager_shouldSucceed() {
         // given
         Order order = getOrder();
-        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER", CancelReason.ETC);
 
-        given(orderPersistenceService.findById(request.orderId()))
+        given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(true);
+                .willReturn(ApiRes.success(true));
         ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
-        given(orderPersistenceService.cancelOrder(any(), any())).willReturn(order);
+        given(orderService.cancelOrder(any(), any())).willReturn(order);
 
         // when
-        Order result = orderService.cancelOrder(request);
+        Order result = orderOrchestrator.cancelOrder(request);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(orderPersistenceService).cancelOrder(any(), eq(request));
+        verify(orderService).cancelOrder(any(), eq(request));
     }
 
     @Test
@@ -213,15 +215,15 @@ public class OrderServiceTest {
     void cancelOrder_whenHubManagerIsNotInCorrectHub_shouldThrowException() {
         // given
         Order order = getOrder();
-        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER");
+        CancelOrderCommand request = new CancelOrderCommand(1L, UUID.randomUUID(), order.getId(), "HUB_MANAGER", CancelReason.ETC);
 
-        given(orderPersistenceService.findById(request.orderId()))
+        given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(false);
+                .willReturn(ApiRes.success(false));
 
         // when & then
-        assertThatThrownBy(() -> orderService.cancelOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.cancelOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("해당 소속 허브만 접근 가능합니다.");
     }
@@ -236,11 +238,11 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
-        given(orderPersistenceService.findByIdWithAll(order.getId()))
+        given(orderService.findByIdWithAll(order.getId()))
                 .willThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> orderService.getOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.getOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("존재하지 않는 주문 입니다.");
     }
@@ -252,11 +254,11 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(),UUID.randomUUID(), 1L, "COMPANY_MANAGER");
 
-        given(orderPersistenceService.findByIdWithAll(order.getId()))
+        given(orderService.findByIdWithAll(order.getId()))
                 .willReturn(order);
 
         // when
-        OrderResult result = orderService.getOrder(request);
+        OrderResult result = orderOrchestrator.getOrder(request);
 
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
@@ -270,11 +272,11 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "COMPANY_MANAGER");
 
-        given(orderPersistenceService.findByIdWithAll(order.getId()))
+        given(orderService.findByIdWithAll(order.getId()))
                 .willReturn(order);
 
         // when & then
-        assertThatThrownBy(() -> orderService.getOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.getOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문을 조회할 권한이 없습니다");
     }
@@ -286,13 +288,13 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(),2L, "HUB_MANAGER");
 
-        given(orderPersistenceService.findByIdWithAll(request.orderId()))
+        given(orderService.findByIdWithAll(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(true);
+                .willReturn(ApiRes.success(true));
 
         // when
-        OrderResult result = orderService.getOrder(request);
+        OrderResult result = orderOrchestrator.getOrder(request);
 
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
@@ -305,13 +307,13 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 2L, "HUB_MANAGER");
 
-        given(orderPersistenceService.findByIdWithAll(request.orderId()))
+        given(orderService.findByIdWithAll(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(false);
+                .willReturn(ApiRes.success(false));
 
         // when & then
-        assertThatThrownBy(() -> orderService.getOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.getOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문을 조회할 권한이 없습니다");
     }
@@ -323,11 +325,11 @@ public class OrderServiceTest {
         Order order = getOrder();
         GetOrderCommand request = new GetOrderCommand(order.getId(), UUID.randomUUID(), 1L, "MASTER");
 
-        given(orderPersistenceService.findByIdWithAll(order.getId()))
+        given(orderService.findByIdWithAll(order.getId()))
                 .willReturn(order);
 
         // when
-        OrderResult result = orderService.getOrder(request);
+        OrderResult result = orderOrchestrator.getOrder(request);
 
         // then
         assertThat(order.getId()).isEqualTo(result.orderId());
@@ -340,11 +342,11 @@ public class OrderServiceTest {
         Page<OrderResult> orderList = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
         SearchOrderCommand request = new SearchOrderCommand(1L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
-        given(orderPersistenceService.searchOrder(request))
+        given(orderService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
-        Page<OrderResult> result = orderService.searchOrder(request);
+        Page<OrderResult> result = orderOrchestrator.searchOrder(request);
 
         // then
         assertThat(result.getContent().size()).isEqualTo(0);
@@ -364,11 +366,11 @@ public class OrderServiceTest {
 
         SearchOrderCommand request = new SearchOrderCommand(1L, companyId, companyId, "COMPANY_MANAGER", PageRequest.of(0, 10));
 
-        given(orderPersistenceService.searchOrder(request))
+        given(orderService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
-        Page<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderOrchestrator.searchOrder(request);
 
         // then
         assertThat(results.getContent().size()).isEqualTo(3);
@@ -381,7 +383,7 @@ public class OrderServiceTest {
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"COMPANY_MANAGER", PageRequest.of(0, 10));
 
         // when & then
-        assertThatThrownBy(() -> orderService.searchOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.searchOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문을 조회할 권한이 없습니다");
     }
@@ -396,12 +398,12 @@ public class OrderServiceTest {
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"HUB_MANAGER", PageRequest.of(0, 10));
 
         given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
-                .willReturn(true);
-        given(orderPersistenceService.searchOrder(request))
+                .willReturn(ApiRes.success(true));
+        given(orderService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
-        Page<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderOrchestrator.searchOrder(request);
 
         // then
         assertThat(results.getContent().size()).isEqualTo(1);
@@ -414,10 +416,10 @@ public class OrderServiceTest {
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
 
         given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
-                .willReturn(false);
+                .willReturn(ApiRes.success(false));
 
         // when & then
-        assertThatThrownBy(() -> orderService.searchOrder(request))
+        assertThatThrownBy(() -> orderOrchestrator.searchOrder(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("주문을 조회할 권한이 없습니다");
     }
@@ -431,11 +433,11 @@ public class OrderServiceTest {
 
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "MASTER", PageRequest.of(0, 10));
 
-        given(orderPersistenceService.searchOrder(request))
+        given(orderService.searchOrder(request))
                 .willReturn(orderList);
 
         // when
-        Page<OrderResult> results = orderService.searchOrder(request);
+        Page<OrderResult> results = orderOrchestrator.searchOrder(request);
 
         // then
         assertThat(results.getContent().size()).isEqualTo(1);
@@ -449,6 +451,6 @@ public class OrderServiceTest {
         int quantity = 10;
         orderProducts.add(new OrderProductReq(productId, quantity));
 
-        return new CreateOrderCommand(1L, UUID.randomUUID(), requestMessage, orderProducts, "멱등키");
+        return new CreateOrderCommand(1L, UUID.randomUUID(), requestMessage, orderProducts, "멱등키", UUID.randomUUID(), "paymentKey", "tossOrderId");
     }
 }
