@@ -1,18 +1,15 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.event;
 
+import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingDomainEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
-
-import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
-import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingMsgReqEvent;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

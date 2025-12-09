@@ -56,8 +56,10 @@ public class OrderOrchestrator {
         RollbackStatus status = RollbackStatus.NONE;
 
         try {
-            status = RollbackStatus.USE_COUPON;
-            useCoupon(command.couponId(), pendingOrderId);
+            if (command.couponId() != null) {
+                status = RollbackStatus.USE_COUPON;
+                useCoupon(command.couponId(), pendingOrderId);
+            }
 
             status = RollbackStatus.DECREASE_STOCK;
             decreaseStock(command.orderProducts(), pendingOrderId);
