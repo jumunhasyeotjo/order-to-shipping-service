@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "hub-product-stock-company", path = "/api/v1/companies/internal", configuration = OrderFeignConfig.class)
+@FeignClient(name = "hub-product-stock-company", path = "/internal/api/v1/companies", configuration = OrderFeignConfig.class)
 public interface OrderCompanyClientImpl extends OrderCompanyClient {
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackExistCompany")
