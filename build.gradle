@@ -61,6 +61,8 @@ dependencies {
 	testImplementation 'com.h2database:h2' // 테스트용 H2 DB 추가
 
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+	implementation 'io.github.resilience4j:resilience4j-retry' // resilience4j retry 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.retry:spring-retry'
 

@@ -96,6 +96,19 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3  # 서킷 브레이커가 Half-open 상태에서 허용하는 최대 호출 수를 3으로 설정
         # 서킷 브레이커가 Open 상태에서 Half-open 상태로 전환되기 전에 기다리는 시간
         waitDurationInOpenState: 20s  # Open 상태에서 Half-open 상태로 전환되기 전에 대기하는 시간을 20초로 설정
+  retry:
+    instances:
+      externalApiRetry: # 재시도 인스턴스 이름
+        max-attempts: 4  # 최초 시도 1회 + 재시도 3회 (간격: 1s, 2s, 4s)
+        wait-duration: 1000ms # 초기 대기 시간 (1초)
+        enable-exponential-backoff: true # 지수 백오프 활성화
+        exponential-backoff-multiplier: 2 # 대기 시간 배수 (1s -> 2s -> 4s)
+        retry-exceptions: # 재시도할 예외 (일시적 장애)
+          - java.io.IOException # 네트워크 연결 실패
+          - java.util.concurrent.TimeoutException # 타임아웃
+          - feign.RetryableException # Feign 재시도 신호
+        ignore-exceptions: # 재시도하지 않을 예외 (클라이언트 에러 등)
+          - feign.FeignException.FeignClientException # 4xx 에러 등
 
 management:
   endpoints:
