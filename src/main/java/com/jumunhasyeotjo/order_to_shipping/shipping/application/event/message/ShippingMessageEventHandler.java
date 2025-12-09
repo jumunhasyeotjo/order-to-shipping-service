@@ -1,12 +1,9 @@
-package com.jumunhasyeotjo.order_to_shipping.shipping.application.event;
-
-import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
+package com.jumunhasyeotjo.order_to_shipping.shipping.application.event.message;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.context.event.EventListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -15,19 +12,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.NetworkException;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingEtaAiPredictor;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfo;
-import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.HubClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.OrderClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.StockClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.UserClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingMsgReqEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentArrivedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubIdCache;
+import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.event.KafkaShippingMessageEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,16 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ShippingEventHandler {
+public class ShippingMessageEventHandler {
 	private final ShippingEtaAiPredictor shippingEtaAiPredictor;
-	private final UserClient userClient;
+	private final KafkaShippingMessageEventPublisher kafkaShippingMessageEventPublisher;
 
 	@Async
-	@Retryable(
-		value = NetworkException.class,
-		maxAttempts = 3,
-		backoff = @Backoff(delay = 1000)
-	)
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleShippingCreated(ShippingCreatedEvent event) {
 		List<ShippingHistory> shippingHistories = event.getShippingHistories();
@@ -67,8 +59,9 @@ public class ShippingEventHandler {
 
 		String etaMessage = "위 내용을 기반으로 도출된 최종 발송 시한은 " + eta + " 입니다.";
 
-		userClient.sendSlackMessage(event.getOriginHubId(), event.getReceiverCompanyId(), orderIdMessage, infoMessage,
-			etaMessage, event.getDriverId());
+		ShippingMsgReqEvent shippingMsgReqEvent = new ShippingMsgReqEvent(event.getOriginHubId(),
+			event.getReceiverCompanyId(), orderIdMessage, infoMessage, etaMessage, event.getDriverId());
+		kafkaShippingMessageEventPublisher.publishEvent(shippingMsgReqEvent);
 	}
 
 	private String buildWaypoints(List<ShippingHistory> shippingHistories) {
