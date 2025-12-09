@@ -24,6 +24,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DepartS
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetAssignedShippingHistoriesCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ProductInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.Route;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.CompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.DriverClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.OrderClient;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.service.StockClient;
@@ -33,6 +34,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmen
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingSegmentDepartedEvent;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingHistoryRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubIdCache;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.HubNameCache;
 
@@ -48,11 +50,13 @@ public class ShippingHistoryService {
 	private final ShippingDomainService shippingDomainService;
 
 	private final ApplicationEventPublisher eventPublisher;
-	private final HubNameCache hubNameCache;
+
 	private final DriverClient driverClient;
 	private final OrderClient orderClient;
 	private final StockClient stockClient;
+
 	private final HubIdCache hubIdCache;
+	private final HubNameCache hubNameCache;
 
 	/**
 	 * 배송이력 생성
@@ -64,11 +68,12 @@ public class ShippingHistoryService {
 
 		ShippingHistory finalHistory = ShippingHistory.create(
 			shipping,
-			recevierCompany.driverId(),
+			driverClient.assignCompanyDriver(recevierCompany.hubId()),
 			hubLegHistories.size() + 1,
 			getHubNameFromId(recevierCompany.hubId()),
-			recevierCompany.companyName(),
-			recevierCompany.routeInfo()
+			recevierCompany.name(),
+			//todo 예상 경로 받기
+			RouteInfo.of(500, 120)
 		);
 
 		List<ShippingHistory> shippingHistories = Stream.concat(hubLegHistories.stream(), Stream.of(finalHistory))
@@ -237,7 +242,7 @@ public class ShippingHistoryService {
 				Route route = routes.get(i);
 				return ShippingHistory.create(
 					shipping,
-					driverClient.assignDriver(route.departureHubId(), route.destinationHubId()),
+					driverClient.assignHubDriver(),
 					i + 1,
 					getHubNameFromId(route.departureHubId()),
 					getHubNameFromId(route.destinationHubId()),

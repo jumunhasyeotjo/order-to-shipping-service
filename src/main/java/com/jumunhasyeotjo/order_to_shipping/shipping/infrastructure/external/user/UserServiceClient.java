@@ -1,7 +1,10 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.user;
 
+import java.util.UUID;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.library.passport.entity.ApiRes;
 
@@ -10,6 +13,9 @@ import com.library.passport.entity.ApiRes;
 )
 public interface UserServiceClient {
 
-	@GetMapping("/v1/user/internal/hubDriver/random")
-	ApiRes<Long> getRandomHubDriver();
+	@GetMapping("/internal/api/v1/users/hub-driver/random")
+	Long getRandomHubDriver();
+
+	@GetMapping("/internal/api/v1/users/company-driver/random/{hubId}")
+	Long getRandomCompanyDriver(@PathVariable UUID hubId);
 }
