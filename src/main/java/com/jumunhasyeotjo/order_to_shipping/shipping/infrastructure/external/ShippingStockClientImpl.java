@@ -20,13 +20,19 @@ public class ShippingStockClientImpl implements StockClient {
 	private final StockServiceClient stockServiceClient;
 	@Override
 	public void increaseStock(UUID idempotencyKey, UUID hubId, List<ProductInfo> productList) {
-		List<OrderProductReq> productReqs = productList.stream().map(OrderProductReq::of).toList();
-		stockServiceClient.incrementStock(productReqs, hubId, idempotencyKey);
+		List<OrderProductReq> productReqs = productList.stream().map(
+			productInfo -> OrderProductReq.from(productInfo, hubId)
+		).toList();
+
+		stockServiceClient.incrementStock(productReqs, idempotencyKey);
 	}
 
 	@Override
 	public void decreaseStock(UUID idempotencyKey, UUID hubId, List<ProductInfo> productList) {
-		List<OrderProductReq> productReqs = productList.stream().map(OrderProductReq::of).toList();
-		stockServiceClient.incrementStock(productReqs, hubId, idempotencyKey);
+		List<OrderProductReq> productReqs = productList.stream().map(
+			productInfo -> OrderProductReq.from(productInfo, hubId)
+		).toList();
+
+		stockServiceClient.incrementStock(productReqs, idempotencyKey);
 	}
 }
