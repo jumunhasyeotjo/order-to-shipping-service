@@ -22,8 +22,7 @@ public record ShippingRes(
 	@Schema(description = "상세 배송 이력")
 	List<ShippingHistoryRes> shippingHistories
 ) {
-	public static ShippingRes from(List<ShippingHistory> shippingHistories){
-		Shipping shipping = shippingHistories.get(0).getShipping();
+	public static ShippingRes from(List<ShippingHistory> shippingHistories,Shipping shipping){
 		List<ShippingHistoryRes> shippingHistoryResList = shippingHistories.stream().map(ShippingHistoryRes::from).toList();
 		return new ShippingRes(
 			shipping.getId(),
