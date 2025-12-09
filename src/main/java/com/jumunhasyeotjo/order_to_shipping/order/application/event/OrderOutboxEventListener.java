@@ -27,19 +27,16 @@ public class OrderOutboxEventListener {
     private final OrderOutboxRepository orderOutboxRepository;
     private final ObjectMapper objectMapper;
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void createOutbox(OrderCreatedEvent event) {
         saveOutbox("ORDER_CREATED", event.getOrderId(), event);
     }
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void createOutbox(OrderRolledBackEvent event) {
         saveOutbox("ORDER_ROLLEDBACK", event.getOrderId(), event);
     }
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void createOutbox(OrderCancelledEvent event) {
         saveOutbox("ORDER_CANCELLED", event.getOrderId(), event);
