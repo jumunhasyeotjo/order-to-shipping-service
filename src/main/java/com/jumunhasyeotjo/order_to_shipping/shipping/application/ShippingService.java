@@ -28,6 +28,7 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreate
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository.ShippingRepository;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.service.ShippingDomainService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
+import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -95,10 +96,10 @@ public class ShippingService {
 	 * 배송 조회
 	 */
 	@Transactional(readOnly = true)
-	public List<ShippingHistory> getShipping(GetShippingCommand command) {
+	public ShippingRes getShipping(GetShippingCommand command) {
 		List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(command.shippingId());
 
-		return shippingHistories;
+		return ShippingRes.from(shippingHistories, shippingHistories.get(0).getShipping());
 	}
 
 	private void validateCancellableBy(UserRole userRole, String userBelong, UUID hubId) {

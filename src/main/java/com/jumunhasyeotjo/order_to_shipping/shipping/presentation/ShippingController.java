@@ -72,23 +72,6 @@ public class ShippingController {
         return ResponseEntity.ok(ApiRes.success(shippingId));
     }
 
-    @GetMapping("/{shippingId}")
-    @Operation(summary = "배송 조회")
-    public ResponseEntity<ApiRes<ShippingRes>> getShipping(
-            @PathVariable(name = "shippingId") UUID shippingId
-    ) {
-        log.info("배송 조회 요청: shippingId={}", shippingId);
-
-        GetShippingCommand command = new GetShippingCommand(
-                shippingId
-        );
-
-        ShippingRes shippingRes = ShippingRes.from(shippingService.getShipping(command));
-
-        log.info("배송 조회 성공: shippingId={}", shippingId);
-        return ResponseEntity.ok(ApiRes.success(shippingRes));
-    }
-
     @PostMapping("/{shippingId}/delay")
     public ResponseEntity<ApiRes<?>> delayShipping(@PathVariable UUID shippingId,
                                                    @Valid @RequestBody DelayShippingReq request,
@@ -106,5 +89,22 @@ public class ShippingController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .build();
+    }
+  
+    @GetMapping("/{shippingId}")
+    @Operation(summary = "배송 조회")
+    public ResponseEntity<ApiRes<ShippingRes>> getShipping(
+      @PathVariable(name = "shippingId") UUID shippingId
+    ) {
+      log.info("배송 조회 요청: shippingId={}", shippingId);
+
+      GetShippingCommand command = new GetShippingCommand(
+        shippingId
+      );
+
+      ShippingRes shippingRes = shippingService.getShipping(command);
+
+      log.info("배송 조회 성공: shippingId={}", shippingId);
+      return ResponseEntity.ok(ApiRes.success(shippingRes));
     }
 }
