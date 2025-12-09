@@ -15,6 +15,8 @@ import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -53,6 +55,7 @@ public class ShippingHistory extends BaseEntity {
 	private String destination;
 
 	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	private ShippingHistoryStatus status;
 
 	@Embedded

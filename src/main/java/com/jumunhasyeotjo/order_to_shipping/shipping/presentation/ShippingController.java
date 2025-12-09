@@ -83,7 +83,7 @@ public class ShippingController {
                 shippingId
         );
 
-        ShippingRes shippingRes = ShippingRes.from(shippingService.getShipping(command));
+		ShippingRes shippingRes = shippingService.getShipping(command);
 
         log.info("배송 조회 성공: shippingId={}", shippingId);
         return ResponseEntity.ok(ApiRes.success(shippingRes));
