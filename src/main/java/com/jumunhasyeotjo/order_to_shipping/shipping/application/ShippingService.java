@@ -46,7 +46,6 @@ public class ShippingService {
 
 	private final ShippingDelayAiMessageGenerator shippingDelayAiMessageGenerator;
 
-	private final UserClient userClient;
 	private final CompanyClient companyClient;
 
 	private final ApplicationEventPublisher eventPublisher;
@@ -90,6 +89,18 @@ public class ShippingService {
 
 		shippingDomainService.cancelDelivery(shipping, shippingHistories);
 		log.info("배송 취소 완료: shippingId={}", command.shippingId());
+	}
+
+	@Transactional
+	public void cancelShippingList(List<UUID> shippingId) {
+		log.info("배송 취소 시작: shipping Size={}", shippingId.size());
+		shippingId.forEach(id  -> {
+			Shipping shipping = getShippingById(id);
+			List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(id);
+
+			shippingDomainService.cancelDelivery(shipping, shippingHistories);
+		});
+		log.info("배송 취소 완료: shipping Size={}", shippingId.size());
 	}
 
 	/**

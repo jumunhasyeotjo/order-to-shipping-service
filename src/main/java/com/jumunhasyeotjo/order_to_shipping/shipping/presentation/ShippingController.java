@@ -1,11 +1,38 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.presentation;
 
+import java.net.URI;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.ShippingService;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.CancelShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.DelayShippingCommand;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.GetShippingCommand;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.dto.ShippingResult;
+import com.jumunhasyeotjo.order_to_shipping.shipping.application.event.message.ShippingMessageEventHandler;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.ShippingHistory;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.event.ShippingCreatedEvent;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
+import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ArriveShippingReq;
+import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.ChangeDriverReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.CreateShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.request.DelayShippingReq;
 import com.jumunhasyeotjo.order_to_shipping.shipping.presentation.dto.response.ShippingRes;
@@ -25,6 +52,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.UUID;
 
+
 import static com.library.passport.proto.PassportProto.Passport;
 
 @Slf4j
@@ -36,14 +64,14 @@ import static com.library.passport.proto.PassportProto.Passport;
 public class ShippingController {
     private final ShippingService shippingService;
 
-    @PostMapping
-    @PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
-    @Operation(summary = "배송 생성")
-    public ResponseEntity<ApiRes<UUID>> createShipping(
-            @PassportUser Passport passport,
-            @Valid @RequestBody CreateShippingReq request
-    ) {
-        log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
+	@PostMapping
+	@PassportAuthorize(allowedRoles = {PassportUserRole.MASTER})
+	@Operation(summary = "배송 생성")
+	public ResponseEntity<ApiRes<UUID>> createShipping(
+		@PassportUser Passport passport,
+		@Valid @RequestBody CreateShippingReq request
+	) {
+		log.info("배송 생성 요청: orderProductId={}", request.orderProductId());
 
         UUID shippingId = shippingService.createShipping(request.toCommand());
 
@@ -90,7 +118,7 @@ public class ShippingController {
                 .status(HttpStatus.OK)
                 .build();
     }
-  
+
     @GetMapping("/{shippingId}")
     @Operation(summary = "배송 조회")
     public ResponseEntity<ApiRes<ShippingRes>> getShipping(
