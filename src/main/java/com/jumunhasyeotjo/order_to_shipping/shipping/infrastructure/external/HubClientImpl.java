@@ -25,7 +25,7 @@ public class HubClientImpl implements HubClient{
 
 	@Override
 	public List<Route> getRoutes() {
-		return hubServiceClient.getRoutes().getData().stream()
+		return hubServiceClient.getRoutes().data().stream()
 			.map(response -> new Route(
 				response.startHub(),
 				response.endHub(),
@@ -36,7 +36,7 @@ public class HubClientImpl implements HubClient{
 
 	@Override
 	public List<HubInfo> getAllHubs() {
-		return hubServiceClient.getAllHubs().getData().stream()
+		return hubServiceClient.getAllHubs().data().stream()
 			.map(response -> new HubInfo(
 				response.id(),
 				response.name()

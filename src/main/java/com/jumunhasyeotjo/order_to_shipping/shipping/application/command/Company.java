@@ -6,10 +6,8 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.RouteInfo;
 
 public record Company(
 	UUID companyId,
-	String companyName,
+	String name,
 	UUID hubId,
-	String address,
-	Long driverId,
-	RouteInfo routeInfo
+	String address
 ) {
 }
