@@ -1,5 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.application.event.order;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -23,13 +25,13 @@ public class OrderEventHandler {
 	private final PaymentService paymentService;
 
 	public void orderCreated(OrderCreatedEvent event){
-		event.supplierCompanyId().forEach(supplierCompanyId -> {
+		event.vendingOrders().forEach(vendingOrder -> {
 			CreateShippingCommand command = new CreateShippingCommand(
-				UUID.randomUUID(), //todo orderProductId 받기
+				vendingOrder.getVendingOrderId(),
 				event.orderCreatedTime(),
-				event.productInfo(),
+				vendingOrder.getProductInfo(),
 				event.requestMessage(),
-				supplierCompanyId,
+				vendingOrder.getSupplierCompanyId(),
 				event.receiverCompanyId()
 			);
 
