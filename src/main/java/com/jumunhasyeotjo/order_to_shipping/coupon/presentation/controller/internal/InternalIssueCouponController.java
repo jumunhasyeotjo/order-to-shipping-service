@@ -26,16 +26,14 @@ public class InternalIssueCouponController {
         summary = "쿠폰 사용 처리",
         description = "발급된 쿠폰을 사용 처리합니다. Internal API."
     )
-    public ResponseEntity<ApiRes<IssueCouponRes>> useCoupon(
+    public ResponseEntity<ApiRes<Integer>> useCoupon(
         @RequestBody UseCouponReq useCouponReq
     ) {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(
                 ApiRes.success(
-                    IssueCouponRes.fromResult(
-                        issueCouponService.useCoupon(useCouponReq.toCommand())
-                    )
+                    issueCouponService.useCoupon(useCouponReq.toCommand())
                 )
             );
     }
