@@ -120,7 +120,6 @@ public class ShippingHistoryService {
 		if (!Objects.equals(shippingHistory.getSequence(), shipping.getTotalRouteCount())) { // 최종경로는 목적지이므로 허브 재고차감 하지않음
 			increaseDestinationHubStock(shipping.getId(), shippingHistory.getDestination());
 		}
-		publishArrivedEvent(shippingHistory, totalRouteCount);
 
 		log.info("배송 도착 처리 완료: shippingHistoryId={}", command.shippingHistoryId());
 	}
@@ -211,29 +210,6 @@ public class ShippingHistoryService {
 		return shippingHistory;
 	}
 
-	private void publishDepartedEvent(ShippingHistory shippingHistory) {
-		boolean isFirstSegment = shippingHistory.getSequence() == 1;
-
-		eventPublisher.publishEvent(
-			new ShippingSegmentDepartedEvent(
-				shippingHistory.getOrigin(),
-				shippingHistory.getShipping().getId(),
-				isFirstSegment
-			)
-		);
-	}
-
-	private void publishArrivedEvent(ShippingHistory shippingHistory, int totalRouteCount) {
-		boolean isFinalDestination = shippingHistory.getSequence() == (totalRouteCount - 1);
-
-		eventPublisher.publishEvent(
-			new ShippingSegmentArrivedEvent(
-				shippingHistory.getDestination(),
-				shippingHistory.getShipping().getId(),
-				isFinalDestination
-			)
-		);
-	}
 
 	private List<ShippingHistory> buildHubLegHistories(Shipping shipping, List<Route> routes) {
 		return IntStream.range(0, routes.size())
