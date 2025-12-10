@@ -12,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Slf4j
 public enum OrderEvent {
-	CREATED("OrderCreatedEvent"),
-	CANCELED("OrderCanceledEvent"),
-	ROLLED_BACK("OrderRolledBackEvent");
+	CREATED("ORDER_CREATED"),
+	CANCELED("ORDER_CANCELLED"),
+	ROLLED_BACK("ORDER_ROLLEDBACK");
 
 	private final String eventName;
 

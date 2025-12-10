@@ -34,6 +34,6 @@ public class ShippingStockClientImpl implements StockClient {
 			productInfo -> ShippingStockProduct.from(productInfo, hubId)
 		).toList();
 
-		stockServiceClient.incrementStock(productReqs, idempotencyKey);
+		stockServiceClient.decreaseStock(productReqs, idempotencyKey);
 	}
 }
