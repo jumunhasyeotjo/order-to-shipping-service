@@ -32,18 +32,17 @@ public class HubKafkaEventListener {
 	)
 	public void listen(
 		@Payload String event,
-		@Header(name = "__TypeId__", required = false) String fullTypeName
+		@Header(name = "eventType", required = false) String eventType
 	) {
 		try {
-			String simpleClassName = KafkaUtil.getClassName(fullTypeName);
-			dispatch(event, simpleClassName);
+			dispatch(event, eventType);
 		}catch (Exception e){
 			log.error("Error processing event: {}", e.getMessage(), e);
 		}
 	}
 
-	public void dispatch(String payload, String simpleClassName) throws JsonProcessingException {
-		switch (HubEvent.ofString(simpleClassName)){
+	public void dispatch(String payload, String eventType) throws JsonProcessingException {
+		switch (HubEvent.ofString(eventType)){
 			case CREATED ->{
 				HubCreatedEvent hubCreatedEvent = objectMapper.readValue(payload, HubCreatedEvent.class);
 				hubEventHandler.hubCreated(hubCreatedEvent);

@@ -37,18 +37,17 @@ public class OrderKafkaEventListener {
 	)
 	public void listen(
 		@Payload String event,
-		@Header(name = "__TypeId__", required = false) String fullTypeName
+		@Header(name = "eventType", required = false) String eventType
 	) {
 		try {
-			String simpleClassName = KafkaUtil.getClassName(fullTypeName);
-			dispatch(event, simpleClassName);
+			dispatch(event, eventType);
 		}catch (Exception e){
 			log.error("Error processing event: {}", e.getMessage(), e);
 		}
 	}
 
-	public void dispatch(String payload, String simpleClassName) throws JsonProcessingException {
-		switch (OrderEvent.ofString(simpleClassName)){
+	public void dispatch(String payload, String eventType) throws JsonProcessingException {
+		switch (OrderEvent.ofString(eventType)){
 			case CREATED ->{
 				OrderCreatedEvent orderCreatedEvent = objectMapper.readValue(payload, OrderCreatedEvent.class);
 				inboxService.process(orderCreatedEvent.orderId().toString(), OrderEvent.CREATED.getEventName(), jsonUtil.toJson(orderCreatedEvent),
