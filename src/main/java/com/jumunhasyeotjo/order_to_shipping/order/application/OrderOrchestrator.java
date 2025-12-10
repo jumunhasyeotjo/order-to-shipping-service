@@ -58,7 +58,7 @@ public class OrderOrchestrator {
         try {
             if (command.couponId() != null) {
                 status = RollbackStatus.USE_COUPON;
-                useCoupon(command.couponId(), pendingOrderId);
+                totalPrice -= useCoupon(command.couponId(), pendingOrderId);
             }
 
             status = RollbackStatus.DECREASE_STOCK;
@@ -124,21 +124,23 @@ public class OrderOrchestrator {
 
     // 상품 정보 조회 및 검증 (등록)
     private List<ProductResult> findAllOrderProduct(List<OrderProductReq> orderProducts) {
-        List<ProductResult> allProducts = orderProductClient.findAllProducts(orderProducts.stream().map(OrderProductReq::productId).toList()).getData();
+        List<ProductResult> allProducts = orderProductClient.findAllProducts(orderProducts.stream().map(OrderProductReq::productId).toList()).data();
         if (!(allProducts.size() == orderProducts.size())) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
         return allProducts;
     }
     // 쿠폰 사용 (등록)
-    private void useCoupon(UUID couponId, UUID orderId) {
-        if (!orderCouponClient.useCoupon(couponId, orderId)) {
+    private Integer useCoupon(UUID couponId, UUID orderId) {
+        Integer discountPrice = orderCouponClient.useCoupon(couponId, orderId);
+        if (discountPrice == null || discountPrice == 0) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
+        return discountPrice;
     }
     // 재고 검증 및 차감 (등록)
     private void decreaseStock(List<OrderProductReq> orderProducts, UUID orderId) {
-        if (!orderStockClient.decreaseStock(orderProducts, orderId).getData()) {
+        if (!orderStockClient.decreaseStock(orderProducts, orderId.toString()).data()) {
             throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
         }
     }
@@ -151,7 +153,7 @@ public class OrderOrchestrator {
 
     // 존재하는 업체 검증 (등록)
     private void validateCompany(UUID companyId) {
-        if (!orderCompanyClient.existCompany(companyId).getData())
+        if (!orderCompanyClient.existCompany(companyId).data())
             throw new BusinessException(ErrorCode.COMPANY_NOT_FOUND);
     }
 
@@ -167,7 +169,7 @@ public class OrderOrchestrator {
     // 허브 담당자 검증 (상태 변경, 취소)
     private void validateHubManager(UUID organizationId, UserRole role, UUID companyId) {
         if (role.equals(UserRole.HUB_MANAGER)) {
-            if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId).getData())
+            if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId).data())
                 throw new BusinessException(ErrorCode.FORBIDDEN_ORDER_HUB);
         }
     }
@@ -195,7 +197,7 @@ public class OrderOrchestrator {
     private void validateGetOrder(UUID organizationId, UserRole role, Long userId, Order order) {
         switch (role) {
             case HUB_MANAGER:
-                if (!orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), organizationId).getData())
+                if (!orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), organizationId).data())
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
                 break;
 
@@ -221,7 +223,7 @@ public class OrderOrchestrator {
                 break;
 
             case HUB_MANAGER:
-                if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId).getData())
+                if (!orderCompanyClient.existCompanyRegionalHub(companyId, organizationId).data())
                     throw new BusinessException(ErrorCode.FORBIDDEN_GET_ORDER);
         }
     }

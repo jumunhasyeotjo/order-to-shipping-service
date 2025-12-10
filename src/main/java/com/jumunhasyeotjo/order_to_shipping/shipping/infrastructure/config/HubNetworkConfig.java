@@ -26,7 +26,10 @@ class HubNetworkConfig {
     @Lazy
     HubNetwork hubNetwork() {
         try {
+            log.info("허브 경로 요청");
             List<Route> routes = hubClient.getRoutes();
+            log.info("허브 경로 요청 성공 {}개", routes.size());
+
             return new RouteBasedHubNetwork(routes);
         } catch (Exception e) {
             log.warn("Failed to load hub routes from HubClient. Falling back to empty hub network.", e);

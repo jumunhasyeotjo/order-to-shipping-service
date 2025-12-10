@@ -2,6 +2,7 @@ package com.jumunhasyeotjo.order_to_shipping.common.config;
 
 import com.library.passport.config.WebMvcConfig;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 
@@ -11,5 +12,6 @@ import org.springframework.context.annotation.Profile;
         "com.library.passport"
 })
 @Import(WebMvcConfig.class)
+@Configuration
 public class PassportConfig {
 }

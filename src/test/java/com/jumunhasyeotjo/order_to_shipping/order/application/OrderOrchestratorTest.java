@@ -1,15 +1,17 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application;
 
+import com.jumunhasyeotjo.order_to_shipping.common.ApiRes;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ExternalExists;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductListRes;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.*;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.CancelReason;
 import com.jumunhasyeotjo.order_to_shipping.order.domain.vo.OrderStatus;
-import com.library.passport.entity.ApiRes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +70,7 @@ public class OrderOrchestratorTest {
         CreateOrderCommand request = getCreateOrderCommand();
 
         given(orderCompanyClient.existCompany(request.organizationId()))
-                .willReturn(ApiRes.success(false));
+                .willReturn(new ExternalExists(false));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
@@ -87,9 +89,9 @@ public class OrderOrchestratorTest {
         given(orderService.existsByIdempotencyKey(request.idempotencyKey()))
                 .willReturn(false);
         given(orderCompanyClient.existCompany(request.organizationId()))
-                .willReturn(ApiRes.success(true));
+                .willReturn(new ExternalExists(true));
         given(orderProductClient.findAllProducts(any()))
-                .willReturn(ApiRes.success(productResults));
+                .willReturn(new ProductListRes(productResults));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
@@ -110,12 +112,12 @@ public class OrderOrchestratorTest {
                 1000);
         productResults.add(product);
 
-        given(orderCompanyClient.existCompany(request.organizationId())).willReturn(ApiRes.success(true));
+        given(orderCompanyClient.existCompany(request.organizationId())).willReturn(new ExternalExists(true));
         given(orderService.existsByIdempotencyKey(request.idempotencyKey())).willReturn(false);
-        given(orderProductClient.findAllProducts(any())).willReturn(ApiRes.success(productResults));
+        given(orderProductClient.findAllProducts(any())).willReturn(new ProductListRes(productResults));
         given(orderService.saveOrder(any(), any(), anyInt())).willReturn(getOrder());
-        given(orderCouponClient.useCoupon(any(), any())).willReturn(true);
-        given(orderStockClient.decreaseStock(any(), any())).willReturn(ApiRes.success(false)); // 재고 부족
+        given(orderCouponClient.useCoupon(any(), any())).willReturn(1000);
+        given(orderStockClient.decreaseStock(any(), any())).willReturn(new ExternalExists(false)); // 재고 부족
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.createOrder(request))
@@ -157,7 +159,7 @@ public class OrderOrchestratorTest {
         given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(ApiRes.success(false));
+                .willReturn(new ExternalExists(false));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.updateOrderStatus(request))
@@ -198,7 +200,7 @@ public class OrderOrchestratorTest {
         given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(ApiRes.success(true));
+                .willReturn(new ExternalExists(true));
         ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELLED);
         given(orderService.cancelOrder(any(), any())).willReturn(order);
 
@@ -220,7 +222,7 @@ public class OrderOrchestratorTest {
         given(orderService.findById(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(ApiRes.success(false));
+                .willReturn(new ExternalExists(false));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.cancelOrder(request))
@@ -291,7 +293,7 @@ public class OrderOrchestratorTest {
         given(orderService.findByIdWithAll(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(ApiRes.success(true));
+                .willReturn(new ExternalExists(true));
 
         // when
         OrderResult result = orderOrchestrator.getOrder(request);
@@ -310,7 +312,7 @@ public class OrderOrchestratorTest {
         given(orderService.findByIdWithAll(request.orderId()))
                 .willReturn(order);
         given(orderCompanyClient.existCompanyRegionalHub(order.getReceiverCompanyId(), request.organizationId()))
-                .willReturn(ApiRes.success(false));
+                .willReturn(new ExternalExists(false));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.getOrder(request))
@@ -398,7 +400,7 @@ public class OrderOrchestratorTest {
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(),"HUB_MANAGER", PageRequest.of(0, 10));
 
         given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
-                .willReturn(ApiRes.success(true));
+                .willReturn(new ExternalExists(true));
         given(orderService.searchOrder(request))
                 .willReturn(orderList);
 
@@ -416,7 +418,7 @@ public class OrderOrchestratorTest {
         SearchOrderCommand request = new SearchOrderCommand(2L, UUID.randomUUID(), UUID.randomUUID(), "HUB_MANAGER", PageRequest.of(0, 10));
 
         given(orderCompanyClient.existCompanyRegionalHub(request.companyId(), request.organizationId()))
-                .willReturn(ApiRes.success(false));
+                .willReturn(new ExternalExists(false));
 
         // when & then
         assertThatThrownBy(() -> orderOrchestrator.searchOrder(request))

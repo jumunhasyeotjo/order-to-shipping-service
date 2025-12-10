@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -17,5 +16,6 @@ public interface JpaShippingHistoryRepository extends JpaRepository<ShippingHist
 
 	Page<ShippingHistory> findAllByDriverIdOrderByCreatedAtDesc(Long driverId, Pageable pageable);
 
-    Optional<ShippingHistory> findByShippingId(UUID shippingId);
+    boolean existsByShippingIdAndDriverId(UUID shippingId, Long driverId);
+
 }

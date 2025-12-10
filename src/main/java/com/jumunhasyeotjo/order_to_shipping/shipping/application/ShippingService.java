@@ -62,10 +62,11 @@ public class ShippingService {
 			ShippingAddress.of(receiverCompany.address()),
 			supplierCompany.hubId(), receiverCompany.hubId(), routes.size());
 
-		// 배송 이력 생성
-		List<ShippingHistory> shippingHistories = shippingHistoryService.createShippingHistoryList(shipping, routes, receiverCompany);
+		Shipping savedShipping = shippingRepository.save(shipping);
 
-		shippingRepository.save(shipping);
+		// 배송 이력 생성
+		List<ShippingHistory> shippingHistories = shippingHistoryService.createShippingHistoryList(savedShipping, routes, receiverCompany);
+
 		shippingHistoryRepository.saveAll(shippingHistories);
 
 		eventPublisher.publishEvent(new ShippingCreatedEvent(shipping.getId(), supplierCompany.hubId(),
@@ -132,10 +133,7 @@ public class ShippingService {
 
 	@Transactional(readOnly = true)
 	public void delayShipping(DelayShippingCommand command) {
-		ShippingHistory shippingHistory = shippingHistoryRepository.findByShippingId(command.shippingId())
-				.orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
-
-		validateDriver(command, shippingHistory);
+		validateDriver(command);
 
 		Shipping shipping = shippingRepository.findById(command.shippingId())
 				.orElseThrow(() -> new BusinessException(NOT_FOUND_BY_ID));
@@ -146,9 +144,9 @@ public class ShippingService {
 		eventPublisher.publishEvent(ShippingDelayedEvent.of(shipping.getId(), shipping.getReceiverCompanyId(), message));
 	}
 
-	private void validateDriver(DelayShippingCommand command, ShippingHistory shippingHistory) {
-		if (!command.driverId().equals(shippingHistory.getDriverId())) {
-			throw new BusinessException(FORBIDDEN);
+	private void validateDriver(DelayShippingCommand command) {
+		if (!shippingHistoryRepository.existsByShippingIdAndDriverId(command.shippingId(), command.driverId())) {
+			throw new BusinessException(NOT_FOUND_BY_ID);
 		}
 	}
 }

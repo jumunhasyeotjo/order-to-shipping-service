@@ -14,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -69,11 +67,6 @@ public class ShippingMessageEventHandler {
 	}
 
 	@Async
-	@Retryable(
-			retryFor = NetworkException.class,
-			maxAttempts = 3,
-			backoff = @Backoff(delay = 1000)
-	)
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleShippingDelayMessage(ShippingDelayedEvent event) throws JsonProcessingException {
 		try {

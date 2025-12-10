@@ -2,9 +2,9 @@ package com.jumunhasyeotjo.order_to_shipping.order.infrastructure.external;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ExternalExists;
 import com.jumunhasyeotjo.order_to_shipping.order.application.service.OrderCompanyClient;
 import com.jumunhasyeotjo.order_to_shipping.order.infrastructure.config.OrderFeignConfig;
-import com.library.passport.entity.ApiRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -19,20 +19,21 @@ public interface OrderCompanyClientImpl extends OrderCompanyClient {
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackExistCompany")
     @CircuitBreaker(name = "default")
     @GetMapping("/{companyId}/exists")
-    ApiRes<Boolean> existCompany(@PathVariable("companyId") UUID companyId);
+    ExternalExists existCompany(@PathVariable("companyId") UUID companyId);
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackExistHub")
     @CircuitBreaker(name = "default")
     @GetMapping("/{companyId}/hub/{hubId}/exist")
-    ApiRes<Boolean> existCompanyRegionalHub(@PathVariable("companyId") UUID companyId, @PathVariable("hubId") UUID hubId);
+    ExternalExists existCompanyRegionalHub(@PathVariable("companyId") UUID companyId, @PathVariable("hubId") UUID hubId);
 
-    // Fallback: 업체 존재 여부 확인 실패
-    default ApiRes<Boolean> fallbackExistCompany(UUID companyId, Throwable t) {
+
+    default ExternalExists fallbackExistCompany(UUID companyId, Throwable t) {
+        System.out.println(t.getMessage());
+        System.out.println(t.getStackTrace());
         throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    // Fallback: 허브 존재 여부 확인 실패
-    default ApiRes<Boolean> fallbackExistHub(UUID companyId, UUID hubId, Throwable t) {
+    default ExternalExists fallbackExistHub(UUID companyId, UUID hubId, Throwable t) {
         throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 }
