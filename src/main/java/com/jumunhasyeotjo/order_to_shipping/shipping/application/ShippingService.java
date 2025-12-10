@@ -63,8 +63,8 @@ public class ShippingService {
 			supplierCompany.hubId(), receiverCompany.hubId(), routes.size());
 
 		// 배송 이력 생성
-		List<ShippingHistory> shippingHistories = shippingHistoryService.createShippingHistoryList(shipping, routes, receiverCompany);
 		shippingRepository.save(shipping);
+		List<ShippingHistory> shippingHistories = shippingHistoryService.createShippingHistoryList(shipping, routes, receiverCompany);
 
 		eventPublisher.publishEvent(new ShippingCreatedEvent(shipping.getId(), supplierCompany.hubId(),
 			command.receiverCompanyId(), command.createdAt(), command.productInfo(), command.orderRequest(),
