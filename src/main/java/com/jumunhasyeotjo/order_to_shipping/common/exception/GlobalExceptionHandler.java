@@ -59,6 +59,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiRes<?>> handleBusinessException(BusinessException ex) {
+        ex.printStackTrace();
         ErrorCode errorCode = ex.getErrorCode();
         log.error("BusinessException: {}", ex.getMessage());
         return ResponseEntity
@@ -72,6 +73,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiRes<?>> handleException(Exception ex) {
+        ex.printStackTrace();
         log.error("Unhandled exception: {}", ex.getMessage());
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
