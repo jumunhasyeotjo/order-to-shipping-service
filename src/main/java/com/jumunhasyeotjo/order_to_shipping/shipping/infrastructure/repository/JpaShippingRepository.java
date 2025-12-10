@@ -10,4 +10,5 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity.Shipping;
 
 @Repository
 public interface JpaShippingRepository extends JpaRepository<Shipping, UUID> {
+	List<Shipping> findAllByOrderId(UUID orderId);
 }

@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.domain.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ public interface ShippingRepository {
 	Shipping save(Shipping shipping);
 
 	Optional<Shipping> findById(UUID shippingId);
+
+	List<Shipping> findAllByOrderId(UUID orderId);
 
 
 

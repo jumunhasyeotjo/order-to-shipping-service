@@ -58,7 +58,7 @@ public class ShippingService {
 		List<Route> routes = shippingRouteGenerator.generateOrRebuildRoute(supplierCompany.hubId(), receiverCompany.hubId());
 
 		// 배송 생성
-		Shipping shipping = Shipping.create(command.orderProductId(), command.receiverCompanyId(),
+		Shipping shipping = Shipping.create(command.orderProductId(), command.orderId(), command.receiverCompanyId(),
 			ShippingAddress.of(receiverCompany.address()),
 			supplierCompany.hubId(), receiverCompany.hubId(), routes.size());
 
@@ -89,15 +89,17 @@ public class ShippingService {
 	}
 
 	@Transactional
-	public void cancelShippingList(List<UUID> shippingId) {
-		log.info("배송 취소 시작: shipping Size={}", shippingId.size());
-		shippingId.forEach(id  -> {
-			Shipping shipping = getShippingById(id);
-			List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(id);
+	public void cancelShippingList(UUID orderId) {
+		log.info("배송 취소 시작: orderId={}", orderId);
+
+		List<Shipping> shippingList = shippingRepository.findAllByOrderId(orderId);
+		shippingList.forEach(shipping  -> {
+			List<ShippingHistory> shippingHistories = shippingHistoryService.getShippingHistoryList(shipping.getId());
 
 			shippingDomainService.cancelDelivery(shipping, shippingHistories);
 		});
-		log.info("배송 취소 완료: shipping Size={}", shippingId.size());
+
+		log.info("배송 취소 완료: shipping Size={}", shippingList.size());
 	}
 
 	/**
