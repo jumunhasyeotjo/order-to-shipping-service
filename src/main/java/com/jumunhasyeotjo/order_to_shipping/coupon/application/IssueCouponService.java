@@ -34,13 +34,13 @@ public class IssueCouponService {
     }
 
     @Transactional
-    public IssueCouponResult useCoupon(UseCouponCommand command) {
+    public Integer useCoupon(UseCouponCommand command) {
         UUID issueCouponId = command.issueCouponId();
         UUID orderId = command.orderId();
 
         IssueCoupon issueCoupon = issueCouponRepository.findById(issueCouponId);
         issueCoupon.useCoupon(orderId);
-        return IssueCouponResult.fromIssueCoupon(issueCoupon);
+        return issueCoupon.getCoupon().getDiscountAmount();
     }
 
     @Transactional
