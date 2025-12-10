@@ -19,6 +19,6 @@ public class CompanyClientImpl implements CompanyClient {
 	private final CompanyServiceClient companyServiceClient;
 	@Override
 	public Company getCompany(UUID companyId) {
-		return companyServiceClient.getCompany(companyId).getData();
+		return companyServiceClient.getCompany(companyId).data();
 	}
 }

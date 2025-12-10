@@ -7,6 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.jumunhasyeotjo.order_to_shipping.common.dto.FeignRes;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.Company;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.HubResponse;
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.external.hub.dto.RouteResponse;
@@ -18,6 +19,6 @@ import com.library.passport.entity.ApiRes;
 public interface CompanyServiceClient {
 
     @GetMapping("/internal/api/v1/companies/{companyId}")
-    ApiRes<Company> getCompany(@PathVariable UUID companyId);
+    FeignRes<Company> getCompany(@PathVariable UUID companyId);
 
 }
