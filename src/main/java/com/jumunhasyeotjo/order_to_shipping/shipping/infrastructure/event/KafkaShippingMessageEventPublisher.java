@@ -21,13 +21,13 @@ public class KafkaShippingMessageEventPublisher {
 	@Value("${spring.kafka.topics.shipping-message}")
 	private String shippingMessageTopic;
 
-	public void publishEvent(ShippingDomainEvent event) {
+	public void publishEvent(ShippingDomainEvent event, String eventType) {
 		String payload = jsonUtil.toJson(event);
 
 		Message<String> message = MessageBuilder
 			.withPayload(payload)
 			.setHeader(KafkaHeaders.TOPIC, shippingMessageTopic)
-			.setHeader("eventType", event.getClass().getSimpleName())
+			.setHeader("eventType", eventType)
 			.build();
 
 		kafkaTemplate.send(message);
