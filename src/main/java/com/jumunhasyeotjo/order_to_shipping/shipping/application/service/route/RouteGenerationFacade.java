@@ -61,15 +61,10 @@ public class RouteGenerationFacade implements ShippingRouteGenerator {
 		};
 		List<UUID> nodes = path.nodes();
 
-		if (nodes.size() < 2) {
-			cache.put(weightStrategy, originHubId, arrivalHubId, Map.of(RouteCacheKeys.UNREACHABLE_KEY, true));
-			throw new BusinessException(ErrorCode.CONNECTION_NOT_FOUND_BETWEEN_HUBS);
-		} else {
-			cache.put(weightStrategy, originHubId, arrivalHubId,
-				Map.of(RouteCacheKeys.UNREACHABLE_KEY, false, RouteCacheKeys.NODES_KEY,
-					nodes.stream().map(UUID::toString).toList()));
-			return toRoutesFromNodes(nodes);
-		}
+		cache.put(weightStrategy, originHubId, arrivalHubId,
+			Map.of(RouteCacheKeys.UNREACHABLE_KEY, false, RouteCacheKeys.NODES_KEY,
+				nodes.stream().map(UUID::toString).toList()));
+		return toRoutesFromNodes(nodes);
 	}
 
 	private HubDijkstraRouter generateNewRouter(){
