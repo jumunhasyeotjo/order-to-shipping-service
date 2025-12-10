@@ -78,7 +78,6 @@ public class ShippingHistoryService {
 
 		List<ShippingHistory> shippingHistories = Stream.concat(hubLegHistories.stream(), Stream.of(finalHistory))
 			.toList();
-		shippingHistoryRepository.saveAll(shippingHistories);
 
 		log.info("상세 배송이력 생성 완료: shippingHistory size={}", shippingHistories.size());
 		return shippingHistories;
