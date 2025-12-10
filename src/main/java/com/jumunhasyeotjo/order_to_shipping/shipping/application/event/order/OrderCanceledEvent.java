@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record OrderCanceledEvent(
 	UUID orderId,
-	List<UUID> shippingIds,
+	String cancelReason,
 	LocalDateTime occurredAt
 ) {
 }

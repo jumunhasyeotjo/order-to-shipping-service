@@ -28,6 +28,7 @@ public class OrderEventHandler {
 		event.vendingOrders().forEach(vendingOrder -> {
 			CreateShippingCommand command = new CreateShippingCommand(
 				vendingOrder.getVendingOrderId(),
+				event.orderId(),
 				event.orderCreatedTime(),
 				vendingOrder.getProductInfo(),
 				event.requestMessage(),
@@ -41,7 +42,13 @@ public class OrderEventHandler {
 
 
 	public void orderCanceled(OrderCanceledEvent event){
-		shippingService.cancelShippingList(event.shippingIds());
+		shippingService.cancelShippingList(event.orderId());
+
+		CancelPaymentCommand command = new CancelPaymentCommand(
+			event.orderId(),
+			"주문취소"
+		);
+		paymentService.cancelPayment(command);
 	}
 
 

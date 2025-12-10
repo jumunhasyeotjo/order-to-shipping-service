@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreateShippingCommand(
 	UUID orderProductId,
+	UUID orderId,
 	LocalDateTime createdAt,
 	String productInfo,
 	String orderRequest,

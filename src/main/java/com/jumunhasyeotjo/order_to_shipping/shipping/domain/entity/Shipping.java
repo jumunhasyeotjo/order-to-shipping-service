@@ -26,6 +26,9 @@ public class Shipping extends BaseEntity {
 	private UUID receiverCompanyId;
 
 	@Column(nullable = false)
+	private UUID orderId;
+
+	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private ShippingStatus shippingStatus;
 
@@ -47,12 +50,13 @@ public class Shipping extends BaseEntity {
 	/**
 	 * 배송 생성 팩토리 메서드
 	 */
-	public static Shipping create(UUID orderId, UUID receiverCompanyId, ShippingAddress address, UUID originHubId, UUID arrivalHubId, Integer totalRouteCount) {
+	public static Shipping create(UUID id, UUID orderId, UUID receiverCompanyId, ShippingAddress address, UUID originHubId, UUID arrivalHubId, Integer totalRouteCount) {
 
 		validateCreateArgs(orderId, receiverCompanyId, address, originHubId, arrivalHubId, totalRouteCount);
 
 		Shipping shipping = new Shipping();
-		shipping.id = orderId;
+		shipping.id = id;
+		shipping.orderId = orderId;
 		shipping.receiverCompanyId = receiverCompanyId;
 		shipping.shippingStatus = ShippingStatus.WAITING_AT_HUB;
 		shipping.shippingAddress = address;

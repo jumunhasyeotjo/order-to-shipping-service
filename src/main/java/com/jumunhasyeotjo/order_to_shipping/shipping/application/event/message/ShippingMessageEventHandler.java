@@ -64,7 +64,7 @@ public class ShippingMessageEventHandler {
 
         ShippingMsgReqEvent shippingMsgReqEvent = new ShippingMsgReqEvent(event.getOriginHubId(),
                 event.getReceiverCompanyId(), orderIdMessage, infoMessage, etaMessage, event.getDriverId());
-        kafkaShippingMessageEventPublisher.publishEvent(shippingMsgReqEvent);
+        kafkaShippingMessageEventPublisher.publishEvent(shippingMsgReqEvent, "SHIPPING_ETA_MESSAGE");
 
 	}
 
@@ -81,7 +81,7 @@ public class ShippingMessageEventHandler {
 			ProducerRecord<String, String> record = new ProducerRecord<>(SHIPPING_MESSAGE_TOPIC, objectMapper.writeValueAsString(event));
 			record.headers().add(new RecordHeader("eventType", eventType.getBytes(StandardCharsets.UTF_8)));
 
-			kafkaShippingMessageEventPublisher.publishEvent(event); // 예외 캐치를 위해 동기적으로 결과 호출
+			kafkaShippingMessageEventPublisher.publishEvent(event,"SHIPPING_DELAYED"); // 예외 캐치를 위해 동기적으로 결과 호출
 			log.info("Kafka 발행 성공 ID: {}, Type: {}", event.getShippingId(), eventType);
 
 		} catch (Exception e) {

@@ -15,6 +15,10 @@ public record CreateShippingReq(
 	@NotNull
 	UUID orderProductId,
 
+	@Schema(description = "주문 id", example = "")
+	@NotNull
+	UUID orderId,
+
 	@Schema(description = "주문 시간", example = "2025-12-08 10:00:00")
 	@NotNull
 	LocalDateTime createdAt,
@@ -38,6 +42,7 @@ public record CreateShippingReq(
 	public CreateShippingCommand toCommand(){
 		return new CreateShippingCommand(
 			this.orderProductId,
+			this.orderId,
 			this.createdAt,
 			this.productInfo,
 			this.orderRequest,

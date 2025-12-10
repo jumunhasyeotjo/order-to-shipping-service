@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,5 +23,10 @@ public class ShippingRepositoryAdapter implements ShippingRepository {
 	@Override
 	public Optional<Shipping> findById(UUID shippingId) {
 		return jpaShippingRepository.findById(shippingId);
+	}
+
+	@Override
+	public List<Shipping> findAllByOrderId(UUID orderId) {
+		return jpaShippingRepository.findAllByOrderId(orderId);
 	}
 }
