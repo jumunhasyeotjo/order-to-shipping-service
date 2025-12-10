@@ -16,12 +16,14 @@ import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.Shorte
 import com.jumunhasyeotjo.order_to_shipping.shipping.infrastructure.cache.key.RouteCacheKeys;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 최단 경로 생성 Facade
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RouteGenerationFacade implements ShippingRouteGenerator {
 	private final HubNetwork network;
 	private final ShortestPathCache cache;
@@ -36,6 +38,7 @@ public class RouteGenerationFacade implements ShippingRouteGenerator {
 	public List<Route> generateOrRebuildRoute(UUID originHubId, UUID arrivalHubId) {
 		Map<String, Object> cached = cache.get(weightStrategy, originHubId, arrivalHubId);
 		if (cached == null) {
+			log.info("허브 경로 캐시 미스");
 			// 캐시 미스 시, 최신 라우트로 그래프를 재구성하여 사용
 			HubDijkstraRouter router = generateNewRouter();
 			return buildShortestRouteForPair(weightStrategy, originHubId, arrivalHubId, router);
@@ -61,18 +64,16 @@ public class RouteGenerationFacade implements ShippingRouteGenerator {
 		};
 		List<UUID> nodes = path.nodes();
 
-		if (nodes.size() < 2) {
-			cache.put(weightStrategy, originHubId, arrivalHubId, Map.of(RouteCacheKeys.UNREACHABLE_KEY, true));
-			throw new BusinessException(ErrorCode.CONNECTION_NOT_FOUND_BETWEEN_HUBS);
-		} else {
-			cache.put(weightStrategy, originHubId, arrivalHubId,
-				Map.of(RouteCacheKeys.UNREACHABLE_KEY, false, RouteCacheKeys.NODES_KEY,
-					nodes.stream().map(UUID::toString).toList()));
-			return toRoutesFromNodes(nodes);
-		}
+		log.info("허브 nodes :" + nodes.size() + " 개");
+
+		cache.put(weightStrategy, originHubId, arrivalHubId,
+			Map.of(RouteCacheKeys.UNREACHABLE_KEY, false, RouteCacheKeys.NODES_KEY,
+				nodes.stream().map(UUID::toString).toList()));
+
+		return toRoutesFromNodes(nodes);
 	}
 
-	private HubDijkstraRouter generateNewRouter(){
+	private HubDijkstraRouter generateNewRouter() {
 		List<Route> freshRoutes = hubClient.getRoutes();
 		HubNetwork freshNetwork = new RouteBasedHubNetwork(freshRoutes);
 		return new HubDijkstraRouter(freshNetwork);
