@@ -23,5 +23,5 @@ public interface ShippingHistoryRepository {
 
 	Page<ShippingHistory> findAllByDriverId(Long driverId, Pageable pageable);
 
-	Optional<ShippingHistory> findByShippingId(UUID uuid);
+    boolean existsByShippingIdAndDriverId(UUID shippingId, Long driverId);
 }

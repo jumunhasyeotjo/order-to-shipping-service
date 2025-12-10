@@ -40,8 +40,9 @@ public class ShippingHistoryRepositoryAdapter implements ShippingHistoryReposito
 		return jpaShippingHistoryRepository.findAllByDriverIdOrderByCreatedAtDesc(driverId, pageable);
 	}
 
+
 	@Override
-	public Optional<ShippingHistory> findByShippingId(UUID shippingId) {
-		return jpaShippingHistoryRepository.findByShippingId(shippingId);
+	public boolean existsByShippingIdAndDriverId(UUID shippingId, Long driverId) {
+		return jpaShippingHistoryRepository.existsByShippingIdAndDriverId(shippingId, driverId);
 	}
 }
