@@ -41,7 +41,7 @@ public class CouponEventConsumer {
                 case "ISSUE_COUPON" -> handleIssueCoupon(value);
                 case "ORDER_ROLLEDBACK" -> handleRollback(value);
                 case "ORDER_CANCELLED" -> handleCancel(value);
-                default -> throw new RuntimeException("Unexpected message type: " + type);
+                default -> log.warn("Unexpected message type: " + type);
             }
         } catch (Exception e) {
             log.error("Failed to process event: {}", type, e);
