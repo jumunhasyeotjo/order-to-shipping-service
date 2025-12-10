@@ -3,6 +3,7 @@ package com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.tos
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -16,6 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TossPaymentResponse {
 
@@ -68,6 +70,7 @@ public class TossPaymentResponse {
 
     // ===== Nested Types =====
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Card {
         private String issuerCode;
         private String acquirerCode;
@@ -84,6 +87,7 @@ public class TossPaymentResponse {
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EasyPay {
         private String provider;     // "토스페이"
         private Integer amount;
@@ -91,11 +95,13 @@ public class TossPaymentResponse {
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Receipt {
         private String url;
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Checkout {
         private String url;
     }
