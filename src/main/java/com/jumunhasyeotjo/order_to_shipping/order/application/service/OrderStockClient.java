@@ -1,11 +1,10 @@
 package com.jumunhasyeotjo.order_to_shipping.order.application.service;
 
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
-import com.library.passport.entity.ApiRes;
+import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ExternalExists;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface OrderStockClient {
-    ApiRes<Boolean> decreaseStock(List<OrderProductReq> orderProducts, UUID orderId);
+    ExternalExists decreaseStock(List<OrderProductReq> orderProducts, String orderId);
 }
