@@ -35,7 +35,7 @@ public class OrderOutboxRelay {
     private final OrderOutboxRepository orderOutboxRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Value("${spring.kafka.topic.order-events:order-events}")
+    @Value("${spring.kafka.topic.order-events:order}")
     private String ORDER_TOPIC;
 
     // 배치 처리 사이즈
