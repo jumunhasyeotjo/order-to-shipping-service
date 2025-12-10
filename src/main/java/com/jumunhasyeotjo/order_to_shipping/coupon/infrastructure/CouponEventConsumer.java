@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.coupon.infrastructure;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.IssueCouponService;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.command.CancelCouponCommand;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.command.IssueCouponCommand;
@@ -20,30 +21,36 @@ import java.util.UUID;
 @Slf4j
 public class CouponEventConsumer {
     private final IssueCouponService issueCouponService;
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(
         topics = "${spring.kafka.topics.order}",
         groupId = "coupon",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    public void listen(ConsumerRecord<String, Object> record) {
+    public void listen(ConsumerRecord<String, String> record) {
 
         String key = record.key();
         String type = new String(record.headers().lastHeader("eventType").value());
-        Object value = record.value();
+        String value = record.value();
 
         log.info("Received message: type={}, key={}, value={}", type, key, value);
 
-        switch (type) {
-            case "ISSUE_COUPON" -> handleIssueCoupon(value);
-            case "ORDER_ROLLEDBACK" -> handleRollback(value);
-            case "ORDER_CANCELLED" -> handleCancel(value);
-            default -> throw new RuntimeException("Unexpected message type: " + type);
+        try {
+            switch (type) {
+                case "ISSUE_COUPON" -> handleIssueCoupon(value);
+                case "ORDER_ROLLEDBACK" -> handleRollback(value);
+                case "ORDER_CANCELLED" -> handleCancel(value);
+                default -> log.warn("Unexpected message type: " + type);
+            }
+        } catch (Exception e) {
+            log.error("Failed to process event: {}", type, e);
+            throw new RuntimeException(e);
         }
     }
 
-    private void handleIssueCoupon(Object value) {
-        CouponIssueEvent event = (CouponIssueEvent) value;
+    private void handleIssueCoupon(String json) throws Exception {
+        CouponIssueEvent event = objectMapper.readValue(json, CouponIssueEvent.class);
 
         log.info("[issueCoupon] event: {}", event);
 
@@ -63,8 +70,8 @@ public class CouponEventConsumer {
         }
     }
 
-    private void handleRollback(Object value) {
-        OrderRollbackEvent event = (OrderRollbackEvent) value;
+    private void handleRollback(String json) throws Exception {
+        OrderRollbackEvent event = objectMapper.readValue(json, OrderRollbackEvent.class);
 
         log.info("[rollback] event: {}", event);
 
@@ -73,8 +80,8 @@ public class CouponEventConsumer {
         );
     }
 
-    private void handleCancel(Object value) {
-        OrderCancelledEvent event = (OrderCancelledEvent) value;
+    private void handleCancel(String json) throws Exception {
+        OrderCancelledEvent event = objectMapper.readValue(json, OrderCancelledEvent.class);
 
         log.info("[cancel] event: {}", event);
 

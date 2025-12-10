@@ -68,8 +68,10 @@ public class IssueCoupon {
         if (status == IssueCouponStatus.USED) {
             if (coupon.getValidateEndDate().isBefore(LocalDate.now())) {
                 status = IssueCouponStatus.EXPIRED;
+                this.orderId = null;
             } else {
                 status = IssueCouponStatus.ISSUED;
+                this.orderId = null;
             }
         }
         else throw new IllegalArgumentException("취소가 불가능한 쿠폰입니다.");
