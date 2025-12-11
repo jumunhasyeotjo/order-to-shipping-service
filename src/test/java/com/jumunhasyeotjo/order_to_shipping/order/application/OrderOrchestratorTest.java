@@ -112,10 +112,13 @@ public class OrderOrchestratorTest {
                 1000);
         productResults.add(product);
 
+        Order mockedOrder = getOrder();
+        ReflectionTestUtils.setField(mockedOrder, "id", UUID.randomUUID());
+
         given(orderCompanyClient.existCompany(request.organizationId())).willReturn(new ExternalExists(true));
         given(orderService.existsByIdempotencyKey(request.idempotencyKey())).willReturn(false);
         given(orderProductClient.findAllProducts(any())).willReturn(new ProductListRes(productResults));
-        given(orderService.saveOrder(any(), any(), anyInt())).willReturn(getOrder());
+        given(orderService.saveOrder(any(), any(), anyInt())).willReturn(mockedOrder);
         given(orderCouponClient.useCoupon(any(), any())).willReturn(1000);
         given(orderStockClient.decreaseStock(any(), any())).willReturn(new ExternalExists(false)); // 재고 부족
 
