@@ -21,7 +21,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "inbox_message", uniqueConstraints = {
+@Table(name = "p_inbox_message", uniqueConstraints = {
     @UniqueConstraint(name = "uk_inbox_event_id", columnNames = "eventId")
 })
 @NoArgsConstructor
