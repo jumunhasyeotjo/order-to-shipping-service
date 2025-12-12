@@ -1,10 +1,12 @@
 server:
   port: 8086
+  servlet:
+    context-path: /order
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_HOST}/eureka/
     register-with-eureka: true
     fetch-registry: true
 
@@ -26,14 +28,14 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST}
       port: 6379
       password:
       timeout: 2000
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -114,7 +116,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: prometheus
+        include: prometheus, health
   prometheus:
     metrics:
       export:
