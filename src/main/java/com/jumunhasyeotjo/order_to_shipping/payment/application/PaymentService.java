@@ -12,10 +12,12 @@ import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.util.JsonUtil;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.CancelPaymentCommand;
 import com.jumunhasyeotjo.order_to_shipping.payment.application.command.ProcessPaymentCommand;
+import com.jumunhasyeotjo.order_to_shipping.payment.application.metric.PaymentMetrics;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.Payment;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.entity.PaymentPgRaw;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.repository.PaymentPgRawRepository;
 import com.jumunhasyeotjo.order_to_shipping.payment.domain.repository.PaymentRepository;
+import com.jumunhasyeotjo.order_to_shipping.payment.domain.vo.PaymentStatus;
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossConfirmRequest;
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossPaymentResponse;
 import com.jumunhasyeotjo.order_to_shipping.payment.presentation.dto.response.PaymentRes;
@@ -30,6 +32,7 @@ public class PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final TossPaymentService tossPaymentService;
 	private final PaymentPgRawRepository paymentPgRawRepository;
+	private final PaymentMetrics paymentMetrics;
 
 	private final JsonUtil jsonUtil;
 
@@ -58,10 +61,10 @@ public class PaymentService {
 
 			payment.setPaymentResult(res.getStatus(), res.getMethod(), res.getApprovedAt());
 			savePgRaw(res, payment.getId());
-
+			paymentMetrics.success(res.getTotalAmount());
 		} catch (BusinessException e) {
 			payment.failPayment("PAYMENT_CONFIRM_ERROR", "서버에서 결제 처리 중 오류가 발생했습니다.");
-
+			paymentMetrics.fail("PAYMENT_CONFIRM_ERROR");
 			log.error("PG 결제 확정 실패. orderId={}", payment.getOrderId(), e);
 			throw e;
 		}
