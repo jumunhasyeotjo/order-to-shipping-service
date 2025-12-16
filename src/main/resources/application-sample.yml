@@ -4,9 +4,13 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_HOST}/eureka/
+      defaultZone: ${EUREKA_SERVER}/eureka/
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    ip-address: ${ECS_INSTANCE_IP_ADDRESS}
 
 spring:
   config:
