@@ -23,6 +23,7 @@ public class TossPaymentService {
 
 	public TossPaymentResponse confirm(TossConfirmRequest tossConfirmRequest, Payment payment) {
 		try {
+			log.info("[PAY] Toss pay confirm request");
 			return tossPaymentsClient.confirm(tossConfirmRequest);
 		} catch (TossRemoteException e) {
 			log.warn("[PAY] Toss confirm failed: status={}, code={}, msg={}",
@@ -38,6 +39,7 @@ public class TossPaymentService {
 
 	public TossPaymentResponse getPaymentInfo(String tossPaymentKey) {
 		try {
+			log.info("[PAY] Toss pay getPaymentInfo request");
 			return tossPaymentsClient.getPaymentInfo(tossPaymentKey);
 		} catch (TossRemoteException e) {
 			log.warn("[PAY] Toss getPaymentInfo failed: status={}, code={}, msg={}", e.getStatus(), e.getCode(),
@@ -50,6 +52,7 @@ public class TossPaymentService {
 
 	public TossPaymentResponse cancel(String cancelReason, Payment payment) {
 		try {
+			log.info("[PAY] Toss pay cancel request");
 			TossPaymentResponse res = tossPaymentsClient.cancel(payment.getTossPaymentKey(), TossCancelRequest.of(cancelReason));
 			payment.cancel(cancelReason, res.getCancels().get(0).getCanceledAt());
 
