@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.shipping.application;
 
+import com.jumunhasyeotjo.order_to_shipping.common.aspect.Metric;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
 import com.jumunhasyeotjo.order_to_shipping.shipping.application.command.*;
@@ -48,9 +49,9 @@ public class ShippingService {
 	private final ApplicationEventPublisher eventPublisher;
 	private final OrderClientImpl orderClientImpl;
 
+	@Metric("배송 생성 전체 프로세스")
 	@Transactional
 	public UUID createShipping(CreateShippingCommand command) {
-		log.info("배송 생성 시작: orderProductId={}", command.orderProductId());
 		Company supplierCompany = companyClient.getCompany(command.supplierCompanyId());
 		Company receiverCompany = companyClient.getCompany(command.receiverCompanyId());
 
@@ -73,7 +74,6 @@ public class ShippingService {
 			command.receiverCompanyId(), command.createdAt(), command.productInfo(), command.orderRequest(),
 			shippingHistories.get(0).getDriverId(), shippingHistories));
 
-		log.info("배송 생성 완료: shippingId={}", shipping.getId());
 		return shipping.getId();
 	}
 
