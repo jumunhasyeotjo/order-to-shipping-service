@@ -43,8 +43,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        show_sql: true
         default_batch_fetch_size: 100
     open-in-view: false
 
@@ -61,10 +59,7 @@ spring:
     consumer:
       group-id: ${CONSUMER_GROUP_ID}
 
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
 
 toss:
   base-url: ${TOSS_BASE_URL}
@@ -120,11 +115,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: prometheus, health
+        include: "*"
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true # P95, P99 등 히스토그램 데이터 수집
+  otlp:
+    tracing:
+      endpoint: http://${MONITORING_URL}:4318/v1/traces # 로컬 Docker의 Tempo로 전송
+  tracing:
+    sampling:
+      probability: 1.0 # 개발환경이므로 모든(100%) 트래픽 추적
   prometheus:
     metrics:
       export:
         enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
 
 eas:
   passport:
