@@ -4,9 +4,13 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER}/eureka/
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    ip-address: ${ECS_INSTANCE_IP_ADDRESS}
 
 spring:
   config:
@@ -23,17 +27,19 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
 
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST}
       port: 6379
       password:
       timeout: 2000
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -54,6 +60,11 @@ spring:
       order: ${ORDER_TOPIC}
     consumer:
       group-id: ${CONSUMER_GROUP_ID}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
 
 toss:
   base-url: ${TOSS_BASE_URL}
@@ -109,22 +120,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, prometheus # Prometheus가 긁어갈 수 있게 노출
-  metrics:
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true # P95, P99 등 히스토그램 데이터 수집
-  otlp:
-    tracing:
-      endpoint: http://${OTLP_TRACING_ENDPOINT}/v1/traces # 로컬 Docker의 Tempo로 전송
-  tracing:
-    sampling:
-      probability: 1.0 # 개발환경이므로 모든(100%) 트래픽 추적 (prod 환경에서 수정 필요)
-
-# 로깅 설정 (Loki로 전송하기 위해 logback-spring.xml 사용 권장하지만, 간단 설정은 아래 참조)
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
+        include: prometheus, health
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 eas:
   passport:
