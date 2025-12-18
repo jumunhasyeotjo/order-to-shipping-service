@@ -112,3 +112,7 @@ jacocoTestReport {
 		)
 	}
 }
+
+tasks.named('jar') {
+	enabled = false   // 일반 jar 비활성화
+}
