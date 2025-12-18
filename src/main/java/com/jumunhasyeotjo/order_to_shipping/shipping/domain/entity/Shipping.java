@@ -1,0 +1,151 @@
+package com.jumunhasyeotjo.order_to_shipping.shipping.domain.entity;
+
+import com.jumunhasyeotjo.order_to_shipping.common.entity.BaseEntity;
+import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingAddress;
+import com.jumunhasyeotjo.order_to_shipping.shipping.domain.vo.ShippingStatus;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+import static com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode.*;
+
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "p_shipping")
+public class Shipping extends BaseEntity {
+
+	@Id
+	private UUID id; // 주문 업체 id
+
+	@Column(nullable = false)
+	private UUID receiverCompanyId;
+
+	@Column(nullable = false)
+	private UUID orderId;
+
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private ShippingStatus shippingStatus;
+
+	@Embedded
+	@AttributeOverrides({
+		@AttributeOverride(name = "address", column = @Column(name = "shipping_address"))
+	})
+	private ShippingAddress shippingAddress;
+
+	@Column(nullable = false)
+	private UUID originHubId;
+
+	@Column(nullable = false)
+	private UUID arrivalHubId;
+
+	@Column(nullable = false)
+	private Integer totalRouteCount;
+
+	/**
+	 * 배송 생성 팩토리 메서드
+	 */
+	public static Shipping create(UUID id, UUID orderId, UUID receiverCompanyId, ShippingAddress address, UUID originHubId, UUID arrivalHubId, Integer totalRouteCount) {
+
+		validateCreateArgs(orderId, receiverCompanyId, address, originHubId, arrivalHubId, totalRouteCount);
+
+		Shipping shipping = new Shipping();
+		shipping.id = id;
+		shipping.orderId = orderId;
+		shipping.receiverCompanyId = receiverCompanyId;
+		shipping.shippingStatus = ShippingStatus.WAITING_AT_HUB;
+		shipping.shippingAddress = address;
+		shipping.originHubId = originHubId;
+		shipping.arrivalHubId = arrivalHubId;
+		shipping.totalRouteCount = totalRouteCount;
+
+		return shipping;
+	}
+
+
+	/**
+	 * 출발허브에서 배송 출고
+	 */
+	public void dispatchFromOriginHub(){
+		ShippingStatus newStatus = ShippingStatus.MOVING_TO_HUB;
+		if (!canTransitionTo(newStatus)) {
+			throw new BusinessException(INVALID_STATUS_TRANSITION);
+		}
+
+		this.shippingStatus = newStatus;
+	}
+
+	/**
+	 * 도착허브에 도착
+	 */
+	public void arriveAtDestinationHub(){
+		ShippingStatus newStatus = ShippingStatus.ARRIVED_AT_HUB;
+		if (!canTransitionTo(newStatus)) {
+			throw new BusinessException(INVALID_STATUS_TRANSITION);
+		}
+
+		this.shippingStatus = newStatus;
+	}
+
+	/**
+	 * 도착허브에서 최종 목적지로 출발
+	 */
+	public void departFromDestinationHub(){
+		ShippingStatus newStatus = ShippingStatus.MOVING_TO_COMPANY;
+		if (!canTransitionTo(newStatus)) {
+			throw new BusinessException(INVALID_STATUS_TRANSITION);
+		}
+
+		this.shippingStatus = newStatus;
+	}
+
+	/**
+	 * 배송 도착
+	 */
+	public void completeDelivery(){
+		ShippingStatus newStatus = ShippingStatus.DELIVERED;
+		if (!canTransitionTo(newStatus)) {
+			throw new BusinessException(INVALID_STATUS_TRANSITION);
+		}
+
+		this.shippingStatus = newStatus;
+	}
+
+	/**
+	 * 배송 취소
+	 */
+	public void cancel(){
+		if(!this.shippingStatus.equals(ShippingStatus.WAITING_AT_HUB)){
+			throw new BusinessException(INVALID_STATE_CANCEL);
+		}
+
+		this.shippingStatus = ShippingStatus.CANCELED;
+	}
+
+
+	private boolean canTransitionTo(ShippingStatus newStatus) {
+		return this.shippingStatus.getSequence() + 1 == newStatus.getSequence();
+	}
+
+	private static void validateCreateArgs(UUID orderId,
+		UUID receiverCompanyId,
+		ShippingAddress address,
+		UUID originHubId,
+		UUID arrivalHubId,
+		Integer totalRouteCount) {
+		if (orderId == null || receiverCompanyId == null || address == null ||
+			originHubId == null || arrivalHubId == null || totalRouteCount == null || totalRouteCount <= 0) {
+			throw new BusinessException(REQUIRED_VALUE_MISSING);
+		}
+		if (originHubId.equals(arrivalHubId)) {
+			throw new BusinessException(INVALID_INPUT);
+		}
+	}
+
+
+}
