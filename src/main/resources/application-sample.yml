@@ -1,6 +1,17 @@
 server:
   port: 8086
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER}/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    ip-address: ${ECS_INSTANCE_IP_ADDRESS}
+
 spring:
   config:
     import: optional:file:./.env[.properties]
@@ -10,27 +21,28 @@ spring:
 
   application:
     name: order-to-shipping-service
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
 
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST}
       port: 6379
       password:
       timeout: 2000
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        show_sql: true
         default_batch_fetch_size: 100
     open-in-view: false
 
@@ -47,12 +59,7 @@ spring:
     consumer:
       group-id: ${CONSUMER_GROUP_ID}
 
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
 
 toss:
   base-url: ${TOSS_BASE_URL}
@@ -108,7 +115,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, prometheus # Prometheus가 긁어갈 수 있게 노출
+        include: "*"
   metrics:
     distribution:
       percentiles-histogram:
@@ -119,14 +126,14 @@ management:
   tracing:
     sampling:
       probability: 1.0 # 개발환경이므로 모든(100%) 트래픽 추적
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_SERVER}
-    register-with-eureka: true
-    fetch-registry: true
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-}]"
 
 eas:
   passport:
