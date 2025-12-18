@@ -78,7 +78,7 @@ public class OrderOutboxRelay {
         List<OrderOutbox> pendingOutboxes = orderOutboxRepository.findAllByIsPublishedFalse(pageable);
 
         if (!pendingOutboxes.isEmpty()) {
-            log.info("발행 되지않은 Outbox 데이터 {}", pendingOutboxes.size());
+//            log.info("발행 되지않은 Outbox 데이터 {}", pendingOutboxes.size());
             for (OrderOutbox outbox : pendingOutboxes) {
                 sendKafkaAndUpdateStatus(outbox);
             }
@@ -99,9 +99,9 @@ public class OrderOutboxRelay {
             if (ex == null) {
                 outbox.publish();
                 orderOutboxRepository.save(outbox);
-                log.info("Kafka 발행 성공 ID: {}, Type: {}", outbox.getId(), outbox.getEventType());
+                log.info("[Event Publish Success] 주문 {} 이벤트 발행 성공 - orderId: {}", outbox.getEventType(), outbox.getId());
             } else {
-                log.error("Kafka 발행 실패 ID: {}", outbox.getId(), ex);
+                log.error("[Event Publish Fail] 이벤트 발행 실패 - orderId: {}", outbox.getId(), ex);
             }
         });
     }

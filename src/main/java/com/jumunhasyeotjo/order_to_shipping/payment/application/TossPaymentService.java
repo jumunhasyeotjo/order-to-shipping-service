@@ -1,5 +1,6 @@
 package com.jumunhasyeotjo.order_to_shipping.payment.application;
 
+import com.jumunhasyeotjo.order_to_shipping.common.aspect.Metric;
 import org.springframework.stereotype.Service;
 
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
@@ -21,6 +22,7 @@ public class TossPaymentService {
 
 	private final TossPaymentsClient tossPaymentsClient;
 
+	@Metric(value = "PG사 결제 처리 프로세스", level = Metric.Level.DEBUG)
 	public TossPaymentResponse confirm(TossConfirmRequest tossConfirmRequest, Payment payment) {
 		try {
 			log.info("[PAY] Toss pay confirm request");

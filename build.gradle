@@ -1,9 +1,9 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.7'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'jacoco'
-	id 'com.google.protobuf' version '0.9.4'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 group = 'com.jumunhasyeotjo'
@@ -11,118 +11,123 @@ version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
-	maven {
-		name = "GitHubPackages"
-		url = uri("https://maven.pkg.github.com/jumunhasyeotjo/passport")
-		credentials {
-			username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-			password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-		}
-	}
+    mavenCentral()
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/jumunhasyeotjo/passport")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 ext {
-	set('springCloudVersion', "2025.0.0")
+    set('springCloudVersion', "2025.0.0")
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.kafka:spring-kafka'
-	testImplementation 'org.springframework.kafka:spring-kafka-test'
-	testImplementation 'org.testcontainers:kafka'
-	implementation 'org.redisson:redisson:3.52.0'
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation "org.testcontainers:junit-jupiter:1.20.1"
-	testImplementation "org.testcontainers:postgresql:1.20.1"
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.kafka:spring-kafka'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.testcontainers:kafka'
+    implementation 'org.redisson:redisson:3.52.0'
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation "org.testcontainers:junit-jupiter:1.20.1"
+    testImplementation "org.testcontainers:postgresql:1.20.1"
 
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // Open Feign 추가
-	implementation 'io.github.openfeign:feign-jackson:13.2'
-	implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-	testImplementation 'com.h2database:h2' // 테스트용 H2 DB 추가
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // Open Feign 추가
+    implementation 'io.github.openfeign:feign-jackson:13.2'
+    implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    testImplementation 'com.h2database:h2' // 테스트용 H2 DB 추가
 
-	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-	implementation 'io.github.resilience4j:resilience4j-retry' // resilience4j retry 의존성 추가
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
-	implementation 'org.springframework.retry:spring-retry'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-retry' // resilience4j retry 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.retry:spring-retry'
 
-	implementation 'com.library:passport:1.0.3'
-	implementation 'com.google.protobuf:protobuf-java:3.21.12'
+    implementation 'com.library:passport:1.0.3'
+    implementation 'com.google.protobuf:protobuf-java:3.21.12'
 
-	implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.kafka:spring-kafka'
 
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'io.micrometer:micrometer-registry-prometheus'
-	implementation 'io.micrometer:micrometer-tracing'
+    // 모니터링 의존성 추가
+    // 1. Actuator & Prometheus (메트릭 수집)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-tracing'
 
-	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    // 2. Distributed Tracing (Tempo 연동 - OTLP)
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
-	implementation 'com.github.loki4j:loki-logback-appender:1.6.0'
+    // 3. Loki Appender (로그 전송)
+    implementation 'com.github.loki4j:loki-logback-appender:1.6.0'
 
-	implementation 'ch.qos.logback:logback-classic'
-	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+    // 4. json 로그 형식 파싱
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
-	finalizedBy 'jacocoTestReport'
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
 }
 
 jacoco {
-	toolVersion = "0.8.12"
+    toolVersion = "0.8.12"
 }
 
 
 jacocoTestReport {
-	dependsOn test
-	reports {
-		html.required = true
-	}
+    dependsOn test
+    reports {
+        html.required = true
+    }
 
-	afterEvaluate {
-		classDirectories.setFrom(
-				// 그 외의 매칭되는 클래스도 제외 대상
-				files(classDirectories.files.collect {
-					fileTree(dir: it, excludes: [
-							"**/common/**",
-							"**/*Application*",
-							"**/*Command*",
-							"**/*Config*",
-							"**/dto/**",
-							"**/*Exception*"
-					])
-				})
-		)
-	}
+    afterEvaluate {
+        classDirectories.setFrom(
+                // 그 외의 매칭되는 클래스도 제외 대상
+                files(classDirectories.files.collect {
+                    fileTree(dir: it, excludes: [
+                            "**/common/**",
+                            "**/*Application*",
+                            "**/*Command*",
+                            "**/*Config*",
+                            "**/dto/**",
+                            "**/*Exception*"
+                    ])
+                })
+        )
+    }
 }
 
 tasks.named('jar') {

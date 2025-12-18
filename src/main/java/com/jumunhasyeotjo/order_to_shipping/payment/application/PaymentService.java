@@ -2,6 +2,7 @@ package com.jumunhasyeotjo.order_to_shipping.payment.application;
 
 import java.util.UUID;
 
+import com.jumunhasyeotjo.order_to_shipping.common.aspect.Metric;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class PaymentService {
 
 	private final JsonUtil jsonUtil;
 
+	@Metric("결제 처리 전체 프로세스")
 	@Transactional(noRollbackFor = BusinessException.class)
 	public UUID processPayment(ProcessPaymentCommand command) {
 		validatePaymentKey(command.tossPaymentKey());

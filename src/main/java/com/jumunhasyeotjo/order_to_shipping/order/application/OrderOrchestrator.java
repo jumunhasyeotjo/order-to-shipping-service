@@ -3,6 +3,7 @@ package com.jumunhasyeotjo.order_to_shipping.order.application;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import com.jumunhasyeotjo.order_to_shipping.common.vo.UserRole;
+import com.jumunhasyeotjo.order_to_shipping.common.aspect.Metric;
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.*;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.OrderResult;
 import com.jumunhasyeotjo.order_to_shipping.order.application.dto.ProductResult;
@@ -39,6 +40,7 @@ public class OrderOrchestrator {
     private final OrderPaymentClient orderPaymentClient;
 
     // 주문 등록
+    @Metric("주문 생성 전체 프로세스")
     public Order createOrder(CreateOrderCommand command) {
         validateCompany(command.organizationId());
         validateDuplicateOrder(command.idempotencyKey()); // 중복 주문 검증
@@ -71,7 +73,7 @@ public class OrderOrchestrator {
             return orderService.updateOrderStatus(pendingOrderId, OrderStatus.ORDERED, vendorOrders, null);
 
         } catch (Exception e) {
-            log.error("주문 저장 실패로 인한 보상 트랜잭션 실행: {}", e.getMessage());
+            log.warn("[Compensate] 주문 실패 롤백 실행 - 단계: {}, 사유: {}", status, e.getMessage());
             orderService.updateOrderStatus(pendingOrderId, OrderStatus.FAILED, null, status);
             throw e; // 롤백을 위한 예외 발생
         }
@@ -130,6 +132,7 @@ public class OrderOrchestrator {
         }
         return allProducts;
     }
+
     // 쿠폰 사용 (등록)
     private Integer useCoupon(UUID couponId, UUID orderId) {
         Integer discountPrice = orderCouponClient.useCoupon(couponId, orderId);
@@ -138,12 +141,14 @@ public class OrderOrchestrator {
         }
         return discountPrice;
     }
+
     // 재고 검증 및 차감 (등록)
     private void decreaseStock(List<OrderProductReq> orderProducts, UUID orderId) {
         if (!orderStockClient.decreaseStock(orderProducts, orderId.toString()).data()) {
             throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
         }
     }
+
     // 주문 결제 (등록)
     private void payOrder(int amount, String tossPaymentKey, String tossOrderId, UUID orderId) {
         if (!orderPaymentClient.confirmOrder(amount, tossPaymentKey, tossOrderId, orderId)) {
