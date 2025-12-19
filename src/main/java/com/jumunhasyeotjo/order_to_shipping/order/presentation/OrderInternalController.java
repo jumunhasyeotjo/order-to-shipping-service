@@ -20,14 +20,14 @@ import java.util.UUID;
 
 @Tag(name = "Internal-Order", description = "내부 서비스 간 통신용 API")
 @RestController
-@RequestMapping("/api/v1/orders/internal")
+@RequestMapping("/internal/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderInternalController {
 
     private final OrderOrchestrator orderOrchestrator;
 
     @ApiDocInternalGetCompanyOrderItems
-    @GetMapping("/internal/order-products")
+    @GetMapping("/order-products")
     public ResponseEntity<ApiRes<List<VendorOrderItemsRes>>> getCompanyOrderItems(@RequestParam("companyOrderId") UUID companyOrderId) {
         List<VendorOrderItemsRes> res = orderOrchestrator.getCompanyOrderItems(companyOrderId);
 
@@ -37,7 +37,7 @@ public class OrderInternalController {
     }
 
     @ApiDocInternalGetCompanyOrderItemsName
-    @GetMapping("/internal/order-products-name")
+    @GetMapping("/order-products-name")
     public ResponseEntity<ApiRes<List<VendorOrderItemsNameRes>>> getCompanyOrderItemsName(@RequestParam("companyOrderId") UUID companyOrderId) {
         List<VendorOrderItemsNameRes> res = orderOrchestrator.getCompanyOrderItemsName(companyOrderId);
 
