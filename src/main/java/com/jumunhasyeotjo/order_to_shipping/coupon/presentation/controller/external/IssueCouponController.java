@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/coupons/issue")
+@RequestMapping("/api/v1/coupons/issue")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "passportHeader")
 public class IssueCouponController {
