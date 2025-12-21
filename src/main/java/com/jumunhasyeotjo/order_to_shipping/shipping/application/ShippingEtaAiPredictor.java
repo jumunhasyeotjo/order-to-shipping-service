@@ -30,7 +30,6 @@ public class ShippingEtaAiPredictor {
 	}
 
 	private String buildEtaPredictionPrompt(String productInfo, String orderRequest, List<ShippingHistory> shippingHistories, String waypoints) {
-
 		String shippingInfo = "상품정보 : " + productInfo + "\n" +
 			"요청사항 : " + orderRequest + "\n" +
 			"발송지 : " + shippingHistories.get(0).getOrigin() + "\n" +
@@ -51,6 +50,7 @@ public class ShippingEtaAiPredictor {
 	}
 
 	private String askGemini(String prompt) {
+		log.info("Gemini api - eta 예측 시작");
 		GeminiRequest.Part part = new GeminiRequest.Part(prompt);
 		GeminiRequest.Content content = new GeminiRequest.Content(List.of(part));
 		GeminiRequest request = new GeminiRequest(List.of(content));
