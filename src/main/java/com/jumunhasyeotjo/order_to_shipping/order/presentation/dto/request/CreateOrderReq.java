@@ -12,12 +12,12 @@ public record CreateOrderReq(
         @NotEmpty(message = "주문 상품은 필수 입력값 입니다.")
         List<OrderProductReq> orderProducts,
 
-        UUID couponId,
+        UUID couponId
 
-        @NotEmpty(message = "tossPaymentKey 는 필수 입력값 입니다.")
-        String tossPaymentKey,
-
-        @NotEmpty(message = "tossOrderId 는 필수 입력값 입니다.")
-        String tossOrderId
+//        @NotEmpty(message = "tossPaymentKey 는 필수 입력값 입니다.")
+//        String tossPaymentKey,
+//
+//        @NotEmpty(message = "tossOrderId 는 필수 입력값 입니다.")
+//        String tossOrderId
 ) {
 }

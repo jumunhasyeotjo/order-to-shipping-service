@@ -49,9 +49,9 @@ public class OrderController {
                 req.requestMessage(),
                 req.orderProducts(),
                 idempotencyKey,
-                req.couponId(),
-                req.tossPaymentKey(),
-                req.tossOrderId());
+                req.couponId());
+//                req.tossPaymentKey(),
+//                req.tossOrderId());
 
         Order order = orderOrchestrator.createOrder(command);
         CreateOrderRes res = new CreateOrderRes(order.getId(), order.getStatus());
