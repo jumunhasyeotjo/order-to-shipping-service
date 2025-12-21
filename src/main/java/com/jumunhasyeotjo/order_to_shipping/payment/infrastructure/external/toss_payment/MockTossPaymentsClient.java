@@ -2,6 +2,7 @@ package com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.tos
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,13 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
     }
 
     private TossPaymentResponse mockConfirmResponse(TossConfirmRequest request) {
+        // 지연테스트
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         return TossPaymentResponse.builder()
             .paymentKey(request.getPaymentKey())
             .orderId(request.getOrderId())
@@ -41,6 +49,13 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
     }
 
     private TossPaymentResponse mockCancelResponse(String paymentKey) {
+        // 지연테스트
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         return TossPaymentResponse.builder()
             .paymentKey(paymentKey)
             .status("CANCELED")
@@ -49,6 +64,13 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
     }
 
     private TossPaymentResponse mockGetPaymentInfo(String paymentKey) {
+        // 지연테스트
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         return TossPaymentResponse.builder()
             .paymentKey(paymentKey)
             .status("DONE")
