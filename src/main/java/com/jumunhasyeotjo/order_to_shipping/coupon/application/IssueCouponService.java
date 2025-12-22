@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,12 @@ public class IssueCouponService {
         coupon.issueCoupon();
         IssueCoupon issueCoupon = IssueCoupon.issue(coupon, userId);
         return IssueCouponResult.fromIssueCoupon(issueCouponRepository.save(issueCoupon));
+    }
+
+    @Transactional(readOnly = true)
+    public List<IssueCouponResult> findByUserId(Long userId) {
+        List<IssueCoupon> issueCoupons = issueCouponRepository.findByUserId(userId);
+        return issueCoupons.stream().map(IssueCouponResult::fromIssueCoupon).collect(Collectors.toList());
     }
 
     @Transactional

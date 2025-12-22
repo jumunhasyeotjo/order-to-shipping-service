@@ -6,6 +6,7 @@ import com.jumunhasyeotjo.order_to_shipping.coupon.domain.repository.IssueCoupon
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -32,5 +33,10 @@ public class IssueCouponRepositoryAdapter implements IssueCouponRepository {
     @Override
     public boolean existsByCoupon_CouponIdAndUserId(UUID couponId, Long userId) {
         return jpaIssueCouponRepository.existsByCoupon_CouponIdAndUserId(couponId, userId);
+    }
+
+    @Override
+    public List<IssueCoupon> findByUserId(Long userId) {
+        return jpaIssueCouponRepository.findByUserId(userId);
     }
 }
