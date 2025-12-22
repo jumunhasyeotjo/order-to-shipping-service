@@ -68,10 +68,17 @@ toss:
 feign:
   client:
     config:
+      # Toss Payments
       tossPaymentsClient:
         loggerLevel: FULL
         connectTimeout: 5000
         readTimeout: 10000
+
+      # Gemini AI
+      gemini-client:
+        loggerLevel: BASIC
+        connectTimeout: 5000
+        readTimeout: 30000
 
 gemini:
   url: ${GEMINI_URL}
