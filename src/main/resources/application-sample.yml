@@ -16,6 +16,9 @@ spring:
   config:
     import: optional:file:./.env[.properties]
 
+  profiles:
+    active: perf
+
   main:
     allow-bean-definition-overriding: true
 
