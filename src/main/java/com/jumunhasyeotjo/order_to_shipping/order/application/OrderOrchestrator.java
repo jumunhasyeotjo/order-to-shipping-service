@@ -67,7 +67,7 @@ public class OrderOrchestrator {
             decreaseStock(command.orderProducts(), pendingOrderId);
 
             status = RollbackStatus.PAYED_ORDER;
-//            payOrder(totalPrice, command.tossPaymentKey(), command.tossOrderId(), pendingOrderId);
+            payOrder(totalPrice, command.tossPaymentKey(), command.tossOrderId(), pendingOrderId);
 
             // 주문 확정
             return orderService.updateOrderStatus(pendingOrderId, OrderStatus.ORDERED, vendorOrders, null);
