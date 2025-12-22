@@ -28,11 +28,8 @@ public class CouponEventConsumerConfig {
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "coupon-consumer-group");
-
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
@@ -43,7 +40,7 @@ public class CouponEventConsumerConfig {
 
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(3);
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.BATCH); // 리스너에서 처리시 자동 커밋 호출 (누락시 Consumer Lag 쌓임)
 
         return factory;
     }
