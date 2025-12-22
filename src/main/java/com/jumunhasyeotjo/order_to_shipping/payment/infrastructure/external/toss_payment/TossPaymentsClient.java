@@ -1,6 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +12,7 @@ import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossConfirmRequest;
 import com.jumunhasyeotjo.order_to_shipping.payment.infrastructure.external.toss_payment.dto.TossPaymentResponse;
 
+@Profile("!perf")
 @FeignClient(
         name = "tossPaymentsClient",
         url = "${toss.base-url}",

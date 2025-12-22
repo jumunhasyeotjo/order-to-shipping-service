@@ -43,7 +43,7 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
             .orderId(request.getOrderId())
             .status("DONE")
             .method("CARD")
-            .approvedAt(OffsetDateTime.from(LocalDateTime.now()))
+            .approvedAt(OffsetDateTime.now())
             .totalAmount(request.getAmount())
             .build();
     }
@@ -59,7 +59,7 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
         return TossPaymentResponse.builder()
             .paymentKey(paymentKey)
             .status("CANCELED")
-            .approvedAt(OffsetDateTime.from(LocalDateTime.now()))
+            .approvedAt(OffsetDateTime.now())
             .build();
     }
 
