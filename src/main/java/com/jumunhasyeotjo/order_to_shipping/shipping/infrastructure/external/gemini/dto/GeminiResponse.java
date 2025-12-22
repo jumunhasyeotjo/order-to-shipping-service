@@ -4,14 +4,22 @@ import java.util.List;
 
 public class GeminiResponse {
 
-    private List<Candidate> candidates;
+    private final List<Candidate> candidates;
+
+    public GeminiResponse(List<Candidate> candidates) {
+        this.candidates = candidates;
+    }
 
     public List<Candidate> getCandidates() {
         return candidates;
     }
 
     public static class Candidate {
-        private Content content;
+        private final Content content;
+
+        public Candidate(Content content) {
+            this.content = content;
+        }
 
         public Content getContent() {
             return content;
@@ -19,7 +27,11 @@ public class GeminiResponse {
     }
 
     public static class Content {
-        private List<Part> parts;
+        private final List<Part> parts;
+
+        public Content(List<Part> parts) {
+            this.parts = parts;
+        }
 
         public List<Part> getParts() {
             return parts;
@@ -27,7 +39,11 @@ public class GeminiResponse {
     }
 
     public static class Part {
-        private String text;
+        private final String text;
+
+        public Part(String text) {
+            this.text = text;
+        }
 
         public String getText() {
             return text;
