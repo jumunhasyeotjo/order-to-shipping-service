@@ -32,11 +32,11 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
 
     private TossPaymentResponse mockConfirmResponse(TossConfirmRequest request) {
         // 지연테스트
-        try {
-            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         return TossPaymentResponse.builder()
             .paymentKey(request.getPaymentKey())
@@ -50,11 +50,11 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
 
     private TossPaymentResponse mockCancelResponse(String paymentKey) {
         // 지연테스트
-        try {
-            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         return TossPaymentResponse.builder()
             .paymentKey(paymentKey)
@@ -65,11 +65,11 @@ public class MockTossPaymentsClient implements TossPaymentsClient {
 
     private TossPaymentResponse mockGetPaymentInfo(String paymentKey) {
         // 지연테스트
-        try {
-            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(ThreadLocalRandom.current().nextInt(300, 501));
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         return TossPaymentResponse.builder()
             .paymentKey(paymentKey)
