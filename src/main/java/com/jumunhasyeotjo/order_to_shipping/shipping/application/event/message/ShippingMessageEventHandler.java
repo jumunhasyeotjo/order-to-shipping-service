@@ -40,6 +40,7 @@ public class ShippingMessageEventHandler {
 	@Async
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleShippingCreated(ShippingCreatedEvent event) {
+		log.info("배송 생성 이벤트 발생");
 		List<ShippingHistory> shippingHistories = event.getShippingHistories();
 		String waypoints = buildWaypoints(event.getShippingHistories());
 		String eta = shippingEtaAiPredictor.predictEta(
