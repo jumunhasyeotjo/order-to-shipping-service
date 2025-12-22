@@ -1,6 +1,7 @@
 package com.jumunhasyeotjo.order_to_shipping.coupon.presentation.controller.external;
 
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.IssueCouponOrchestratorService;
+import com.jumunhasyeotjo.order_to_shipping.coupon.application.IssueCouponService;
 import com.jumunhasyeotjo.order_to_shipping.coupon.application.command.IssueCouponCommand;
 import com.jumunhasyeotjo.order_to_shipping.coupon.presentation.dto.req.IssueCouponReq;
 import com.jumunhasyeotjo.order_to_shipping.coupon.presentation.dto.res.IssueCouponRes;
@@ -17,7 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/coupons/issue")
@@ -26,6 +29,7 @@ import java.util.UUID;
 public class IssueCouponController {
 
     private final IssueCouponOrchestratorService issueCouponOrchestratorService;
+    private final IssueCouponService issueCouponService;
 
     @PostMapping("/async")
     @PassportAuthorize(
@@ -128,6 +132,30 @@ public class IssueCouponController {
                 IssueCouponRes.fromResult(
                     issueCouponOrchestratorService.issueCoupon(req.toCommand())
                 )
+            ));
+    }
+
+    @GetMapping()
+    @Operation(
+        summary = "발급 쿠폰 조회",
+        description = "발급된 쿠폰을 조회합니다."
+    )
+    @PassportAuthorize(
+        allowedRoles = {
+            PassportUserRole.COMPANY_MANAGER,
+            PassportUserRole.COMPANY_DRIVER,
+            PassportUserRole.HUB_MANAGER,
+            PassportUserRole.HUB_DRIVER,
+            PassportUserRole.MASTER
+        }
+    )
+    public ResponseEntity<ApiRes<List<IssueCouponRes>>> findByUserId(
+        @Parameter(hidden = true) @PassportUser Passport passport
+    ) {
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiRes.success(
+                issueCouponService.findByUserId(passport.getUserId()).stream().map(IssueCouponRes::fromResult).collect(Collectors.toList())
             ));
     }
 }
