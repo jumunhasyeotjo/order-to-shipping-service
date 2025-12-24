@@ -1,11 +1,13 @@
-package com.jumunhasyeotjo.order_to_shipping.order.application;
+package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion;
 
 
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -35,7 +37,8 @@ public class Outbox {
     @Column(nullable = false, length = 50)
     private String eventType;
 
-    @Column(nullable = false, columnDefinition = "JSON")
+    @Column(columnDefinition = "JSONB")
+    @Type(JsonBinaryType.class)
     private String payload;
 
     @Enumerated(EnumType.STRING)

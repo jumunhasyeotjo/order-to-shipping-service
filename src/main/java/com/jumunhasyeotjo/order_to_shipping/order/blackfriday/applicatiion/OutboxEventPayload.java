@@ -1,8 +1,10 @@
-package com.jumunhasyeotjo.order_to_shipping.order.application;
+package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion;
 
 import com.jumunhasyeotjo.order_to_shipping.order.application.command.OrderProductReq;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OutboxEventPayload {
 
     // 주문 정보

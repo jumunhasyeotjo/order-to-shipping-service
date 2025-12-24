@@ -1,10 +1,12 @@
-package com.jumunhasyeotjo.order_to_shipping.order.application;
+package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +49,7 @@ public class BFOrderOutboxService {
 
         } catch (Exception e) {
             log.error("[Outbox 생성 실패] orderId: {}, error: {}", orderId, e.getMessage(), e);
+            e.printStackTrace();
             throw new BusinessException(ErrorCode.OUTBOX_PUBLISH_FAILED);
         }
     }
@@ -170,7 +173,7 @@ public class BFOrderOutboxService {
      * 실패한 Outbox 조회 (최대 재시도 횟수 초과)
      */
     @Transactional(readOnly = true)
-    public List<com.jumunhasyeotjo.order_to_shipping.order.application.Outbox> findFailedOutboxes() {
+    public List<Outbox> findFailedOutboxes() {
         List<Outbox> outboxes = outboxRepository.findFailedOutboxes();
         log.info("[실패 데이터 조회] 개수: {}", outboxes.size());
         return outboxes;
@@ -207,4 +210,39 @@ public class BFOrderOutboxService {
         Outbox outbox = outboxRepository.findByOrderId(orderId).orElseThrow(() -> new BusinessException(ErrorCode.OUTBOX_NOT_INIT));
         outbox.setPayload(payload);
     }
+
+    /**
+     * READY 상태이면서 payload가 있는 Outbox 조회 (Kafka 발행 대상)
+     *
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지 크기
+     * @return READY 상태의 Outbox 목록
+     */
+    @Transactional(readOnly = true)
+    public List<Outbox> findReadyOutboxes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<Outbox> outboxes = outboxRepository.findReadyOutboxesWithPayload(pageable);
+
+        log.debug("[READY Outbox 조회] page: {}, size: {}, 조회된 개수: {}",
+                page, size, outboxes.size());
+
+        return outboxes;
+    }
+
+
+    /**
+     * 재시도 횟수 증가
+     */
+    @Transactional
+    public void incrementRetryCount(UUID orderId) {
+        Outbox outbox = outboxRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.OUTBOX_NOT_FOUND));
+
+        outbox.incrementRetryCount();
+        outboxRepository.save(outbox);
+
+        log.info("[재시도 횟수 증가] outboxId: {}, orderId: {}, retryCount: {}",
+                outbox.getId(), orderId, outbox.getRetryCount());
+    }
+
 }

@@ -89,6 +89,9 @@ dependencies {
     // 4. json 로그 형식 파싱
     implementation 'ch.qos.logback:logback-classic'
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    //Hibernate가 String을 JSONB로 자동 변환
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.0'
 }
 
 dependencyManagement {

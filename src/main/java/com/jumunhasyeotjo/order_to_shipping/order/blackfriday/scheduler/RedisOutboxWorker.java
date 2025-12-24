@@ -1,17 +1,13 @@
-package com.jumunhasyeotjo.order_to_shipping.order.application.scheduler;
+package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.scheduler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jumunhasyeotjo.order_to_shipping.order.application.BFOrderOutboxService;
-import com.jumunhasyeotjo.order_to_shipping.order.application.OutboxEventPayload;
+import com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion.BFOrderOutboxService;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -32,7 +28,7 @@ import java.util.UUID;
 @Component
 public class RedisOutboxWorker {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private final BFOrderOutboxService orderOutboxService;
 
     private static final String STREAM_KEY = "outbox:order-created";
@@ -40,7 +36,7 @@ public class RedisOutboxWorker {
     private static final String CONSUMER_NAME = "order-worker-1";
 
     public RedisOutboxWorker(
-            @Qualifier("BfredisTemplate") RedisTemplate<String, Object> redisTemplate,
+            @Qualifier("BfredisTemplate") RedisTemplate<String, String> redisTemplate,
             BFOrderOutboxService orderOutboxService) {
         this.redisTemplate = redisTemplate;
         this.orderOutboxService = orderOutboxService;

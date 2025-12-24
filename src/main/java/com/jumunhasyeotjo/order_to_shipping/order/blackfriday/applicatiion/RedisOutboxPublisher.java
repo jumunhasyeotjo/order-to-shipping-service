@@ -1,6 +1,7 @@
-package com.jumunhasyeotjo.order_to_shipping.order.application;
+package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
@@ -18,12 +19,12 @@ import java.util.*;
 @Component
 public class RedisOutboxPublisher {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
-    private DefaultRedisScript<Map> luaScript;
+    private DefaultRedisScript<String> luaScript;
 
     public RedisOutboxPublisher(
-            @Qualifier("BfredisTemplate") RedisTemplate<String, Object> bfRedisTemplate,
+            @Qualifier("BfredisTemplate") RedisTemplate<String, String> bfRedisTemplate,
             ObjectMapper objectMapper) {
         this.redisTemplate = bfRedisTemplate;
         this.objectMapper = objectMapper;
@@ -31,22 +32,11 @@ public class RedisOutboxPublisher {
 
     @PostConstruct
     public void init() {
-        // Lua Script 로드
         luaScript = new DefaultRedisScript<>();
         luaScript.setLocation(new ClassPathResource("lua/order-outbox.lua"));
-        luaScript.setResultType(Map.class);
+        luaScript.setResultType(String.class);  //  String 타입
     }
 
-    /**
-     * Lua Script를 사용하여 원자적으로 이벤트 발행
-     *
-     * @param orderId 주문 ID
-     * @param idempotencyKey 멱등키
-     * @param productList 상품 목록
-     * @param couponId 쿠폰 ID (nullable)
-     * @param eventPayload 이벤트 페이로드 (OutboxEventPayload)
-     * @return Redis Streams MessageId
-     */
     public String publishWithLuaScript(
             UUID orderId,
             String idempotencyKey,
@@ -63,45 +53,56 @@ public class RedisOutboxPublisher {
             // 2. ARGV 준비
             List<String> argv = prepareArgv(orderId, idempotencyKey, productList, couponId, eventPayload);
 
-            // 3. Lua Script 실행
-            Map<String, Object> result = redisTemplate.execute(
+            // 3. Lua Script 실행 - String 반환
+            String resultJson = redisTemplate.execute(
                     luaScript,
                     keys,
                     argv.toArray()
             );
 
-            // 4. 결과 처리
+            log.debug("[Lua Script 원본 결과] {}", resultJson);
+            //  원본 결과 로그 (디버깅용)
+            log.info("[Lua Script 원본 결과] type: {}, content: '{}'",
+                    resultJson != null ? resultJson.getClass().getSimpleName() : "null",
+                    resultJson);
+
+            // 4. JSON 검증
+            if (resultJson == null || resultJson.trim().isEmpty()) {
+                log.error("[Lua Script 결과 없음] orderId: {}", orderId);
+                throw new BusinessException(ErrorCode.LUA_SCRIPT_EXECUTION_FAILED);
+            }
+
+            // 5. JSON 문자열을 Map으로 파싱
+            Map<String, Object> result;
+            try {
+                result = objectMapper.readValue(
+                        resultJson,
+                        new TypeReference<Map<String, Object>>() {}
+                );
+            } catch (JsonProcessingException e) {
+                log.error("[JSON 파싱 실패] orderId: {}, resultJson: '{}', error: {}",
+                        orderId, resultJson, e.getMessage());
+                throw new BusinessException(ErrorCode.JSON_PROCESSING_ERROR);
+            }
+
+            // 5. 결과 처리
             return handleLuaScriptResult(result, orderId);
 
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("[Lua Script 실행 실패] orderId: {}, error: {}", orderId, e.getMessage(), e);
             throw new BusinessException(ErrorCode.OUTBOX_PUBLISH_FAILED);
         }
     }
 
-    /**
-     * KEYS 배열 준비
-     *
-     * KEYS[1] = outbox:stream (Redis Streams key)
-     * KEYS[2] = idempotency:{idempotencyKey} (멱등성 체크용)
-     */
     private List<String> prepareKeys() {
         return Arrays.asList(
-                "outbox:order-created",           // KEYS[1]: Redis Streams
-                "idempotency:"                    // KEYS[2]: 멱등성 키 prefix (Lua에서 조합)
+                "outbox:order-created",
+                "idempotency:"
         );
     }
 
-    /**
-     * ARGV 배열 준비
-     *
-     * ARGV[1] = orderId
-     * ARGV[2] = orderProductsJson (상품 목록 JSON)
-     * ARGV[3] = couponId (nullable, "nil"로 표시)
-     * ARGV[4] = couponDiscount (0 if no coupon)
-     * ARGV[5] = idempotencyKey
-     * ARGV[6] = eventPayload (전체 이벤트 JSON)
-     */
     private List<String> prepareArgv(
             UUID orderId,
             String idempotencyKey,
@@ -112,25 +113,14 @@ public class RedisOutboxPublisher {
         try {
             List<String> argv = new ArrayList<>();
 
-            // ARGV[1]: orderId
             argv.add(orderId.toString());
-
-            // ARGV[2]: orderProductsJson
-            String orderProductsJson = objectMapper.writeValueAsString(productList);
-            argv.add(orderProductsJson);
-
-            // ARGV[3]: couponId (nullable)
+            argv.add(objectMapper.writeValueAsString(productList));
             argv.add(couponId != null ? couponId.toString() : "nil");
-
-            // ARGV[4]: couponDiscount (현재는 0, 실제로는 쿠폰 할인액 계산 필요)
             argv.add("0");
-
-            // ARGV[5]: idempotencyKey
             argv.add(idempotencyKey);
+            argv.add(objectMapper.writeValueAsString(eventPayload));
 
-            // ARGV[6]: eventPayload (전체 이벤트 JSON)
-            String eventPayloadJson = objectMapper.writeValueAsString(eventPayload);
-            argv.add(eventPayloadJson);
+            log.debug("[ARGV 준비 완료] size: {}", argv.size());
 
             return argv;
 
@@ -140,37 +130,40 @@ public class RedisOutboxPublisher {
         }
     }
 
-    /**
-     * Lua Script 실행 결과 처리
-     */
     private String handleLuaScriptResult(Map<String, Object> result, UUID orderId) {
         if (result == null) {
             throw new BusinessException(ErrorCode.LUA_SCRIPT_EXECUTION_FAILED);
         }
 
+        log.debug("[Lua Script 파싱 결과] {}", result);
+
         // 에러 체크
         if (result.containsKey("err")) {
             String errorCode = (String) result.get("err");
-            log.error("[Lua Script 에러] orderId: {}, errorCode: {}", orderId, errorCode);
+            log.error("[Lua Script 에러] orderId: {}, errorCode: {}, result: {}",
+                    orderId, errorCode, result);
 
-            throw switch (errorCode) {
-                case "DUPLICATE_REQUEST" -> new BusinessException(ErrorCode.DUPLICATE_ORDER);
+            switch (errorCode) {
+                case "DUPLICATE_REQUEST" ->
+                        throw new BusinessException(ErrorCode.DUPLICATE_ORDER);
                 case "INSUFFICIENT_STOCK" -> {
-                    log.info(String.format("productId: %s, required: %s, available: %s",
+                    log.error("[재고 부족] productId: {}, required: {}, available: {}",
                             result.get("productId"),
                             result.get("required"),
-                            result.get("available")));
-                    throw new BusinessException(
-                        ErrorCode.INVALID_PRODUCT_STOCK
-                );
-
+                            result.get("available"));
+                     throw new BusinessException(ErrorCode.INVALID_PRODUCT_STOCK);
                 }
                 case "COUPON_ALREADY_USED" -> {
-                    log.error("couponId: " + result.get("couponId"));
-                    throw new BusinessException(ErrorCode.COUPON_VALIDATION_FAILED);
+                    log.error("[쿠폰 이미 사용] couponId: {}", result.get("couponId"));
+                     throw new BusinessException(ErrorCode.COUPON_ALREADY_USED);
                 }
-                default -> new BusinessException(ErrorCode.LUA_SCRIPT_EXECUTION_FAILED);
-            };
+                case "JSON_PARSE_ERROR" -> {
+                    log.error("[JSON 파싱 에러] details: {}", result.get("details"));
+                     throw new BusinessException(ErrorCode.JSON_PROCESSING_ERROR);
+                }
+                default ->
+                        throw new BusinessException(ErrorCode.LUA_SCRIPT_EXECUTION_FAILED);
+            }
         }
 
         // 성공 처리
@@ -181,29 +174,5 @@ public class RedisOutboxPublisher {
         }
 
         throw new BusinessException(ErrorCode.LUA_SCRIPT_EXECUTION_FAILED);
-    }
-
-    /**
-     * 보상 트랜잭션 이벤트 발행
-     */
-    public void publishCompensationEvent(UUID orderId, String reason) {
-        try {
-            Map<String, Object> compensationEvent = Map.of(
-                    "type", "COMPENSATION",
-                    "orderId", orderId.toString(),
-                    "reason", reason,
-                    "timestamp", System.currentTimeMillis()
-            );
-
-            redisTemplate.opsForStream().add(
-                    "outbox:compensation",
-                    compensationEvent
-            );
-
-            log.info("[보상 트랜잭션 발행] orderId: {}, reason: {}", orderId, reason);
-
-        } catch (Exception e) {
-            log.error("[보상 트랜잭션 발행 실패] orderId: {}, error: {}", orderId, e.getMessage(), e);
-        }
     }
 }

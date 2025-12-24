@@ -67,7 +67,7 @@ public enum ErrorCode {
     // Lua Script
     LUA_SCRIPT_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LUA001", "Lua Script 실행에 실패했습니다."),
     INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "LUA002", "재고가 부족합니다."),
-    COUPON_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "LUA003", "쿠폰 검증에 실패했습니다."),
+    COUPON_ALREADY_USED(HttpStatus.BAD_REQUEST, "LUA003", "이미 사용한 쿠폰입니다."),
 
     // Payment
     PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAY001", "결제 승인에 실패했습니다."),

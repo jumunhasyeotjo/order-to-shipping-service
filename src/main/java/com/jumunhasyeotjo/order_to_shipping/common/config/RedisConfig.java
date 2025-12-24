@@ -67,8 +67,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> BfredisTemplate(@Qualifier("bfRedisConnectionFactory") RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
+    public RedisTemplate<String, String> BfredisTemplate(@Qualifier("bfRedisConnectionFactory") RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         // ObjectMapper 설정
@@ -77,13 +77,11 @@ public class RedisConfig {
 
         // Serializer 설정
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        GenericJackson2JsonRedisSerializer jsonSerializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);
 
         template.setKeySerializer(stringSerializer);
-        template.setValueSerializer(jsonSerializer);
+        template.setValueSerializer(stringSerializer);
         template.setHashKeySerializer(stringSerializer);
-        template.setHashValueSerializer(jsonSerializer);
+        template.setHashValueSerializer(stringSerializer);
 
         return template;
     }

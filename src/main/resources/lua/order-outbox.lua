@@ -14,60 +14,76 @@ local idempotencyPrefix = KEYS[2]
 local orderId = ARGV[1]
 local orderProductsJson = ARGV[2]
 local couponId = ARGV[3]
-local couponDiscount = tonumber(ARGV[4] or "0")
 local idempotencyKey = ARGV[5]
 local eventPayload = ARGV[6]
 
--- 1. 멱등성 체크 (중복 요청 방지)
+-- 1. 멱등성 체크
 local idempotencyCheckKey = idempotencyPrefix .. idempotencyKey
 if redis.call("EXISTS", idempotencyCheckKey) == 1 then
-    return {err="DUPLICATE_REQUEST"}
+    -- ⭐ JSON 문자열로 반환
+    return cjson.encode({err="DUPLICATE_REQUEST"})
 end
 
--- 2. 상품별 재고 체크 및 차감
-local orderProducts = cjson.decode(orderProductsJson)
+-- 2. JSON 파싱
+local orderProducts
+local success, result = pcall(function()
+    return cjson.decode(orderProductsJson)
+end)
+
+if not success then
+    -- ⭐ JSON 문자열로 반환
+    return cjson.encode({err="JSON_PARSE_ERROR", details=tostring(result)})
+end
+
+orderProducts = result
+
+-- 3. 재고 키 배열 생성
+local stockKeys = {}
 for _, product in ipairs(orderProducts) do
-    local productId = product.productId
-    local quantity = tonumber(product.quantity)
-    local stockKey = "bf:stock:" .. productId
-
-    -- 재고 확인
-    local currentStock = tonumber(redis.call("GET", stockKey) or "0")
-    if currentStock < quantity then
-        return {
-            err="INSUFFICIENT_STOCK",
-            productId=productId,
-            required=quantity,
-            available=currentStock
-        }
-    end
-
-    -- 재고 차감 (예약)
-    redis.call("DECRBY", stockKey, quantity)
+    table.insert(stockKeys, "bf:stock:" .. product.productId)
 end
 
--- 3. 쿠폰 차감 (있는 경우)
+-- 4. 배치 재고 조회
+local stocks = redis.call("MGET", unpack(stockKeys))
+
+-- 5. 재고 검증
+for i, product in ipairs(orderProducts) do
+    local currentStock = tonumber(stocks[i] or "0")
+    local required = tonumber(product.quantity)
+
+    if currentStock < required then
+        -- ⭐ JSON 문자열로 반환
+        return cjson.encode({
+            err="INSUFFICIENT_STOCK",
+            productId=product.productId,
+            required=required,
+            available=currentStock
+        })
+    end
+end
+
+-- 6. 쿠폰 검증
 if couponId ~= "nil" and couponId ~= "" then
     local couponKey = "coupon:used:" .. couponId
-
-    -- 쿠폰 사용 여부 확인
     if redis.call("EXISTS", couponKey) == 1 then
-        -- 롤백: 재고 복구
-        for _, product in ipairs(orderProducts) do
-            redis.call("INCRBY", "bf:stock:" .. product.productId, product.quantity)
-        end
-        return {err="COUPON_ALREADY_USED", couponId=couponId}
+        -- ⭐ JSON 문자열로 반환
+        return cjson.encode({err="COUPON_ALREADY_USED", couponId=couponId})
     end
-
-    -- 쿠폰 사용 처리
-    redis.call("SET", couponKey, "1")
-    redis.call("EXPIRE", couponKey, 86400) -- 24시간 TTL
 end
 
--- 4. 멱등성 키 저장 (TTL 24시간)
+-- 7. 재고 차감
+for _, product in ipairs(orderProducts) do
+    redis.call("DECRBY", "bf:stock:" .. product.productId, tonumber(product.quantity))
+end
+
+-- 8. 쿠폰 사용
+if couponId ~= "nil" and couponId ~= "" then
+    redis.call("SETEX", "coupon:used:" .. couponId, 86400, "1")
+end
+
+-- 9. 멱등성 키 & Outbox 발행
 redis.call("SETEX", idempotencyCheckKey, 86400, orderId)
 
--- 5. Redis Streams Outbox에 이벤트 발행
 local messageId = redis.call("XADD", streamKey, "*",
     "orderId", orderId,
     "idempotencyKey", idempotencyKey,
@@ -76,4 +92,5 @@ local messageId = redis.call("XADD", streamKey, "*",
     "timestamp", redis.call("TIME")[1]
 )
 
-return {ok="SUCCESS", messageId=messageId, orderId=orderId}
+-- ⭐ JSON 문자열로 반환
+return cjson.encode({ok="SUCCESS", messageId=messageId, orderId=orderId})
