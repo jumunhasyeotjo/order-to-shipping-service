@@ -3,6 +3,7 @@ package com.jumunhasyeotjo.order_to_shipping.order.blackfriday.applicatiion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.BusinessException;
 import com.jumunhasyeotjo.order_to_shipping.common.exception.ErrorCode;
+import com.jumunhasyeotjo.order_to_shipping.order.domain.entity.Order;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +21,39 @@ import java.util.UUID;
 public class BFOrderOutboxService {
 
     private final BfOutboxRepository outboxRepository;
+    private final BFOrderService bfOrderService;
     private final ObjectMapper objectMapper;
+
+    /**
+     * [Final Stage] 결제 승인 + Outbox/SnapShot 상태 갱신
+     *
+     * - 결제 승인 (출금) 호출
+     * - Outbox 상태를 'complete'로 갱신
+     * - Order 상태를 'ORDERED'로 갱신
+     * - 두 상태 갱신은 하나의 트랜잭션으로 묶음
+     */
+    @Transactional
+    public Order executeStatusUpdate(Order order) {
+        UUID orderId = order.getId();
+        log.info("[Final Stage Start] orderId: {}", orderId);
+
+        try {
+            // → 하나의 트랜잭션으로 묶음
+            markAsReady(orderId);
+            Order completedOrder = bfOrderService.updateStatusForComplete(
+                    orderId,
+                    order.getVendorOrders()
+            );
+
+            log.info("[Final Stage End] Outbox/SnapShot 상태 갱신 완료 - orderId: {}", orderId);
+            return completedOrder;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("[Final Stage 실패] orderId: {}, error: {}", orderId, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FINAL_STAGE_FAILED);
+        }
+    }
 
     /**
      * Outbox 생성
@@ -53,30 +86,6 @@ public class BFOrderOutboxService {
             throw new BusinessException(ErrorCode.OUTBOX_PUBLISH_FAILED);
         }
     }
-
-    /**
-     * Outbox 상태를 'READY'로 변경
-     *
-     * Worker가 이벤트 처리 완료 후 호출
-     */
-//    @Transactional
-//    public void updateOutboxStatusToReady(String orderId) {
-//        try {
-//            Outbox outbox = outboxRepository.findByOrderId(orderId)
-//                    .orElseThrow(() -> new BusinessException(ErrorCode.OUTBOX_NOT_FOUND));
-//
-//            outbox.markAsReady();
-//            outboxRepository.save(outbox);
-//
-//            log.info("[상태 변경: READY] outboxId: {}, orderId: {}", outbox.getId(), orderId);
-//
-//        } catch (BusinessException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            log.error("[상태 변경 실패: READY] orderId: {}, error: {}", orderId, e.getMessage(), e);
-//            throw new BusinessException(ErrorCode.OUTBOX_PROCESSING_FAILED);
-//        }
-//    }
 
     /**
      * Outbox 상태를 'COMPLETE'로 변경
@@ -127,30 +136,6 @@ public class BFOrderOutboxService {
         }
     }
 
-//    /**
-//     * Outbox 상태 조회
-//     */
-//    @Transactional(readOnly = true)
-//    public String getOutboxStatus(String orderId) {
-//        return outboxRepository.findByOrderId(orderId)
-//                .map(outbox -> outbox.getStatus().name())
-//                .orElse(null);
-//    }
-//
-//    /**
-//     * 재시도 횟수 증가
-//     */
-//    @Transactional
-//    public void incrementRetryCount(String orderId) {
-//        Outbox outbox = outboxRepository.findByOrderId(orderId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.OUTBOX_NOT_FOUND));
-//
-//        outbox.incrementRetryCount();
-//        outboxRepository.save(outbox);
-//
-//        log.info("[재시도 횟수 증가] outboxId: {}, orderId: {}, retryCount: {}",
-//                outbox.getId(), orderId, outbox.getRetryCount());
-//    }
 
     /**
      * N번 이상 결과 나오지 않은 데이터 조회
@@ -194,10 +179,7 @@ public class BFOrderOutboxService {
         }
     }
 
-    public void upsert(String orderId, String idempotencyKey,
-                       String eventType, Object payload) {
 
-    }
 
     @Transactional
     public void markAsReady(UUID orderId) {

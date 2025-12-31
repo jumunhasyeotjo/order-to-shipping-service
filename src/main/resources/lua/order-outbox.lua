@@ -20,7 +20,7 @@ local eventPayload = ARGV[6]
 -- 1. 멱등성 체크
 local idempotencyCheckKey = idempotencyPrefix .. idempotencyKey
 if redis.call("EXISTS", idempotencyCheckKey) == 1 then
-    -- ⭐ JSON 문자열로 반환
+    --  JSON 문자열로 반환
     return cjson.encode({err="DUPLICATE_REQUEST"})
 end
 
@@ -31,7 +31,7 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    -- ⭐ JSON 문자열로 반환
+    --  JSON 문자열로 반환
     return cjson.encode({err="JSON_PARSE_ERROR", details=tostring(result)})
 end
 
@@ -52,7 +52,7 @@ for i, product in ipairs(orderProducts) do
     local required = tonumber(product.quantity)
 
     if currentStock < required then
-        -- ⭐ JSON 문자열로 반환
+        --  JSON 문자열로 반환
         return cjson.encode({
             err="INSUFFICIENT_STOCK",
             productId=product.productId,
@@ -66,7 +66,7 @@ end
 if couponId ~= "nil" and couponId ~= "" then
     local couponKey = "coupon:used:" .. couponId
     if redis.call("EXISTS", couponKey) == 1 then
-        -- ⭐ JSON 문자열로 반환
+        --  JSON 문자열로 반환
         return cjson.encode({err="COUPON_ALREADY_USED", couponId=couponId})
     end
 end
@@ -92,5 +92,5 @@ local messageId = redis.call("XADD", streamKey, "*",
     "timestamp", redis.call("TIME")[1]
 )
 
--- ⭐ JSON 문자열로 반환
+--  JSON 문자열로 반환
 return cjson.encode({ok="SUCCESS", messageId=messageId, orderId=orderId})

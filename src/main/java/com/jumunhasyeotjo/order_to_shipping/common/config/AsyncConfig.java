@@ -1,6 +1,8 @@
 package com.jumunhasyeotjo.order_to_shipping.common.config;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -23,6 +25,18 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.initialize();
         return executor;
     }
+
+    @Bean("ioExecutor")
+    public Executor ioExecutor() {
+        return new ThreadPoolTaskExecutor() {{
+            setCorePoolSize(10);
+            setMaxPoolSize(50);
+            setQueueCapacity(200);
+            setThreadNamePrefix("io-");
+            initialize();
+        }};
+    }
+
 
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {

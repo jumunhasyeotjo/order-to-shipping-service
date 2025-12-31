@@ -155,7 +155,7 @@ public class BfOrderOutboxRelay {
             String eventJson = objectMapper.writeValueAsString(event);
 
             ProducerRecord<String, String> record = new ProducerRecord<>(BF_ORDER_TOPIC, eventJson);
-            record.headers().add("eventType", "BF_ORDER_CREATED".getBytes());
+            record.headers().add("eventType",event.getEventType().getBytes());
 
             SendResult<String, String> result = kafkaTemplate.send(record).get();
 

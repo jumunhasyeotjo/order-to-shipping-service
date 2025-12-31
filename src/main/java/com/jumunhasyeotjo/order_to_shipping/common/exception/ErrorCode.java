@@ -30,6 +30,7 @@ public enum ErrorCode {
     INVALID_PRODUCT_PRICE(HttpStatus.BAD_REQUEST, "E050", "주문상품의 가격은 1 미만이면 안됩니다."),
     INVALID_PRODUCT_STOCK(HttpStatus.BAD_REQUEST, "E050", "주문한 상품의 재고가 부족합니다."),
     DUPLICATE_ORDER(HttpStatus.BAD_REQUEST, "E050", "중복된 주문 입니다."),
+    INVALID_COUPON_OWNER(HttpStatus.BAD_REQUEST, "E050", "쿠폰 소유자가 일치하지 않습니다."),
 
     // 401 UNAUTHORIZED
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "EU001", "인증이 필요합니다."),
